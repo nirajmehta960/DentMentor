@@ -1,0 +1,328 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* DentMentor Design System - Professional mentorship platform */
+
+@layer base {
+  :root {
+    /* Brand Colors - DentMentor */
+    --background: 0 0% 100%;
+    --foreground: 168 76% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 168 76% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 168 76% 15%;
+
+    /* Primary - Deep Teal */
+    --primary: 168 76% 25%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 168 76% 20%;
+    --primary-light: 168 76% 85%;
+
+    /* Secondary - Warm Orange */
+    --secondary: 20 91% 48%;
+    --secondary-foreground: 0 0% 98%;
+    --secondary-hover: 20 91% 40%;
+    --secondary-light: 20 91% 90%;
+
+    /* Accent - Soft Blue */
+    --accent: 199 89% 48%;
+    --accent-foreground: 0 0% 98%;
+    --accent-hover: 199 89% 40%;
+    --accent-light: 199 89% 90%;
+
+    --muted: 168 20% 96%;
+    --muted-foreground: 168 20% 45%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 168 20% 90%;
+    --input: 168 20% 90%;
+    --ring: 168 76% 25%;
+
+    --radius: 0.75rem;
+
+    /* DentMentor Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(168, 76%, 25%), hsl(168, 76%, 35%));
+    --gradient-secondary: linear-gradient(135deg, hsl(20, 91%, 48%), hsl(20, 91%, 58%));
+    --gradient-accent: linear-gradient(135deg, hsl(199, 89%, 48%), hsl(199, 89%, 58%));
+    --gradient-hero: linear-gradient(135deg, hsl(168, 76%, 25%) 0%, hsl(199, 89%, 48%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(168, 20%, 98%) 100%);
+
+    /* Shadows & Effects */
+    --shadow-soft: 0 4px 20px -2px hsl(168, 76%, 25% / 0.1);
+    --shadow-medium: 0 8px 25px -5px hsl(168, 76%, 25% / 0.15);
+    --shadow-large: 0 20px 60px -10px hsl(168, 76%, 25% / 0.2);
+    --shadow-glow: 0 0 30px hsl(199, 89%, 48% / 0.3);
+    --shadow-orange-glow: 0 0 30px hsl(20, 91%, 48% / 0.3);
+
+    /* Animation Timings */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* Sidebar Variables */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark mode for DentMentor */
+    --background: 168 76% 8%;
+    --foreground: 0 0% 98%;
+    --card: 168 76% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 168 76% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 168 76% 35%;
+    --primary-foreground: 168 76% 8%;
+    --secondary: 20 91% 55%;
+    --secondary-foreground: 20 20% 8%;
+    --accent: 199 89% 55%;
+    --accent-foreground: 199 20% 8%;
+    --muted: 168 20% 15%;
+    --muted-foreground: 168 20% 65%;
+    --border: 168 20% 20%;
+    --input: 168 20% 20%;
+    --ring: 168 76% 35%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    scroll-behavior: smooth;
+  }
+}
+
+/* DentMentor Animation System */
+@layer utilities {
+  /* Scroll Animation Classes */
+  .scroll-animate {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .scroll-animate.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .scroll-animate-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .scroll-animate-left.animate-in {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .scroll-animate-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .scroll-animate-right.animate-in {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .scroll-animate-scale {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .scroll-animate-scale.animate-in {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Stagger Animation Delays */
+  .stagger-1 { transition-delay: 100ms; }
+  .stagger-2 { transition-delay: 200ms; }
+  .stagger-3 { transition-delay: 300ms; }
+  .stagger-4 { transition-delay: 400ms; }
+  .stagger-5 { transition-delay: 500ms; }
+
+  /* Pulse Glow Effect */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--accent) / 0.6), 0 0 60px hsl(var(--accent) / 0.3);
+    }
+  }
+
+  /* Hero Parallax Effect */
+  .parallax-bg {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Floating Animation */
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Counter Animation */
+  .counter-number {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Gradient Text Effect */
+  .gradient-text {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Custom Buttons */
+  .btn-hero {
+    background: var(--gradient-primary);
+    border: none;
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--shadow-medium);
+    transition: var(--transition-smooth);
+  }
+
+  .btn-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-large);
+  }
+
+  .btn-secondary {
+    background: var(--gradient-secondary);
+    border: none;
+    color: hsl(var(--secondary-foreground));
+    box-shadow: var(--shadow-medium);
+    transition: var(--transition-smooth);
+  }
+
+  .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-orange-glow), var(--shadow-large);
+  }
+
+  .btn-accent {
+    background: var(--gradient-accent);
+    border: none;
+    color: hsl(var(--accent-foreground));
+    box-shadow: var(--shadow-medium);
+    transition: var(--transition-smooth);
+  }
+
+  .btn-accent:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow), var(--shadow-large);
+  }
+
+  /* Card Effects */
+  .card-hover {
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition-smooth);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-large);
+  }
+
+  /* Floating Action Button */
+  .fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 50;
+    opacity: 0;
+    transform: translateY(100px);
+    transition: all 0.3s ease-out;
+  }
+
+  .fab.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Mentor Card Animations */
+  .mentor-card {
+    @apply transform transition-all duration-300 ease-out;
+  }
+
+  .mentor-card:hover {
+    @apply shadow-xl;
+    transform: translateY(-4px) scale(1.02);
+  }
+
+  /* Filter Animation */
+  .animate-slide-in-top {
+    animation: slideInTop 0.3s ease-out;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.3s ease-out;
+  }
+
+  .animate-slide-in-bottom {
+    animation: slideInBottom 0.3s ease-out;
+  }
+
+  @keyframes slideInTop {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bounceIn {
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slideInBottom {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scrollbar Styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thumb-muted {
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  .scrollbar-track-transparent {
+    scrollbar-track-color: transparent;
+  }
+}
