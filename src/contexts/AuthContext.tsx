@@ -108,53 +108,89 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-            const initializeAuth = async () => {
+                        const initializeAuth = async () => {
+      let authStateChangeTimeout: NodeJS.Timeout | null = null;
+      let isProcessingAuthChange = false;
+      
       try {
-        // Set up auth state listener with safeguards
+        // Set up auth state listener with enhanced safeguards
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
-            if (!mounted) return;
-
-            if (event === 'SIGNED_IN' && session) {
-              const userType = (session.user.user_metadata?.user_type || 
-                               session.user.app_metadata?.user_type) as UserType;
-              
-              setState(prev => ({
-                ...prev,
-                user: session.user,
-                session,
-                userType,
-                isAuthLoading: false,
-              }));
-
-              // Load profiles after setting auth state
-              if (userType) {
-                setTimeout(() => {
-                  loadUserProfiles(session.user.id, userType);
-                }, 0);
-              }
-            } else if (event === 'SIGNED_OUT') {
-              // Only clear state, no redirects - let components handle redirects
-              setState({
-                user: null,
-                session: null,
-                profile: null,
-                mentorProfile: null,
-                menteeProfile: null,
-                userType: null,
-                onboardingComplete: false,
-                currentOnboardingStep: 1,
-                isLoading: false,
-                isAuthLoading: false,
-                isProfileLoading: false,
-                error: null,
-              });
-            } else {
-              setState(prev => ({
-                ...prev,
-                isAuthLoading: false,
-              }));
+            if (!mounted || isProcessingAuthChange) return;
+            
+            // Clear any pending state changes
+            if (authStateChangeTimeout) {
+              clearTimeout(authStateChangeTimeout);
             }
+            
+            console.log('Auth state change:', event, session ? 'session exists' : 'no session');
+
+            // Debounce state changes to prevent rapid updates
+            authStateChangeTimeout = setTimeout(() => {
+              if (!mounted || isProcessingAuthChange) return;
+              
+              isProcessingAuthChange = true;
+              
+              try {
+                if (event === 'SIGNED_IN' && session) {
+                  const userType = (session.user.user_metadata?.user_type || 
+                                   session.user.app_metadata?.user_type) as UserType;
+                  
+                  setState(prev => ({
+                    ...prev,
+                    user: session.user,
+                    session,
+                    userType,
+                    isAuthLoading: false,
+                  }));
+
+                  // Load profiles after setting auth state
+                  if (userType) {
+                    setTimeout(() => {
+                      loadUserProfiles(session.user.id, userType);
+                    }, 0);
+                  }
+                } else if (event === 'SIGNED_OUT') {
+                  console.log('SIGNED_OUT event detected - clearing state only');
+                  // Only clear state, no redirects - let components handle redirects
+                  setState({
+                    user: null,
+                    session: null,
+                    profile: null,
+                    mentorProfile: null,
+                    menteeProfile: null,
+                    userType: null,
+                    onboardingComplete: false,
+                    currentOnboardingStep: 1,
+                    isLoading: false,
+                    isAuthLoading: false,
+                    isProfileLoading: false,
+                    error: null,
+                  });
+                } else if (event === 'TOKEN_REFRESHED') {
+                  console.log('TOKEN_REFRESHED event - updating session only');
+                  // Only update session, don't trigger other state changes
+                  if (session) {
+                    setState(prev => ({
+                      ...prev,
+                      session,
+                      isAuthLoading: false,
+                    }));
+                  }
+                } else {
+                  console.log('Other auth event:', event);
+                  setState(prev => ({
+                    ...prev,
+                    isAuthLoading: false,
+                  }));
+                }
+              } finally {
+                // Reset processing flag after a delay
+                setTimeout(() => {
+                  isProcessingAuthChange = false;
+                }, 500);
+              }
+            }, 100); // 100ms debounce
           }
         );
 
@@ -180,6 +216,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setState(prev => ({ ...prev, isLoading: false }));
 
         return () => {
+          if (authStateChangeTimeout) {
+            clearTimeout(authStateChangeTimeout);
+          }
           subscription.unsubscribe();
         };
       } catch (error) {
