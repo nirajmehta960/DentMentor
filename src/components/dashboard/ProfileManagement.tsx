@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Edit, User, Settings, DollarSign, Camera } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Edit, User, Settings, DollarSign, Camera, CheckCircle, Users, Star, DollarSign as DollarIcon, ExternalLink, Edit3, Globe, Clock, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { ServiceManagementModal } from './ServiceManagementModal';
@@ -19,7 +20,7 @@ export function ProfileManagement() {
   const { toast } = useToast();
 
   const handleEditProfile = () => {
-    navigate('/onboarding');
+    navigate('/onboarding?edit=1');
   };
 
   const handleImageSaved = async (croppedImage: string) => {
@@ -83,8 +84,8 @@ export function ProfileManagement() {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-muted rounded-full"></div>
               <div className="space-y-2 flex-1">
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
+                <div className="h-4 bg-muted rounded-full w-3/4"></div>
+                <div className="h-3 bg-muted rounded-full w-1/2"></div>
               </div>
             </div>
           </div>
@@ -99,145 +100,235 @@ export function ProfileManagement() {
 
   const formatSpecializations = (specializations: string[] | null) => {
     if (!specializations || specializations.length === 0) return 'No specializations listed';
-    return specializations.slice(0, 3).join(', ') + (specializations.length > 3 ? '...' : '');
+    return specializations.join(', ');
+  };
+
+  // Determine current status based on education
+  const getCurrentStatus = () => {
+    if (mentorProfile?.dental_school) {
+      return `Graduate from ${mentorProfile.dental_school}`;
+    }
+    return 'Current Student';
+  };
+
+  // Format rating display
+  const formatRating = (rating: number) => {
+    if (!rating || rating === 0) {
+      return 'No ratings yet';
+    }
+    return rating.toFixed(1);
+  };
+
+  // Format sessions display
+  const formatSessions = (sessions: number) => {
+    if (!sessions || sessions === 0) {
+      return '0 completed';
+    }
+    return `${sessions} completed`;
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="w-5 h-5" />
-          Profile Management
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Profile Summary */}
-        <div className="flex items-start gap-4">
-          <div className="relative group">
-            <Avatar className="w-20 h-20">
-              <AvatarImage src={mentorProfile?.profile_photo_url} />
-              <AvatarFallback className="text-lg font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <button
-              onClick={() => setShowImageCropper(true)}
-              className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Camera className="w-6 h-6 text-white" />
-            </button>
-          </div>
-          
-          <div className="flex-1 space-y-2">
-            <div>
-              <h3 className="text-lg font-semibold">
-                {profile?.first_name} {profile?.last_name}
-              </h3>
+    <TooltipProvider>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Profile Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Profile Summary */}
+          <div className="flex items-start gap-4">
+            <div className="relative group">
+              <Avatar className="w-20 h-20">
+                <AvatarImage src={mentorProfile?.profile_photo_url} />
+                <AvatarFallback className="text-lg font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => setShowImageCropper(true)}
+                className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-black/60"
+              >
+                <Camera className="w-6 h-6 text-white" />
+              </button>
+            </div>
+            
+            <div className="flex-1 space-y-1">
+              {/* Name with blue verification tick */}
+              <div className="flex items-center gap-1">
+                <h3 className="text-lg font-semibold">
+                  {profile?.first_name} {profile?.last_name}
+                </h3>
+                {mentorProfile?.is_verified && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <CheckCircle className="w-4 h-4 text-blue-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Verified Mentor</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              
+              {/* Professional headline */}
               <p className="text-sm text-muted-foreground">
                 {mentorProfile?.professional_headline || 'Dental Mentor'}
               </p>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={mentorProfile?.is_verified ? 'default' : 'secondary'}>
-                {mentorProfile?.is_verified ? 'Verified' : 'Pending Verification'}
-              </Badge>
-              <Badge variant="outline">
-                {mentorProfile?.years_experience || 0} years experience
-              </Badge>
-            </div>
-            
-            <p className="text-sm text-muted-foreground">
-              <strong>Specializations:</strong> {formatSpecializations(mentorProfile?.specializations)}
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">
-              {(mentorProfile as any)?.total_sessions || 0}
-            </div>
-            <div className="text-xs text-muted-foreground">Sessions</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">
-              {(mentorProfile as any)?.average_rating || 0}
-            </div>
-            <div className="text-xs text-muted-foreground">Rating</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">
-              ${mentorProfile?.hourly_rate || 0}
-            </div>
-            <div className="text-xs text-muted-foreground">Hourly Rate</div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button onClick={handleEditProfile} className="flex-1">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Profile
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowServiceModal(true)}
-            className="flex-1"
-          >
-            <DollarSign className="w-4 h-4 mr-2" />
-            Manage Services
-          </Button>
-        </div>
-
-        {/* Bio Preview */}
-        {mentorProfile?.professional_bio && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Bio</h4>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {mentorProfile.professional_bio.length > 200 
-                ? `${mentorProfile.professional_bio.substring(0, 200)}...` 
-                : mentorProfile.professional_bio
-              }
-            </p>
-          </div>
-        )}
-
-        {/* Contact Info */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium">Contact Information</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p>Email: {profile?.user_id}</p>
-            {profile?.phone && <p>Phone: {profile.phone}</p>}
-            {mentorProfile?.linkedin_url && (
-              <p>LinkedIn: 
-                <a 
-                  href={mentorProfile.linkedin_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline ml-1"
-                >
-                  View Profile
-                </a>
+              
+              {/* Current status with graduation cap */}
+              <div className="flex items-center gap-1">
+                <GraduationCap className="w-4 h-4 text-primary" />
+                <p className="text-sm text-primary font-medium">
+                  {getCurrentStatus()}
+                </p>
+              </div>
+              
+              {/* Experience badge */}
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {mentorProfile?.years_experience || 0} years experience
+                </Badge>
+                {!mentorProfile?.is_verified && (
+                  <Badge variant="secondary" className="text-xs">
+                    Pending Verification
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Specializations - removed blue tick and ellipsis */}
+              <p className="text-sm text-muted-foreground">
+                <strong>Specializations:</strong> {formatSpecializations(mentorProfile?.specializations)}
               </p>
-            )}
+            </div>
           </div>
-        </div>
-      </CardContent>
 
-      {/* Service Management Modal */}
-      <ServiceManagementModal
-        isOpen={showServiceModal}
-        onClose={() => setShowServiceModal(false)}
-      />
+          {/* Enhanced Quick Stats with Icons */}
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Users className="w-4 h-4 text-primary" />
+                <div className="text-2xl font-bold text-primary">
+                  {(mentorProfile as any)?.total_sessions || 0}
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {formatSessions((mentorProfile as any)?.total_sessions || 0)}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Star className="w-4 h-4 text-primary" />
+                <div className="text-2xl font-bold text-primary">
+                  {formatRating((mentorProfile as any)?.average_rating || 0)}
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">Rating</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <DollarIcon className="w-4 h-4 text-primary" />
+                <div className="text-2xl font-bold text-primary">
+                  ${mentorProfile?.hourly_rate || 0}
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">Hourly Rate</div>
+            </div>
+          </div>
 
-      {/* Profile Image Cropper */}
-      <ProfileImageCropper
-        open={showImageCropper}
-        onOpenChange={setShowImageCropper}
-        onImageSaved={handleImageSaved}
-      />
-    </Card>
+          {/* Enhanced Action Buttons with Hover Effects */}
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleEditProfile} 
+              className="flex-1 transition-all duration-200 hover:bg-primary/90 hover:shadow-md"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowServiceModal(true)}
+              className="flex-1 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm"
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Manage Services
+            </Button>
+          </div>
+
+          {/* Enhanced Bio Section - removed edit icon */}
+          {mentorProfile?.professional_bio && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Bio</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {mentorProfile.professional_bio.length > 200 
+                  ? `${mentorProfile.professional_bio.substring(0, 200)}...` 
+                  : mentorProfile.professional_bio
+                }
+              </p>
+            </div>
+          )}
+
+          {/* Enhanced Contact Information */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Contact Information</h4>
+            <div className="text-sm text-muted-foreground space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Email:</span>
+                <span className="text-foreground">{mentorProfile?.email || profile?.email || 'Not provided'}</span>
+              </div>
+              {profile?.phone && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Phone:</span>
+                  <span className="text-foreground">{profile.phone}</span>
+                </div>
+              )}
+              {mentorProfile?.linkedin_url && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">LinkedIn:</span>
+                  <a 
+                    href={mentorProfile.linkedin_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline flex items-center gap-1 transition-colors"
+                  >
+                    View Profile
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Professional Details */}
+          <div className="space-y-3 pt-2 border-t">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Globe className="w-4 h-4" />
+              <span>Languages: English, Hindi</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span>Available: Weekends</span>
+            </div>
+            <div className="text-xs text-muted-foreground/70 pt-2">
+              Last updated: {new Date().toLocaleDateString()}
+            </div>
+          </div>
+        </CardContent>
+
+        {/* Service Management Modal */}
+        <ServiceManagementModal
+          isOpen={showServiceModal}
+          onClose={() => setShowServiceModal(false)}
+        />
+
+        {/* Profile Image Cropper */}
+        <ProfileImageCropper
+          open={showImageCropper}
+          onOpenChange={setShowImageCropper}
+          onImageSaved={handleImageSaved}
+        />
+      </Card>
+    </TooltipProvider>
   );
 }

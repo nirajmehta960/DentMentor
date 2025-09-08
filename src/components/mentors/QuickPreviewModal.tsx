@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Mentor } from '@/hooks/use-mentor-search';
 import { useState } from 'react';
 
@@ -23,176 +24,185 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
   const [showPhoto, setShowPhoto] = useState(false);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-in-bottom">
-        <DialogHeader className="relative" />
+    <TooltipProvider>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-in-bottom">
+          <DialogHeader className="relative" />
 
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-start gap-6">
-            <div className="relative">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-start gap-6">
+              <div className="relative">
+                <img
+                  src={mentor.avatar}
+                  alt={mentor.name}
+                  className="w-28 h-28 rounded-2xl object-cover ring-4 ring-white shadow-lg cursor-pointer object-center"
+                  onClick={(e) => { e.stopPropagation(); setShowPhoto(true); }}
+                />
+                
+                {/* Availability Indicator */}
+                <div className="absolute -bottom-2 -right-2 flex items-center gap-2 bg-white rounded-full px-2 py-1 shadow-md border">
+                  <div className={`w-3 h-3 rounded-full ${availability.color} ${availability.pulse ? 'animate-pulse' : ''}`} />
+                  <span className="text-xs font-medium text-foreground">{availability.label}</span>
+                </div>
+              </div>
+              
+              <div className="flex-1">
+                {/* Name with verification tick */}
+                <div className="flex items-center gap-1 mb-1">
+                  <h2 className="text-2xl font-bold text-foreground">{mentor.name}</h2>
+                  {mentor.verified && (
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <CheckCircle className="w-5 h-5 text-blue-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Verified Mentor</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+                {mentor.professionalHeadline && (
+                  <p className="text-muted-foreground mb-1">{mentor.professionalHeadline}</p>
+                )}
+                <div className="space-y-0.5">
+                  {mentor.dentalSchool || mentor.school ? (
+                    <p className="text-primary font-medium">🎓 {mentor.dentalSchool || mentor.school}</p>
+                  ) : null}
+                  {mentor.bachelorUniversity ? (
+                    <p className="text-primary font-medium">🎓 {mentor.bachelorUniversity}</p>
+                  ) : null}
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-3">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    <span>{mentor.location}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4 mt-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(mentor.rating)
+                              ? 'text-secondary fill-current'
+                              : 'text-muted-foreground'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-semibold">{mentor.rating}</span>
+                    <span className="text-muted-foreground">({mentor.reviews} reviews)</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <span>Responds in {mentor.responseTime}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-right">
+                <div className="text-3xl font-bold text-foreground">${mentor.price}</div>
+                <div className="text-sm text-muted-foreground">per session</div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Bio */}
+            <div>
+              <h3 className="font-semibold text-foreground mb-2">About</h3>
+              <p className="text-muted-foreground leading-relaxed">{mentor.bio}</p>
+            </div>
+
+            {/* Specializations */}
+            <div>
+              <h3 className="font-semibold text-foreground mb-3">Specializations</h3>
+              <div className="flex flex-wrap gap-2">
+                {mentor.tags.map((tag, index) => (
+                  <Badge key={tag} variant="secondary" className="text-sm">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Users className="w-4 h-4 text-primary" />
+                  <div className="text-xl font-bold text-primary">{mentor.sessions || 0}</div>
+                </div>
+                <div className="text-xs text-muted-foreground">Sessions</div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Star className="w-4 h-4 text-primary" />
+                  <div className="text-xl font-bold text-primary">{mentor.rating}</div>
+                </div>
+                <div className="text-xs text-muted-foreground">Rating</div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Award className="w-4 h-4 text-primary" />
+                  <div className="text-xl font-bold text-primary">{mentor.reviews}</div>
+                </div>
+                <div className="text-xs text-muted-foreground">Reviews</div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button 
+                size="lg" 
+                className="flex-1 bg-primary hover:bg-primary/90 text-white transition-all duration-200 hover:shadow-md"
+                onClick={() => {
+                  // Handle booking
+                  onClose();
+                }}
+              >
+                <Calendar className="w-5 h-5 mr-2" />
+                Book Session
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="flex-1 border-primary/20 hover:bg-primary/5 transition-all duration-200"
+                onClick={() => {
+                  // Handle message
+                  onClose();
+                }}
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Send Message
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+
+        {/* Full Image Modal */}
+        <Dialog open={showPhoto} onOpenChange={setShowPhoto}>
+          <DialogContent className="max-w-[50vw] w-[50vw]">
+            <DialogHeader>
+              <h2 className="text-lg font-semibold">{mentor.name}</h2>
+            </DialogHeader>
+            <div className="flex justify-center">
               <img
                 src={mentor.avatar}
                 alt={mentor.name}
-                className="w-28 h-28 rounded-2xl object-cover ring-4 ring-white shadow-lg cursor-pointer object-center"
-                onClick={(e) => { e.stopPropagation(); setShowPhoto(true); }}
-              />
-              {mentor.verified && (
-                <div className="absolute -top-2 -right-2 bg-primary rounded-full p-2">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                </div>
-              )}
-              
-              {/* Availability Indicator */}
-              <div className="absolute -bottom-2 -right-2 flex items-center gap-2 bg-white rounded-full px-2 py-1 shadow-md border">
-                <div className={`w-3 h-3 rounded-full ${availability.color} ${availability.pulse ? 'animate-pulse' : ''}`} />
-                <span className="text-xs font-medium text-foreground">{availability.label}</span>
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-foreground mb-1">{mentor.name}</h2>
-              {mentor.professionalHeadline && (
-                <p className="text-muted-foreground mb-1">{mentor.professionalHeadline}</p>
-              )}
-              <div className="space-y-0.5">
-                {mentor.dentalSchool || mentor.school ? (
-                  <p className="text-primary font-medium">🎓 {mentor.dentalSchool || mentor.school}</p>
-                ) : null}
-                {mentor.bachelorUniversity ? (
-                  <p className="text-primary font-medium">🎓 {mentor.bachelorUniversity}</p>
-                ) : null}
-              </div>
-              
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-3">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{mentor.location}</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4 mt-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < Math.floor(mentor.rating)
-                            ? 'text-secondary fill-current'
-                            : 'text-muted-foreground'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="font-semibold">{mentor.rating}</span>
-                  <span className="text-muted-foreground">({mentor.reviews} reviews)</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="w-4 h-4 text-primary" />
-                  <span>Responds in {mentor.responseTime}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="text-right">
-              <div className="text-3xl font-bold text-foreground">${mentor.price}</div>
-              <div className="text-sm text-muted-foreground">per session</div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Award className="w-6 h-6 text-primary" />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{mentor.experience}</div>
-              <div className="text-sm text-muted-foreground">Years Experience</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{mentor.sessionCount}</div>
-              <div className="text-sm text-muted-foreground">Sessions Completed</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Languages className="w-6 h-6 text-primary" />
-              </div>
-              <div className="text-2xl font-bold text-foreground">{mentor.languages.length}</div>
-              <div className="text-sm text-muted-foreground">Languages</div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Bio */}
-          <div>
-            <h3 className="font-semibold text-lg mb-3">About</h3>
-            <p className="text-muted-foreground leading-relaxed">{mentor.bio}</p>
-          </div>
-
-          {/* Languages */}
-          <div>
-            <h3 className="font-semibold text-lg mb-3">Languages</h3>
-            <div className="flex flex-wrap gap-2">
-              {mentor.languages.map((language) => (
-                <Badge key={language} variant="secondary">
-                  {language}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Specializations */}
-          <div>
-            <h3 className="font-semibold text-lg mb-3">Specializations</h3>
-            <div className="flex flex-wrap gap-2">
-              {mentor.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Actions */}
-          <div className="flex gap-4">
-            <Button size="lg" className="flex-1">
-              <Calendar className="w-5 h-5 mr-2" />
-              Book Session
-            </Button>
-            <Button variant="outline" size="lg">
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Send Message
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-
-      {/* Face-focused half-size photo viewer */}
-      {showPhoto && (
-        <Dialog open={showPhoto} onOpenChange={setShowPhoto}>
-          <DialogContent className="max-w-[50vw] w-[50vw] p-0 bg-transparent border-none shadow-none">
-            <DialogHeader className="hidden" />
-            <div className="w-full h-full flex items-center justify-center">
-              <img
-                src={mentor.avatar}
-                alt={`${mentor.name} profile photo`}
-                className="w-full h-auto object-cover rounded-2xl"
+                className="max-w-full max-h-[50vh] object-cover rounded-lg"
                 style={{ objectPosition: 'center top' }}
               />
             </div>
           </DialogContent>
         </Dialog>
-      )}
-    </Dialog>
+      </Dialog>
+    </TooltipProvider>
   );
 };
