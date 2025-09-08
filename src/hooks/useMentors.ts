@@ -22,6 +22,9 @@ export interface Mentor {
   sessionCount: number;
   tags: string[];
   isProfileComplete?: boolean;
+  professionalHeadline?: string;
+  bachelorUniversity?: string | null;
+  dentalSchool?: string | null;
 }
 
 export interface MentorFilters {
@@ -157,7 +160,10 @@ export function useMentors() {
               responseTime: '< 2 hours',
               sessionCount: mentorProfile.total_sessions || 0,
               tags: mentorProfile.specializations || [specialty],
-              isProfileComplete: true
+              isProfileComplete: true,
+              professionalHeadline: mentorProfile.professional_headline || undefined,
+              bachelorUniversity: mentorProfile.bachelor_university || null,
+              dentalSchool: mentorProfile.dental_school || null
             };
           })
         );
@@ -196,7 +202,10 @@ export function useMentors() {
             responseTime: '< 4 hours',
             sessionCount: 0,
             tags: ['General Dentistry'],
-            isProfileComplete: false
+            isProfileComplete: false,
+            professionalHeadline: undefined,
+            bachelorUniversity: null,
+            dentalSchool: null
           }));
         }
       }

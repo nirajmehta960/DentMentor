@@ -1,9 +1,10 @@
-import { X, Star, MapPin, Clock, DollarSign, CheckCircle, Calendar, MessageCircle, Languages, GraduationCap, Award, Users } from 'lucide-react';
+import { Star, MapPin, Clock, CheckCircle, Calendar, MessageCircle, Languages, GraduationCap, Award, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Mentor } from '@/hooks/use-mentor-search';
+import { useState } from 'react';
 
 interface QuickPreviewModalProps {
   mentor: Mentor;
@@ -19,16 +20,12 @@ const availabilityConfig = {
 
 export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModalProps) => {
   const availability = availabilityConfig[mentor.availability];
+  const [showPhoto, setShowPhoto] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-in-bottom">
-        <DialogHeader className="relative">
-          <DialogClose className="absolute right-0 top-0 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </DialogClose>
-        </DialogHeader>
+        <DialogHeader className="relative" />
 
         <div className="space-y-6">
           {/* Header */}
@@ -37,7 +34,8 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
               <img
                 src={mentor.avatar}
                 alt={mentor.name}
-                className="w-24 h-24 rounded-2xl object-cover ring-4 ring-white shadow-lg"
+                className="w-28 h-28 rounded-2xl object-cover ring-4 ring-white shadow-lg cursor-pointer object-center"
+                onClick={(e) => { e.stopPropagation(); setShowPhoto(true); }}
               />
               {mentor.verified && (
                 <div className="absolute -top-2 -right-2 bg-primary rounded-full p-2">
@@ -53,21 +51,27 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
             </div>
             
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-foreground mb-2">{mentor.name}</h2>
-              <p className="text-primary font-semibold text-lg mb-2">{mentor.specialty}</p>
+              <h2 className="text-2xl font-bold text-foreground mb-1">{mentor.name}</h2>
+              {mentor.professionalHeadline && (
+                <p className="text-muted-foreground mb-1">{mentor.professionalHeadline}</p>
+              )}
+              <div className="space-y-0.5">
+                {mentor.dentalSchool || mentor.school ? (
+                  <p className="text-primary font-medium">🎓 {mentor.dentalSchool || mentor.school}</p>
+                ) : null}
+                {mentor.bachelorUniversity ? (
+                  <p className="text-primary font-medium">🎓 {mentor.bachelorUniversity}</p>
+                ) : null}
+              </div>
               
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                <div className="flex items-center gap-1">
-                  <GraduationCap className="w-4 h-4" />
-                  <span>{mentor.school}</span>
-                </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-3">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
                   <span>{mentor.location}</span>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-4 mt-3">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -172,6 +176,23 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
           </div>
         </div>
       </DialogContent>
+
+      {/* Face-focused half-size photo viewer */}
+      {showPhoto && (
+        <Dialog open={showPhoto} onOpenChange={setShowPhoto}>
+          <DialogContent className="max-w-[50vw] w-[50vw] p-0 bg-transparent border-none shadow-none">
+            <DialogHeader className="hidden" />
+            <div className="w-full h-full flex items-center justify-center">
+              <img
+                src={mentor.avatar}
+                alt={`${mentor.name} profile photo`}
+                className="w-full h-auto object-cover rounded-2xl"
+                style={{ objectPosition: 'center top' }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 };

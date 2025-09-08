@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { QuickPreviewModal } from './QuickPreviewModal';
 import { Mentor } from '@/hooks/use-mentor-search';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 
 interface MentorCardProps {
   mentor: Mentor;
@@ -21,6 +22,7 @@ const availabilityConfig = {
 export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardProps) => {
   const [showPreview, setShowPreview] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showImage, setShowImage] = useState(false);
 
   const availability = availabilityConfig[mentor.availability];
 
@@ -51,7 +53,7 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
                 <img
                   src={mentor.avatar}
                   alt={mentor.name}
-                  className="w-16 h-16 rounded-xl object-cover ring-2 ring-white shadow-md group-hover:ring-primary/20 transition-all duration-300"
+                  className="w-20 h-20 rounded-xl object-cover ring-2 ring-white shadow-md group-hover:ring-primary/20 transition-all duration-300"
                 />
                 {mentor.verified && (
                   <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
@@ -73,7 +75,17 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
                 <h3 className="font-semibold text-lg text-foreground truncate group-hover:text-primary transition-colors">
                   {mentor.name}
                 </h3>
-                <p className="text-primary font-medium text-sm mb-1">{mentor.specialty}</p>
+                {mentor.professionalHeadline && (
+                  <p className="text-muted-foreground text-sm mb-1 truncate">{mentor.professionalHeadline}</p>
+                )}
+                <div className="space-y-0.5 mb-1">
+                  {mentor.dentalSchool || mentor.school ? (
+                    <p className="text-primary font-medium text-xs truncate">🎓 {mentor.dentalSchool || mentor.school}</p>
+                  ) : null}
+                  {mentor.bachelorUniversity ? (
+                    <p className="text-primary font-medium text-xs truncate">🎓 {mentor.bachelorUniversity}</p>
+                  ) : null}
+                </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <MapPin className="w-3 h-3" />
                   <span className="truncate">{mentor.location}</span>
@@ -116,7 +128,7 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
               {mentor.bio}
             </p>
 
-            {/* Tags */}
+            {/* Tags → Specializations only */}
             <div className="flex flex-wrap gap-1 mb-4">
               {mentor.tags.slice(0, 3).map((tag, tagIndex) => (
                 <Badge 
@@ -166,7 +178,7 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
               <img
                 src={mentor.avatar}
                 alt={mentor.name}
-                className="w-20 h-20 rounded-xl object-cover ring-2 ring-white shadow-md"
+                className="w-24 h-24 rounded-xl object-cover ring-2 ring-white shadow-md"
               />
               {mentor.verified && (
                 <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
@@ -182,7 +194,17 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="font-semibold text-xl text-foreground">{mentor.name}</h3>
-                  <p className="text-primary font-medium">{mentor.specialty}</p>
+                  {mentor.professionalHeadline && (
+                    <p className="text-muted-foreground text-sm">{mentor.professionalHeadline}</p>
+                  )}
+                  <div className="space-y-0.5">
+                    {mentor.dentalSchool || mentor.school ? (
+                      <p className="text-primary text-sm">🎓 {mentor.dentalSchool || mentor.school}</p>
+                    ) : null}
+                    {mentor.bachelorUniversity ? (
+                      <p className="text-primary text-sm">🎓 {mentor.bachelorUniversity}</p>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="text-xl font-bold text-foreground">${mentor.price}</div>
@@ -258,6 +280,8 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
       />
+
+      {/* Image viewer restricted to QuickPreviewModal */}
     </>
   );
 };
