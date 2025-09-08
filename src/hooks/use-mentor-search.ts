@@ -19,6 +19,9 @@ export interface Mentor {
   responseTime: string;
   sessionCount: number;
   tags: string[];
+  professionalHeadline?: string;
+  bachelorUniversity?: string | null;
+  dentalSchool?: string | null;
 }
 
 export interface Filters {
