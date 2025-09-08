@@ -27,6 +27,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     isProfileLoading
   } = useAuth();
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isEditMode = searchParams.get('edit') === '1' || searchParams.get('edit') === 'true';
 
   // Show loading while authentication or profiles are loading
   if (isLoading || isAuthLoading || (user && isProfileLoading)) {
@@ -69,8 +71,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Handle onboarding requirements
-  if (user && userType && requireOnboarding && onboardingComplete) {
-    // User has completed onboarding but is trying to access onboarding page
+  if (user && userType && requireOnboarding && onboardingComplete && !isEditMode) {
+    // User has completed onboarding but is trying to access onboarding page without edit mode
     const dashboardPath = userType === 'mentee' ? '/mentors' : '/dashboard';
     return <Navigate to={dashboardPath} replace />;
   }

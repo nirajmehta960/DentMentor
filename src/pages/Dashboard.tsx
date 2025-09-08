@@ -8,6 +8,7 @@ import { SessionManagement } from '@/components/dashboard/SessionManagement';
 import { ProfileManagement } from '@/components/dashboard/ProfileManagement';
 import { AvailabilityCalendar } from '@/components/dashboard/AvailabilityCalendar';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { MonthlyAvailabilityPanel } from '@/components/dashboard/MonthlyAvailabilityPanel';
 
 export default function Dashboard() {
   const { user, userType, onboardingComplete, isLoading } = useAuth();
@@ -37,19 +38,31 @@ export default function Dashboard() {
       <DashboardNavigation />
       <div className="container mx-auto px-4 py-6 space-y-8">
         <WelcomeBar />
-        
         <QuickStats />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-8">
+
+        {/* Row 1: Session Management (60%) | Availability Calendar (40%) */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="lg:col-span-3 space-y-8">
             <SessionManagement />
+          </div>
+          <div className="lg:col-span-2 space-y-8">
+            <AvailabilityCalendar />
+          </div>
+        </div>
+
+        {/* Row 2: Profile Management (60%) | Your Availability (40%) */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="lg:col-span-3 space-y-8">
             <ProfileManagement />
           </div>
-          
-          <div className="space-y-8">
-            <AvailabilityCalendar />
-            <RecentActivity />
+          <div className="lg:col-span-2 space-y-8">
+            <MonthlyAvailabilityPanel currentMonth={new Date()} onMonthChange={() => {}} />
           </div>
+        </div>
+
+        {/* Row 3: Recent Activity (Full width) */}
+        <div>
+          <RecentActivity />
         </div>
       </div>
     </div>

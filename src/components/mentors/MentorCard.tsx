@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Star, MapPin, Clock, DollarSign, CheckCircle, Calendar, MessageCircle, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { QuickPreviewModal } from './QuickPreviewModal';
 import { Mentor } from '@/hooks/use-mentor-search';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
@@ -55,11 +56,6 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
                   alt={mentor.name}
                   className="w-20 h-20 rounded-xl object-cover ring-2 ring-white shadow-md group-hover:ring-primary/20 transition-all duration-300"
                 />
-                {mentor.verified && (
-                  <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
-                    <CheckCircle className="w-3 h-3 text-white" />
-                  </div>
-                )}
                 
                 {/* Availability Indicator */}
                 <div className="absolute -bottom-1 -right-1 flex items-center justify-center">
@@ -72,9 +68,22 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
               </div>
               
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg text-foreground truncate group-hover:text-primary transition-colors">
-                  {mentor.name}
-                </h3>
+                {/* Name with verification tick */}
+                <div className="flex items-center gap-1 mb-1">
+                  <h3 className="font-semibold text-lg text-foreground truncate group-hover:text-primary transition-colors">
+                    {mentor.name}
+                  </h3>
+                  {mentor.verified && (
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <CheckCircle className="w-4 h-4 text-blue-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Verified Mentor</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
                 {mentor.professionalHeadline && (
                   <p className="text-muted-foreground text-sm mb-1 truncate">{mentor.professionalHeadline}</p>
                 )}
@@ -150,128 +159,146 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
             {/* Actions */}
             <div className="flex gap-2">
               <Button 
-                className="flex-1 group/btn"
+                size="sm" 
+                className="flex-1 bg-primary hover:bg-primary/90 text-white transition-all duration-200 hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Handle booking logic
+                  // Handle booking
                 }}
               >
-                <Calendar className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" />
+                <Calendar className="w-4 h-4 mr-2" />
                 Book Session
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
+                className="flex-1 border-primary/20 hover:bg-primary/5 transition-all duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Handle message logic
+                  // Handle message
                 }}
               >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Message
               </Button>
             </div>
           </>
         ) : (
           // List Layout
-          <div className="flex items-center gap-6">
-            <div className="relative flex-shrink-0">
-              <img
-                src={mentor.avatar}
-                alt={mentor.name}
-                className="w-24 h-24 rounded-xl object-cover ring-2 ring-white shadow-md"
-              />
-              {mentor.verified && (
-                <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
-                  <CheckCircle className="w-4 h-4 text-white" />
+          <>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <img
+                  src={mentor.avatar}
+                  alt={mentor.name}
+                  className="w-24 h-24 rounded-xl object-cover ring-2 ring-white shadow-md group-hover:ring-primary/20 transition-all duration-300"
+                />
+                
+                {/* Availability Indicator */}
+                <div className="absolute -bottom-1 -right-1 flex items-center justify-center">
+                  <div 
+                    className={`w-4 h-4 rounded-full border-2 border-white ${availability.color} ${
+                      availability.pulse ? 'animate-pulse' : ''
+                    }`}
+                  />
                 </div>
-              )}
-              <div className="absolute -bottom-1 -right-1">
-                <div className={`w-4 h-4 rounded-full border-2 border-white ${availability.color}`} />
               </div>
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h3 className="font-semibold text-xl text-foreground">{mentor.name}</h3>
-                  {mentor.professionalHeadline && (
-                    <p className="text-muted-foreground text-sm">{mentor.professionalHeadline}</p>
+              
+              <div className="flex-1 min-w-0">
+                {/* Name with verification tick */}
+                <div className="flex items-center gap-1 mb-1">
+                  <h3 className="font-semibold text-xl text-foreground truncate group-hover:text-primary transition-colors">
+                    {mentor.name}
+                  </h3>
+                  {mentor.verified && (
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <CheckCircle className="w-4 h-4 text-blue-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Verified Mentor</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
-                  <div className="space-y-0.5">
-                    {mentor.dentalSchool || mentor.school ? (
-                      <p className="text-primary text-sm">🎓 {mentor.dentalSchool || mentor.school}</p>
-                    ) : null}
-                    {mentor.bachelorUniversity ? (
-                      <p className="text-primary text-sm">🎓 {mentor.bachelorUniversity}</p>
-                    ) : null}
+                </div>
+                {mentor.professionalHeadline && (
+                  <p className="text-muted-foreground text-sm mb-2 truncate">{mentor.professionalHeadline}</p>
+                )}
+                <div className="space-y-0.5 mb-2">
+                  {mentor.dentalSchool || mentor.school ? (
+                    <p className="text-primary font-medium text-sm truncate">🎓 {mentor.dentalSchool || mentor.school}</p>
+                  ) : null}
+                  {mentor.bachelorUniversity ? (
+                    <p className="text-primary font-medium text-sm truncate">🎓 {mentor.bachelorUniversity}</p>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    <span className="truncate">{mentor.location}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>{mentor.responseTime}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xl font-bold text-foreground">${mentor.price}</div>
-                  <div className="text-sm text-muted-foreground">per session</div>
-                </div>
               </div>
               
-              <div className="flex items-center gap-4 mb-3">
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(mentor.rating)
-                          ? 'text-secondary fill-current'
-                          : 'text-muted-foreground'
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-1 text-sm font-medium">{mentor.rating}</span>
-                  <span className="text-sm text-muted-foreground">({mentor.reviews} reviews)</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  {mentor.location}
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  {mentor.responseTime}
-                </div>
-              </div>
-              
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{mentor.bio}</p>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex flex-wrap gap-1">
-                  {mentor.tags.slice(0, 4).map((tag, tagIndex) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+              <div className="text-right">
+                <div className="text-2xl font-bold text-foreground mb-1">${mentor.price}</div>
+                <div className="text-sm text-muted-foreground mb-4">per session</div>
+                
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < Math.floor(mentor.rating)
+                            ? 'text-secondary fill-current'
+                            : 'text-muted-foreground'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-medium">{mentor.rating}</span>
+                  <span className="text-xs text-muted-foreground">({mentor.reviews})</span>
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button onClick={(e) => e.stopPropagation()}>
+                  <Button 
+                    size="sm" 
+                    className="bg-primary hover:bg-primary/90 text-white transition-all duration-200 hover:shadow-md"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle booking
+                    }}
+                  >
                     <Calendar className="w-4 h-4 mr-2" />
-                    Book Session
+                    Book
                   </Button>
-                  <Button variant="outline" onClick={(e) => e.stopPropagation()}>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-primary/20 hover:bg-primary/5 transition-all duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle message
+                    }}
+                  >
                     <MessageCircle className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
-      
-      {/* Hover Glow Effect */}
-      <div className={`absolute inset-0 rounded-2xl border-2 border-primary/20 transition-all duration-300 pointer-events-none ${
-        isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
-      }`} />
     </div>
   );
 
   return (
-    <>
+    <TooltipProvider>
       {cardContent}
       
       {/* Quick Preview Modal */}
@@ -280,8 +307,22 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
       />
-
-      {/* Image viewer restricted to QuickPreviewModal */}
-    </>
+      
+      {/* Full Image Modal */}
+      <Dialog open={showImage} onOpenChange={setShowImage}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <h2 className="text-lg font-semibold">{mentor.name}</h2>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <img
+              src={mentor.avatar}
+              alt={mentor.name}
+              className="max-w-full max-h-[70vh] object-contain rounded-lg"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 };

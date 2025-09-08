@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, Upload, X, RotateCcw } from 'lucide-react';
+import { Camera, Upload, X } from 'lucide-react';
 import heic2any from 'heic2any';
 
 interface ProfileImageCropperProps {
@@ -27,12 +27,17 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 200, height: 200 });
-  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Simple position state
+  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
 
   const convertHeicToJpeg = async (file: File): Promise<string> => {
     try {
@@ -60,7 +65,7 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
       return;
     }
 
-    // Validate file type - support all image types including HEIC
+    // Validate file type
     if (!supportedTypes.includes(file.type.toLowerCase()) && !file.name.match(/\.(jpg|jpeg|png|webp|gif|bmp|tiff|heic|heif)$/i)) {
       toast({
         title: "Invalid file type",
@@ -81,6 +86,7 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
     }
 
     try {
+      setIsProcessing(true);
       let imageDataUrl: string;
 
       // Handle HEIC/HEIF files
@@ -98,21 +104,12 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
 
       setSelectedImage(imageDataUrl);
       setImageLoaded(false);
+      setImageOffset({ x: 0, y: 0 });
       
-      // Reset crop area to center
+      // Simple load and set loaded state
       setTimeout(() => {
-        const img = new Image();
-        img.onload = () => {
-          const size = Math.min(img.width, img.height, 400);
-          setCropArea({
-            x: (400 - size) / 2,
-            y: (400 - size) / 2,
-            width: size,
-            height: size
-          });
-          setImageLoaded(true);
-        };
-        img.src = imageDataUrl;
+        setImageLoaded(true);
+        setIsProcessing(false);
       }, 100);
 
     } catch (error) {
@@ -122,6 +119,7 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
         description: "Failed to process the selected image. Please try again.",
         variant: "destructive"
       });
+      setIsProcessing(false);
     }
   }, [toast]);
 
@@ -149,92 +147,33 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
     }
   }, [handleFileSelect]);
 
-  const handleCropAreaMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleImageMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setIsDraggingCrop(true);
-    const rect = e.currentTarget.getBoundingClientRect();
+    setIsDraggingImage(true);
     setDragStart({
-      x: e.clientX - rect.left - cropArea.x,
-      y: e.clientY - rect.top - cropArea.y
+      x: e.clientX - imageOffset.x,
+      y: e.clientY - imageOffset.y
     });
-  }, [cropArea]);
+  }, [imageOffset]);
 
-  const handleCropAreaMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDraggingCrop) return;
+  const handleImageMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDraggingImage) return;
     
     e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const newX = e.clientX - rect.left - dragStart.x;
-    const newY = e.clientY - rect.top - dragStart.y;
-    
-    const maxX = 400 - cropArea.width;
-    const maxY = 400 - cropArea.height;
-    
-    setCropArea(prev => ({
-      ...prev,
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
-    }));
-  }, [isDraggingCrop, dragStart, cropArea.width, cropArea.height]);
+    setImageOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  }, [isDraggingImage, dragStart]);
 
-  const handleCropAreaMouseUp = useCallback(() => {
-    setIsDraggingCrop(false);
+  const handleImageMouseUp = useCallback(() => {
+    setIsDraggingImage(false);
   }, []);
-
-  const handleCrop = useCallback(async () => {
-    if (!selectedImage || !canvasRef.current) {
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      return;
-    }
-
-    const img = new Image();
-    img.onload = () => {
-      // Calculate the scale factor
-      const scaleX = img.width / 400;
-      const scaleY = img.height / 400;
-      
-      // Set canvas size to crop area
-      canvas.width = cropArea.width;
-      canvas.height = cropArea.height;
-      
-      // Draw the cropped portion
-      ctx.drawImage(
-        img,
-        cropArea.x * scaleX,
-        cropArea.y * scaleY,
-        cropArea.width * scaleX,
-        cropArea.height * scaleY,
-        0,
-        0,
-        cropArea.width,
-        cropArea.height
-      );
-      
-      // Convert to base64
-      const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
-      onImageSaved(croppedImage);
-    };
-    
-    img.onerror = (e) => {
-      console.error('Error loading image for cropping:', e);
-      toast({
-        title: "Error",
-        description: "Failed to load image for cropping. Please try again.",
-        variant: "destructive"
-      });
-    };
-    
-    img.src = selectedImage;
-  }, [selectedImage, cropArea, onImageSaved, toast]);
 
   const handleReset = useCallback(() => {
     setSelectedImage(null);
     setImageLoaded(false);
+    setImageOffset({ x: 0, y: 0 });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -245,6 +184,119 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
     onOpenChange(false);
   }, [handleReset, onOpenChange]);
 
+  // Update preview in real-time
+  useEffect(() => {
+    if (!selectedImage || !imageLoaded || !previewCanvasRef.current) return;
+
+    const canvas = previewCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      // Clear canvas
+      ctx.clearRect(0, 0, 100, 100);
+      
+      // Create circular clipping path
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(50, 50, 50, 0, Math.PI * 2);
+      ctx.clip();
+      
+      // Calculate scale to fill the preview circle
+      const previewSize = 100;
+      const scaleX = previewSize / img.width;
+      const scaleY = previewSize / img.height;
+      const scale = Math.max(scaleX, scaleY) * 1.5; // Fill the circle
+      
+      const centerX = previewSize / 2;
+      const centerY = previewSize / 2;
+      const offsetX = (imageOffset.x / 300) * previewSize;
+      const offsetY = (imageOffset.y / 300) * previewSize;
+      
+      // Draw image
+      ctx.drawImage(
+        img,
+        centerX - (img.width * scale) / 2 - offsetX,
+        centerY - (img.height * scale) / 2 - offsetY,
+        img.width * scale,
+        img.height * scale
+      );
+      
+      ctx.restore();
+    };
+    img.src = selectedImage;
+  }, [selectedImage, imageLoaded, imageOffset]);
+
+  const handleCrop = useCallback(async () => {
+    if (!selectedImage || !canvasRef.current) {
+      return;
+    }
+
+    setIsProcessing(true);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      setIsProcessing(false);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      // Set canvas size for high-quality circular crop
+      const size = 400; // High resolution output
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, size, size);
+      
+      // Create circular clipping path
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+      ctx.clip();
+      
+      // Calculate scale to fill the circle
+      const scaleX = size / img.width;
+      const scaleY = size / img.height;
+      const scale = Math.max(scaleX, scaleY) * 1.5; // Fill the circle
+      
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const offsetX = (imageOffset.x / 300) * size;
+      const offsetY = (imageOffset.y / 300) * size;
+      
+      // Draw image
+      ctx.drawImage(
+        img,
+        centerX - (img.width * scale) / 2 - offsetX,
+        centerY - (img.height * scale) / 2 - offsetY,
+        img.width * scale,
+        img.height * scale
+      );
+      
+      ctx.restore();
+      
+      // Convert to base64
+      const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
+      onImageSaved(croppedImage);
+      setIsProcessing(false);
+    };
+    
+    img.onerror = () => {
+      console.error('Error loading image for cropping');
+      toast({
+        title: "Error",
+        description: "Failed to load image for cropping. Please try again.",
+        variant: "destructive"
+      });
+      setIsProcessing(false);
+    };
+    
+    img.src = selectedImage;
+  }, [selectedImage, imageOffset, onImageSaved, toast]);
+
   // Reset when dialog opens
   useEffect(() => {
     if (open) {
@@ -254,100 +306,158 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Update Profile Picture</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Camera className="h-5 w-5" />
+            Update Profile Picture
+          </DialogTitle>
           <DialogDescription>
-            Upload and crop your profile picture. Supports all image formats including iPhone photos (HEIC/HEIF) up to 10MB.
+            Upload and position your profile picture. Drag to adjust the position.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           {!selectedImage ? (
             <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
+                isDragging 
+                  ? 'border-primary bg-primary/5 scale-105' 
+                  : 'border-muted-foreground/25 hover:border-primary/50'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-sm text-muted-foreground mb-2">
-                Drag and drop an image here, or click to select
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Supports JPG, PNG, WebP, GIF, BMP, TIFF, HEIC, HEIF (max 10MB)
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.heic,.heif"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-4"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera className="mr-2 h-4 w-4" />
-                Select Image
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="relative w-full h-96 bg-muted rounded-lg overflow-hidden">
-                <img
-                  src={selectedImage}
-                  alt="Preview"
-                  className="w-full h-full object-contain"
-                  onLoad={() => setImageLoaded(true)}
-                  onError={(e) => console.error('Preview image failed to load:', e)}
+              <div className="flex flex-col items-center space-y-4">
+                <div className="p-4 rounded-full bg-primary/10">
+                  <Upload className="h-8 w-8 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-lg font-medium">
+                    {isDragging ? 'Drop your image here' : 'Upload your photo'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Drag and drop an image, or click to browse
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.heic,.heif"
+                  onChange={handleFileSelect}
+                  className="hidden"
                 />
-                {imageLoaded && (
-                  <div
-                    className="absolute border-2 border-white shadow-lg cursor-move"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                      width: cropArea.width,
-                      height: cropArea.height,
-                    }}
-                    onMouseDown={handleCropAreaMouseDown}
-                    onMouseMove={handleCropAreaMouseMove}
-                    onMouseUp={handleCropAreaMouseUp}
-                    onMouseLeave={handleCropAreaMouseUp}
-                  />
-                )}
-              </div>
-              
-              <div className="flex gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleReset}
-                  className="flex-1"
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Reset
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleCrop}
-                  className="flex-1"
+                  size="lg"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isProcessing}
                 >
                   <Camera className="mr-2 h-4 w-4" />
-                  Crop & Save
+                  {isProcessing ? 'Processing...' : 'Select Image'}
                 </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Main Crop Interface */}
+              <div className="flex flex-col items-center gap-6">
+                {/* Crop Area */}
+                <div className="relative">
+                  <div className="relative w-[300px] h-[300px] rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-2xl">
+                    {imageLoaded && (
+                      <div
+                        className={`absolute inset-0 cursor-move select-none ${isDraggingImage ? 'cursor-grabbing' : 'cursor-grab'}`}
+                        onMouseDown={handleImageMouseDown}
+                        onMouseMove={handleImageMouseMove}
+                        onMouseUp={handleImageMouseUp}
+                        onMouseLeave={handleImageMouseUp}
+                        style={{
+                          transform: `translate(${imageOffset.x}px, ${imageOffset.y}px)`,
+                          transformOrigin: 'center center',
+                        }}
+                      >
+                        <img
+                          src={selectedImage}
+                          alt="Crop preview"
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            transform: 'scale(1.5)', // Force scale to fill circle
+                          }}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Grid Overlay */}
+                    {imageLoaded && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        <svg className="w-full h-full" viewBox="0 0 300 300">
+                          <defs>
+                            <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+                              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1"/>
+                            </pattern>
+                          </defs>
+                          <circle cx="150" cy="150" r="150" fill="url(#grid)" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Instructions */}
+                  <p className="text-center text-sm text-muted-foreground mt-4">
+                    Drag to reposition your photo
+                  </p>
+                </div>
+
+                {/* Real-time Preview */}
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-center">Preview</h3>
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <canvas
+                        ref={previewCanvasRef}
+                        width={100}
+                        height={100}
+                        className="w-20 h-20 rounded-full border-2 border-gray-200 shadow-lg"
+                      />
+                      <div className="absolute inset-0 rounded-full border-2 border-primary/20 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 w-full max-w-xs">
+                  <Button
+                    variant="outline"
+                    onClick={handleReset}
+                    disabled={isProcessing}
+                    className="flex-1"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    New Photo
+                  </Button>
+                  <Button
+                    onClick={handleCrop}
+                    disabled={isProcessing}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                  >
+                    <Camera className="mr-2 h-4 w-4" />
+                    {isProcessing ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
         
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={handleClose}>
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={handleClose} disabled={isProcessing}>
             Cancel
           </Button>
         </div>

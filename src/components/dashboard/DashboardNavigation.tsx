@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,13 +20,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Bell, Settings, HelpCircle, LogOut, User, GraduationCap } from 'lucide-react';
+import { Bell, Settings, HelpCircle, LogOut, User, GraduationCap, Camera } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
+import { ProfileImageCropper } from '@/components/dashboard/ProfileImageCropper';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export function DashboardNavigation() {
   const { user, profile, mentorProfile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [showImageCropper, setShowImageCropper] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -41,6 +46,31 @@ export function DashboardNavigation() {
   const initials = profile?.first_name && profile?.last_name 
     ? `${profile.first_name[0]}${profile.last_name[0]}`
     : 'M';
+
+  const handleImageSaved = useCallback(async (croppedImage: string) => {
+    try {
+      if (!user?.id) return;
+      // Update mentor profile photo
+      const { error: mpError } = await supabase
+        .from('mentor_profiles')
+        .update({ profile_photo_url: croppedImage })
+        .eq('user_id', user.id);
+      if (mpError) throw mpError;
+
+      // Update general profile avatar
+      const { error: pError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: croppedImage })
+        .eq('user_id', user.id);
+      if (pError) throw pError;
+
+      toast({ title: 'Profile picture updated', description: 'Your photo has been saved.' });
+      setShowImageCropper(false);
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Error updating photo', description: 'Please try again.', variant: 'destructive' });
+    }
+  }, [user?.id, toast]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -97,17 +127,18 @@ export function DashboardNavigation() {
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email}
                     </p>
-                    <p className="text-xs text-primary font-medium">
-                      {mentorProfile?.professional_headline || 'Dental Mentor'}
-                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/onboarding" className="cursor-pointer">
+                  <Link to="/onboarding?edit=1" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Edit Profile
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowImageCropper(true)}>
+                  <Camera className="mr-2 h-4 w-4" />
+                  Change Picture
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
@@ -153,6 +184,12 @@ export function DashboardNavigation() {
           </div>
         </div>
       </div>
+
+      <ProfileImageCropper
+        open={showImageCropper}
+        onOpenChange={setShowImageCropper}
+        onImageSaved={handleImageSaved}
+      />
     </header>
   );
 }

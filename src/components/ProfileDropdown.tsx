@@ -155,6 +155,12 @@ export function ProfileDropdown({ isScrolled = false }: ProfileDropdownProps) {
     setShowImageCropper(true);
   }, []);
 
+  const handleEditProfile = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate('/onboarding?edit=1');
+  }, [navigate]);
+
   return (
     <>
       <DropdownMenu>
@@ -190,15 +196,19 @@ export function ProfileDropdown({ isScrolled = false }: ProfileDropdownProps) {
             </div>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleDashboard}>
+          <DropdownMenuItem onClick={handleEditProfile}>
             <User className="mr-2 h-4 w-4" />
-            <span>Dashboard</span>
+            <span>Edit Profile</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleChangePicture}>
             <Camera className="mr-2 h-4 w-4" />
             <span>Change Picture</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleDashboard}>
+            <User className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSignOutClick}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sign Out</span>

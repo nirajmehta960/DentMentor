@@ -30,10 +30,10 @@ export function TimeSlotModal({
   const [defaultDuration, setDefaultDuration] = useState<number>(30);
   const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
 
-  // Generate 24-hour time slots in 30-minute intervals
+  // Generate time slots from 08:00 to 22:00 in 30-minute intervals
   const generateTimeSlots = (): string[] => {
-    const slots = [];
-    for (let hour = 0; hour < 24; hour++) {
+    const slots = [] as string[];
+    for (let hour = 8; hour <= 21; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         slots.push(timeString);
@@ -43,7 +43,9 @@ export function TimeSlotModal({
   };
 
   const formatTime12Hour = (time24: string): string => {
-    const [hour, minute] = time24.split(':').map(Number);
+    const [hourStr, minuteStr] = time24.split(':');
+    const hour = Number(hourStr);
+    const minute = Number(minuteStr);
     const period = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     return `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
@@ -66,9 +68,12 @@ export function TimeSlotModal({
   const calculateEndTime = (startTime: string, duration: number): string => {
     const [hour, minute] = startTime.split(':').map(Number);
     const totalMinutes = hour * 60 + minute + duration;
-    const endHour = Math.floor(totalMinutes / 60) % 24;
+    const endHour = Math.floor(totalMinutes / 60);
     const endMinute = totalMinutes % 60;
-    return `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    // cap at 22:00
+    const cappedHour = Math.min(endHour, 22);
+    const cappedMinute = cappedHour === 22 ? 0 : endMinute;
+    return `${cappedHour.toString().padStart(2, '0')}:${cappedMinute.toString().padStart(2, '0')}`;
   };
 
   const isSlotSelected = (time: string): boolean => {
@@ -159,7 +164,7 @@ export function TimeSlotModal({
                   variant={isSlotSelected(time) ? "default" : "outline"}
                   size="sm"
                   onClick={() => toggleTimeSlot(time)}
-                  className="text-xs"
+                  className="text-xs transition-colors"
                 >
                   {formatTime12Hour(time)}
                 </Button>
