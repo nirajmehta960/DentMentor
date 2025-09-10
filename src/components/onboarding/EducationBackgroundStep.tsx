@@ -76,6 +76,8 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
   const [formData, setFormData] = useState({
     bachelor_university: data?.bachelor_university || '',
     bachelor_graduation_year: data?.bachelor_graduation_year || '',
+    masters_university: data?.masters_university || '',
+    master_graduation_year: data?.master_graduation_year || '',
     dental_school: data?.dental_school || '',
     dental_school_graduation_year: data?.dental_school_graduation_year || '',
     current_status: data?.current_status || ''
@@ -132,7 +134,14 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
       return;
     }
 
-    onNext(formData);
+    // Clean up the data before sending - convert empty strings to null for optional fields
+    const cleanedData = {
+      ...formData,
+      masters_university: formData.masters_university.trim() || null,
+      master_graduation_year: formData.master_graduation_year || null
+    };
+
+    onNext(cleanedData);
   };
 
   const currentYear = new Date().getFullYear();
@@ -166,6 +175,37 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
           <Select
             value={formData.bachelor_graduation_year.toString()}
             onValueChange={(value) => setFormData(prev => ({ ...prev, bachelor_graduation_year: parseInt(value) }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select graduation year" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Master's University */}
+        <div className="space-y-2">
+          <Label htmlFor="masters-university">Master's University</Label>
+          <Input
+            id="masters-university"
+            placeholder="e.g., University of Mumbai, University of Cairo"
+            value={formData.masters_university}
+            onChange={(e) => setFormData(prev => ({ ...prev, masters_university: e.target.value }))}
+          />
+        </div>
+
+        {/* Master's Graduation Year */}
+        <div className="space-y-2">
+          <Label htmlFor="master-year">Master's Graduation Year</Label>
+          <Select
+            value={formData.master_graduation_year.toString()}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, master_graduation_year: parseInt(value) }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select graduation year" />

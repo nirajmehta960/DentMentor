@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, ArrowRight, Camera } from 'lucide-react';
 import { ProfileImageCropper } from '@/components/dashboard/ProfileImageCropper';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProfessionalProfileStepProps {
@@ -33,7 +32,8 @@ export const ProfessionalProfileStep = ({ data, onNext, onPrevious }: Profession
     professional_bio: data?.professional_bio || '',
     country_of_origin: data?.country_of_origin || '',
     years_experience: data?.years_experience || '',
-    linkedin_url: data?.linkedin_url || ''
+    linkedin_url: data?.linkedin_url || '',
+    email: data?.email || ''
   });
 
   const [photoPreview, setPhotoPreview] = useState(data?.profile_photo_url || '');
@@ -42,43 +42,22 @@ export const ProfessionalProfileStep = ({ data, onNext, onPrevious }: Profession
 
   const handleImageSaved = async (croppedImage: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No session');
-
-      // Convert base64 to blob
-      const response = await fetch(croppedImage);
-      const blob = await response.blob();
-
-      // Upload to Supabase Storage
-      const fileName = `profile-${session.user.id}-${Date.now()}.png`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('mentor-photos')
-        .upload(fileName, blob, {
-          contentType: 'image/png',
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('mentor-photos')
-        .getPublicUrl(fileName);
-
-      setFormData(prev => ({ ...prev, profile_photo_url: urlData.publicUrl }));
-      setPhotoPreview(urlData.publicUrl);
+      // Just update the form data with the cropped image URL
+      // The actual database update will happen when the form is submitted
+      setFormData(prev => ({ ...prev, profile_photo_url: croppedImage }));
+      setPhotoPreview(croppedImage);
 
       toast({
-        title: "Photo uploaded successfully!",
+        title: "Photo updated successfully!",
         description: "Your profile photo has been updated.",
       });
 
       setShowImageCropper(false);
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('Error updating photo:', error);
       toast({
-        title: "Upload failed",
-        description: error.message,
+        title: "Error updating photo",
+        description: "Please try again.",
         variant: "destructive"
       });
     }
@@ -110,6 +89,26 @@ export const ProfessionalProfileStep = ({ data, onNext, onPrevious }: Profession
       toast({
         title: "Country of origin required",
         description: "Please select your country of origin.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Invalid email format",
+        description: "Please enter a valid email address.",
         variant: "destructive"
       });
       return;
@@ -165,6 +164,18 @@ export const ProfessionalProfileStep = ({ data, onNext, onPrevious }: Profession
             </div>
           </CardContent>
         </Card>
+
+        {/* Email */}
+        <div className="space-y-2">
+          <Label htmlFor="email">Email Address *</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="your.email@example.com"
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+          />
+        </div>
 
         {/* Professional Headline */}
         <div className="space-y-2">
