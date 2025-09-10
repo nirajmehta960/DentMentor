@@ -1,4 +1,4 @@
-# DentMentor
+# DentMentor - Mentorship Platform for International Dental Students                                                
 
 A mentorship platform connecting dental students with verified U.S. dental professionals to accelerate their careers and successfully navigate the dental licensing process.
 
@@ -89,7 +89,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Niraj Mehta**
 - GitHub: [@nirajmehta960](https://github.com/nirajmehta960)
-- LinkedIn: [Niraj Mehta](https://linkedin.com/in/nirajmehta)
+- LinkedIn: [Niraj Mehta](https://linkedin.com/in/niraj-mehta)
 
 ## 🙏 Acknowledgments
 
