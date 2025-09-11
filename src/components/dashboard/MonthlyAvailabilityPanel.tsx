@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { format } from 'date-fns';
+import { Calendar, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
 import { useAvailability } from '@/hooks/useAvailability';
 
 interface MonthlyAvailabilityPanelProps {
@@ -11,7 +12,11 @@ interface MonthlyAvailabilityPanelProps {
 }
 
 export function MonthlyAvailabilityPanel({ currentMonth }: MonthlyAvailabilityPanelProps) {
-  const { availability, isLoading } = useAvailability();
+  const { availability, isLoading, refetch } = useAvailability();
+
+  const handleRefresh = async () => {
+    await refetch();
+  };
 
   const to12 = (t: string): string => {
     if (!t || typeof t !== 'string' || !t.includes(':')) return t || '';
@@ -33,22 +38,18 @@ export function MonthlyAvailabilityPanel({ currentMonth }: MonthlyAvailabilityPa
   const parseSlots = (timeSlots: any): { time: string; duration: number }[] => {
     if (!Array.isArray(timeSlots)) return [];
     return timeSlots.map((s: any) => {
-      // Support already-parsed objects
       if (s && typeof s === 'object' && 'time' in s) {
         const time = typeof s.time === 'string' ? s.time : '';
         const duration = typeof s.duration === 'number' ? s.duration : 60;
         return { time, duration };
       }
-      // Expect "HH:mm-HH:mm:duration" or "HH:mm:duration" legacy
       if (typeof s === 'string') {
         const parts = s.split(':');
         if (parts.length >= 3) {
-          // time segment may contain a dash
           const duration = parseInt(parts[parts.length - 1]);
           const time = parts.slice(0, parts.length - 1).join(':');
           return { time, duration: Number.isNaN(duration) ? 60 : duration };
         }
-        // Fallback: no duration provided
         return { time: s, duration: 60 };
       }
       return { time: '', duration: 60 };
@@ -75,16 +76,26 @@ export function MonthlyAvailabilityPanel({ currentMonth }: MonthlyAvailabilityPa
     );
   }
 
-  // Sort by date ascending
   const sorted = [...(availability || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
     <Card className="h-fit">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="w-5 h-5" />
-          Your Availability
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Your Availability
+          </CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {sorted.length === 0 ? (
@@ -95,8 +106,11 @@ export function MonthlyAvailabilityPanel({ currentMonth }: MonthlyAvailabilityPa
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {sorted.map(item => {
+              const dateStr = item.date;
+              const dateObj = new Date(dateStr + 'T00:00:00');
+              const formattedDate = format(dateObj, 'MMM d EEEE');
               const slots = parseSlots(item.time_slots);
-              const dateObj = new Date(item.date);
+              
               return (
                 <div key={item.id} className="border rounded-lg p-3 space-y-1">
                   <div className="flex items-center gap-2">
