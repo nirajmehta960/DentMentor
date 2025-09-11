@@ -253,6 +253,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Clear error function
+  const clearError = useCallback(() => {
+    setState(prev => ({ ...prev, error: null }));
+  }, []);
+
   // Sign up function
   const signUp = useCallback(async (signUpData: SignUpData) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
@@ -316,6 +321,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       toast({
         title: "Sign in failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMessage };
+    }
+  }, [toast]);
+
+  // Sign in with Google function
+  const signInWithGoogle = useCallback(async (userType: 'mentor' | 'mentee') => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth?tab=signin`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Google sign in failed';
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
+      toast({
+        title: "Google sign in failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -468,23 +506,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [state.user, state.menteeProfile, toast]);
 
+  // Refresh profile function
+  const refreshProfile = useCallback(async () => {
+    if (!state.user || !state.userType) return;
+    
+    await loadUserProfiles(state.user.id, state.userType, state.user);
+  }, [state.user, state.userType]);
+
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     ...state,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     updateProfile,
     updateMentorProfile,
     updateMenteeProfile,
+    refreshProfile,
+    clearError,
   }), [
     state,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     updateProfile,
     updateMentorProfile,
     updateMenteeProfile,
+    refreshProfile,
+    clearError,
   ]);
 
   return (
