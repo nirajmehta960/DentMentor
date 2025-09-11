@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -41,66 +41,78 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   // Load user profiles based on user type
-  const loadUserProfiles = async (userId: string, userType: UserType) => {
+  const loadUserProfiles = async (userId: string, userType: UserType, user: User) => {
     if (!userType) return;
 
     setState(prev => ({ ...prev, isProfileLoading: true }));
 
     try {
-      // Load general profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      // Create basic profile from user metadata first
+      const profile = {
+        id: userId,
+        first_name: user.user_metadata?.first_name || 'Mentor',
+        last_name: user.user_metadata?.last_name || '',
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Error loading profile:', profileError);
-        return;
-      }
+      // Try to load specific profile based on user type, but don't fail if it doesn't exist
+      let mentorProfile = null;
+      let menteeProfile = null;
 
-      // Load specific profile based on user type
       if (userType === 'mentor') {
-        const { data: mentorProfile, error: mentorError } = await supabase
-          .from('mentor_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
+        try {
+          const { data: mentor, error: mentorError } = await supabase
+            .from('mentor_profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
 
-        if (mentorError && mentorError.code !== 'PGRST116') {
-          console.error('Error loading mentor profile:', mentorError);
+          if (!mentorError && mentor) {
+            mentorProfile = mentor;
+          }
+        } catch (mentorError) {
+          // Silently handle mentor profile fetch errors
         }
-
-        setState(prev => ({
-          ...prev,
-          profile: profile ? { ...profile, user_type: profile.user_type as UserType } : null,
-          mentorProfile,
-          onboardingComplete: mentorProfile?.onboarding_completed || false,
-          currentOnboardingStep: mentorProfile?.onboarding_step || 1,
-        }));
       } else if (userType === 'mentee') {
-        const { data: menteeProfile, error: menteeError } = await supabase
-          .from('mentee_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
+        try {
+          const { data: mentee, error: menteeError } = await supabase
+            .from('mentee_profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
 
-        if (menteeError && menteeError.code !== 'PGRST116') {
-          console.error('Error loading mentee profile:', menteeError);
+          if (!menteeError && mentee) {
+            menteeProfile = mentee;
+          }
+        } catch (menteeError) {
+          // Silently handle mentee profile fetch errors
         }
-
-        setState(prev => ({
-          ...prev,
-          profile: profile ? { ...profile, user_type: profile.user_type as UserType } : null,
-          menteeProfile,
-          onboardingComplete: menteeProfile?.onboarding_completed || false,
-          currentOnboardingStep: menteeProfile?.onboarding_step || 1,
-        }));
       }
+
+      // Determine onboarding status
+      const onboardingComplete = userType === 'mentor' 
+        ? !!mentorProfile?.dental_school && !!mentorProfile?.specializations
+        : !!menteeProfile?.dental_school_interest;
+
+      setState(prev => ({
+        ...prev,
+        profile,
+        mentorProfile,
+        menteeProfile,
+        onboardingComplete,
+        isProfileLoading: false,
+        isLoading: false,
+      }));
+
     } catch (error) {
-      console.error('Error loading profiles:', error);
-    } finally {
-      setState(prev => ({ ...prev, isProfileLoading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        isProfileLoading: false,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to load profile'
+      }));
     }
   };
 
@@ -108,7 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-                        const initializeAuth = async () => {
+    const initializeAuth = async () => {
       let authStateChangeTimeout: NodeJS.Timeout | null = null;
       let isProcessingAuthChange = false;
       
@@ -123,8 +135,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               clearTimeout(authStateChangeTimeout);
             }
             
-            console.log('Auth state change:', event, session ? 'session exists' : 'no session');
-
             // Debounce state changes to prevent rapid updates
             authStateChangeTimeout = setTimeout(() => {
               if (!mounted || isProcessingAuthChange) return;
@@ -144,14 +154,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     isAuthLoading: false,
                   }));
 
-                  // Load profiles after setting auth state
+                  // Only load profiles if we don't already have them for this user
                   if (userType) {
-                    setTimeout(() => {
-                      loadUserProfiles(session.user.id, userType);
-                    }, 0);
+                    setState(prev => {
+                      const needsProfileLoad = userType === 'mentor' 
+                        ? !prev.mentorProfile || prev.mentorProfile.user_id !== session.user.id
+                        : !prev.menteeProfile || prev.menteeProfile.user_id !== session.user.id;
+                      
+                      if (needsProfileLoad) {
+                        setTimeout(() => {
+                          loadUserProfiles(session.user.id, userType, session.user);
+                        }, 0);
+                      }
+                      return prev;
+                    });
                   }
                 } else if (event === 'SIGNED_OUT') {
-                  console.log('SIGNED_OUT event detected - clearing state only');
                   // Only clear state, no redirects - let components handle redirects
                   setState({
                     user: null,
@@ -168,17 +186,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     error: null,
                   });
                 } else if (event === 'TOKEN_REFRESHED') {
-                  console.log('TOKEN_REFRESHED event - updating session only');
-                  // Only update session, don't trigger other state changes
-                  if (session) {
-                    setState(prev => ({
-                      ...prev,
-                      session,
-                      isAuthLoading: false,
-                    }));
-                  }
+                  // no setState here
                 } else {
-                  console.log('Other auth event:', event);
                   setState(prev => ({
                     ...prev,
                     isAuthLoading: false,
@@ -208,156 +217,122 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             isAuthLoading: false,
           }));
 
+          // Load profiles after setting auth state
           if (userType) {
-            await loadUserProfiles(session.user.id, userType);
+            setTimeout(() => {
+              loadUserProfiles(session.user.id, userType, session.user);
+            }, 0);
           }
+        } else {
+          setState(prev => ({
+            ...prev,
+            isAuthLoading: false,
+            isLoading: false,
+          }));
         }
-
-        setState(prev => ({ ...prev, isLoading: false }));
-
-        return () => {
-          if (authStateChangeTimeout) {
-            clearTimeout(authStateChangeTimeout);
-          }
-          subscription.unsubscribe();
-        };
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          isAuthLoading: false,
-          error: 'Failed to initialize authentication',
-        }));
+        if (mounted) {
+          setState(prev => ({
+            ...prev,
+            isAuthLoading: false,
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Authentication failed'
+          }));
+        }
       }
+
+      return () => {
+        mounted = false;
+        if (authStateChangeTimeout) {
+          clearTimeout(authStateChangeTimeout);
+        }
+        subscription.unsubscribe();
+      };
     };
 
     initializeAuth();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
-  const signIn = async (email: string, password: string): Promise<{ error?: string }> => {
-    setState(prev => ({ ...prev, error: null, isAuthLoading: true }));
+  // Sign up function
+  const signUp = useCallback(async (signUpData: SignUpData) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signUp({
+        email: signUpData.email,
+        password: signUpData.password,
+        options: {
+          data: {
+            first_name: signUpData.firstName,
+            last_name: signUpData.lastName,
+            user_type: signUpData.userType,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user && !data.session) {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link to complete your registration.",
+        });
+      }
+
+      setState(prev => ({ ...prev, isLoading: false }));
+      return { success: true, user: data.user };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Sign up failed';
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
+      toast({
+        title: "Sign up failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMessage };
+    }
+  }, [toast]);
+
+  // Sign in function
+  const signIn = useCallback(async (email: string, password: string) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
+      setState(prev => ({ ...prev, isLoading: false }));
+      return { success: true, user: data.user };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       toast({
-        title: "Welcome back!",
-        description: "You have been signed in successfully.",
+        title: "Sign in failed",
+        description: errorMessage,
+        variant: "destructive",
       });
-
-      return {};
-    } catch (error: any) {
-      const errorMessage = error.message;
-      setState(prev => ({ ...prev, error: errorMessage, isAuthLoading: false }));
-      return { error: errorMessage };
+      return { success: false, error: errorMessage };
     }
-  };
+  }, [toast]);
 
-  const signUp = async (data: SignUpData): Promise<{ error?: string }> => {
-    setState(prev => ({ ...prev, error: null, isAuthLoading: true }));
+  // Sign out function
+  const signOut = useCallback(async () => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-    try {
-      const redirectUrl = data.userType === 'mentee' 
-        ? `${window.location.origin}/mentee-onboarding`
-        : `${window.location.origin}/onboarding`;
-
-      const { error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            first_name: data.firstName,
-            last_name: data.lastName,
-            phone: data.phone,
-            user_type: data.userType
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      // Clear persisted form data
-      sessionStorage.removeItem('dentmentor-signup-data');
-
-      // Clear state directly
-      setState({
-        user: null,
-        session: null,
-        profile: null,
-        mentorProfile: null,
-        menteeProfile: null,
-        userType: null,
-        onboardingComplete: false,
-        currentOnboardingStep: 1,
-        isLoading: false,
-        isAuthLoading: false,
-        isProfileLoading: false,
-        error: null,
-      });
-
-      toast({
-        title: "Account created successfully!",
-        description: data.userType === 'mentee'
-          ? "Please check your email to verify your account before browsing mentors."
-          : "Please check your email to verify your account before continuing with onboarding.",
-      });
-
-      return {};
-    } catch (error: any) {
-      const errorMessage = error.message;
-      setState(prev => ({ ...prev, error: errorMessage, isAuthLoading: false }));
-      return { error: errorMessage };
-    }
-  };
-
-  const signInWithGoogle = async (userType: 'mentor' | 'mentee'): Promise<{ error?: string }> => {
-    setState(prev => ({ ...prev, error: null, isAuthLoading: true }));
-
-    try {
-      const redirectUrl = userType === 'mentee'
-        ? `${window.location.origin}/mentee-onboarding`
-        : `${window.location.origin}/onboarding`;
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            user_type: userType
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      return {};
-    } catch (error: any) {
-      const errorMessage = error.message;
-      setState(prev => ({ ...prev, error: errorMessage, isAuthLoading: false }));
-      return { error: errorMessage };
-    }
-  };
-
-  const signOut = async (): Promise<{ error?: string }> => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Clear session storage
-      sessionStorage.removeItem('dentmentor-signup-data');
-
-      // Clear state directly
       setState({
         user: null,
         session: null,
@@ -373,144 +348,156 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
 
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Sign out failed';
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       toast({
-        title: "Signed out successfully",
-        description: "You have been signed out.",
+        title: "Sign out failed",
+        description: errorMessage,
+        variant: "destructive",
       });
-
-      return {};
-    } catch (error: any) {
-      const errorMessage = error.message;
-      setState(prev => ({ ...prev, error: errorMessage }));
-      return { error: errorMessage };
+      return { success: false, error: errorMessage };
     }
-  };
+  }, [toast]);
 
-  const updateProfile = async (updates: Partial<AuthProfile>): Promise<boolean> => {
-    if (!state.user) return false;
+  // Update profile function
+  const updateProfile = useCallback(async (profileData: Partial<AuthProfile>) => {
+    if (!state.user) {
+      return { success: false, error: 'No user logged in' };
+    }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: state.user.id,
-          ...updates
-        });
-
-      if (error) throw error;
-
-      setState(prev => ({
-        ...prev,
-        profile: prev.profile ? { ...prev.profile, ...updates } : null,
-      }));
-
-      return true;
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Error updating profile",
-        description: "Please try again.",
-        variant: "destructive"
+      const { error } = await supabase.auth.updateUser({
+        data: profileData,
       });
-      return false;
-    }
-  };
 
-  const updateMentorProfile = async (updates: Partial<MentorProfile>): Promise<boolean> => {
-    if (!state.user) return false;
+      if (error) {
+        throw error;
+      }
+
+      setState(prev => ({ ...prev, isLoading: false }));
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Profile update failed';
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
+      toast({
+        title: "Profile update failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { success: false, error: errorMessage };
+    }
+  }, [state.user, toast]);
+
+  // Update mentor profile function
+  const updateMentorProfile = useCallback(async (profileData: Partial<MentorProfile>) => {
+    if (!state.user || !state.mentorProfile) {
+      return { success: false, error: 'No mentor profile found' };
+    }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
       const { error } = await supabase
         .from('mentor_profiles')
-        .upsert({
-          user_id: state.user.id,
-          ...updates
-        }, {
-          ignoreDuplicates: false,
-          onConflict: 'user_id'
-        });
+        .update(profileData)
+        .eq('user_id', state.user.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
+      // Update local state
       setState(prev => ({
         ...prev,
-        mentorProfile: prev.mentorProfile ? { ...prev.mentorProfile, ...updates } : null,
-        onboardingComplete: updates.onboarding_completed ?? prev.onboardingComplete,
-        currentOnboardingStep: updates.onboarding_step ?? prev.currentOnboardingStep,
+        mentorProfile: prev.mentorProfile ? { ...prev.mentorProfile, ...profileData } : null,
+        isLoading: false,
       }));
 
-      return true;
+      return { success: true };
     } catch (error) {
-      console.error('Error updating mentor profile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Mentor profile update failed';
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       toast({
-        title: "Error saving progress",
-        description: "Please try again.",
-        variant: "destructive"
+        title: "Profile update failed",
+        description: errorMessage,
+        variant: "destructive",
       });
-      return false;
+      return { success: false, error: errorMessage };
     }
-  };
+  }, [state.user, state.mentorProfile, toast]);
 
-  const updateMenteeProfile = async (updates: Partial<MenteeProfile>): Promise<boolean> => {
-    if (!state.user) return false;
+  // Update mentee profile function
+  const updateMenteeProfile = useCallback(async (profileData: Partial<MenteeProfile>) => {
+    if (!state.user || !state.menteeProfile) {
+      return { success: false, error: 'No mentee profile found' };
+    }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
       const { error } = await supabase
         .from('mentee_profiles')
-        .upsert({
-          user_id: state.user.id,
-          ...updates
-        }, {
-          ignoreDuplicates: false,
-          onConflict: 'user_id'
-        });
+        .update(profileData)
+        .eq('user_id', state.user.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
+      // Update local state
       setState(prev => ({
         ...prev,
-        menteeProfile: prev.menteeProfile ? { ...prev.menteeProfile, ...updates } : null,
-        onboardingComplete: updates.onboarding_completed ?? prev.onboardingComplete,
-        currentOnboardingStep: updates.onboarding_step ?? prev.currentOnboardingStep,
+        menteeProfile: prev.menteeProfile ? { ...prev.menteeProfile, ...profileData } : null,
+        isLoading: false,
       }));
 
-      return true;
+      return { success: true };
     } catch (error) {
-      console.error('Error updating mentee profile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Mentee profile update failed';
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       toast({
-        title: "Error saving progress",
-        description: "Please try again.",
-        variant: "destructive"
+        title: "Profile update failed",
+        description: errorMessage,
+        variant: "destructive",
       });
-      return false;
+      return { success: false, error: errorMessage };
     }
-  };
+  }, [state.user, state.menteeProfile, toast]);
 
-  const refreshProfile = async (): Promise<void> => {
-    if (!state.user || !state.userType) return;
-    await loadUserProfiles(state.user.id, state.userType);
-  };
-
-  const clearError = useCallback((): void => {
-    setState(prev => ({ ...prev, error: null }));
-  }, []);
-
-  const contextValue: AuthContextType = {
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     ...state,
-    signIn,
     signUp,
-    signInWithGoogle,
+    signIn,
     signOut,
     updateProfile,
     updateMentorProfile,
     updateMenteeProfile,
-    refreshProfile,
-    clearError,
-  };
+  }), [
+    state,
+    signUp,
+    signIn,
+    signOut,
+    updateProfile,
+    updateMentorProfile,
+    updateMenteeProfile,
+  ]);
 
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

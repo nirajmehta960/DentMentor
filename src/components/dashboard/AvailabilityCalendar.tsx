@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, isPast, isAfter, addDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAvailability } from '@/hooks/useAvailability';
-import { SlotsSummaryCard } from './SlotsSummaryCard';
 import { TimeSlotModal } from './TimeSlotModal';
-import { addMonths, subMonths, format, isSameDay, isPast, isAfter, startOfMonth, endOfMonth, getDaysInMonth, getDay } from 'date-fns';
+import { useAvailability } from '@/hooks/useAvailability';
 
 interface SelectedSlot {
   id: string;
@@ -22,9 +22,15 @@ export function AvailabilityCalendar() {
   const [pendingDates, setPendingDates] = useState<Date[]>([]);
   const [pendingSaved, setPendingSaved] = useState(false);
   const [currentMonth, setCurrentMonth] = useState<Date>(startOfMonth(new Date()));
-  const { availability, isLoading, updateAvailability } = useAvailability();
+  const { availability, isLoading, updateAvailability, isUpdating } = useAvailability();
   
-  const availableDates = availability?.map(a => new Date(a.date)) || [];
+  const availableDates = availability?.map(a => {
+    const dateStr = a.date;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date;
+  }) || [];
+  
   const fromMonth = startOfMonth(new Date());
   const toMonth = endOfMonth(addMonths(new Date(), 1));
 
@@ -33,97 +39,81 @@ export function AvailabilityCalendar() {
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
     if (isPast(date) || isAfter(date, toMonth)) return;
+    
     setSelectedDate(date);
-    setPendingSaved(false);
-    setPendingDates(prev => {
-      const exists = prev.some(d => isSameDay(d, date));
-      return exists ? prev : [...prev, date];
-    });
     setShowTimeSlotModal(true);
-  };
-
-  const handleSaveTimeSlots = async (slots: { time: string; duration: number }[]) => {
-    if (!selectedDate) return;
-    try {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const formattedSlots = slots.map(slot => `${slot.time}:${slot.duration}`);
-      await updateAvailability(dateStr, formattedSlots);
-      setPendingSaved(true);
-      setPendingDates(prev => prev.filter(d => !isSameDay(d, selectedDate)));
-      const newSlots = slots.map((slot, index) => ({
-        id: `${dateStr}-${slot.time}-${slot.duration}-${index}`,
-        date: selectedDate,
-        time: slot.time,
-        duration: slot.duration,
-      }));
-      setSelectedSlots(prev => [...prev, ...newSlots]);
-    } catch (error) {
-      console.error('Error saving time slots:', error);
-    }
   };
 
   const handleModalOpenChange = (open: boolean) => {
     setShowTimeSlotModal(open);
-    if (!open && selectedDate && !pendingSaved) {
-      setPendingDates(prev => prev.filter(d => !isSameDay(d, selectedDate)));
+    if (!open) {
+      setSelectedDate(undefined);
     }
   };
 
-  const changeMonth = (delta: number) => {
-    const next = delta > 0 ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1);
-    if (next < fromMonth || next > toMonth) return;
-    setCurrentMonth(next);
+  const handleSaveTimeSlots = (slots: { time: string; duration: number }[]) => {
+    if (!selectedDate) return;
+    
+    const newSlots: SelectedSlot[] = slots.map(slot => ({
+      id: `${selectedDate.toISOString()}-${slot.time}-${slot.duration}`,
+      date: selectedDate,
+      time: slot.time,
+      duration: slot.duration
+    }));
+    
+    setSelectedSlots(prev => [...prev, ...newSlots]);
+    setPendingDates(prev => [...prev, selectedDate]);
+    setShowTimeSlotModal(false);
+    setSelectedDate(undefined);
+  };
+
+  const changeMonth = (direction: number) => {
+    setCurrentMonth(prev => {
+      const newMonth = addMonths(prev, direction);
+      return newMonth;
+    });
   };
 
   const renderGrid = () => {
     const monthStart = startOfMonth(currentMonth);
-    const totalDays = getDaysInMonth(currentMonth);
-    const startIndex = getDay(monthStart); // 0=Sun ... 6=Sat
+    const monthEnd = endOfMonth(currentMonth);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
-    const cells: (Date | null)[] = [];
-    // leading empty cells
-    for (let i = 0; i < startIndex; i++) cells.push(null);
-    // days
-    for (let d = 1; d <= totalDays; d++) {
-      cells.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d));
-    }
-    // trailing to complete rows to 7*n
-    const remainder = cells.length % 7;
-    if (remainder !== 0) {
-      for (let i = 0; i < 7 - remainder; i++) cells.push(null);
-    }
+    const cells = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     return (
       <div className="space-y-4">
-        {/* Header with month and arrows */}
-        <div className="flex items-center justify-between px-2">
-          <button
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => changeMonth(-1)}
-            className="h-9 w-9 rounded-xl border bg-white text-foreground hover:bg-muted transition-colors disabled:opacity-40"
-            disabled={startOfMonth(currentMonth) <= fromMonth}
-            aria-label="Previous month"
+            disabled={currentMonth <= fromMonth}
           >
             <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="text-xl font-semibold">{format(currentMonth, 'MMMM yyyy')}</div>
-          <button
+          </Button>
+          <h3 className="text-lg font-semibold">
+            {format(currentMonth, 'MMMM yyyy')}
+          </h3>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => changeMonth(1)}
-            className="h-9 w-9 rounded-xl border bg-white text-foreground hover:bg-muted transition-colors disabled:opacity-40"
-            disabled={endOfMonth(currentMonth) >= toMonth}
-            aria-label="Next month"
+            disabled={currentMonth >= toMonth}
           >
             <ChevronRight className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
 
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 text-center text-sm font-semibold text-foreground/70 px-2">
-          {daysShort.map((d) => (
-            <div key={d} className="py-2">{d}</div>
+        <div className="grid grid-cols-7 gap-y-2">
+          {daysShort.map((day) => (
+            <div key={day} className="text-center text-sm font-medium text-muted-foreground">
+              {day}
+            </div>
           ))}
         </div>
 
-        {/* Date grid */}
         <div className="grid grid-cols-7 gap-y-2">
           {cells.map((date, idx) => {
             if (!date) return <div key={`e-${idx}`} className="h-10" />;
@@ -174,35 +164,35 @@ export function AvailabilityCalendar() {
     try {
       const slotsByDate = selectedSlots.reduce((acc, slot) => {
         const dateStr = format(slot.date, 'yyyy-MM-dd');
-        if (!acc[dateStr]) acc[dateStr] = [];
+        if (!acc[dateStr]) {
+          acc[dateStr] = [];
+        }
         acc[dateStr].push(`${slot.time}:${slot.duration}`);
         return acc;
       }, {} as Record<string, string[]>);
 
-      for (const [dateStr, slots] of Object.entries(slotsByDate)) {
-        await updateAvailability(dateStr, slots);
+      for (const [date, timeSlots] of Object.entries(slotsByDate)) {
+        await updateAvailability(date, timeSlots);
       }
-      setSelectedSlots([]);
-    } catch (error) {
-      console.error('Error saving slots:', error);
-    }
-  };
 
-  const clearAllSlots = () => {
-    setSelectedSlots([]);
+      setSelectedSlots([]);
+      setPendingDates([]);
+    } catch (error) {
+      console.error('Error saving all slots:', error);
+    }
   };
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="h-fit">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5" />
+            <Calendar className="w-5 h-5" />
             Availability Calendar
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className="animate-pulse space-y-3">
             <div className="h-64 bg-muted rounded"></div>
           </div>
         </CardContent>
@@ -211,37 +201,51 @@ export function AvailabilityCalendar() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="border shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5" />
-            Availability Calendar
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-2xl border p-6 bg-white max-w-md mx-auto">
-            {renderGrid()}
+    <Card className="h-fit">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="w-5 h-5" />
+          Availability Calendar
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {renderGrid()}
+        
+        {selectedSlots.length > 0 && (
+          <div className="mt-6 space-y-2">
+            <h4 className="text-sm font-medium">Selected Time Slots:</h4>
+            {selectedSlots.map((slot) => (
+              <div key={slot.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                <span className="text-sm">
+                  {format(slot.date, 'MMM dd')} at {slot.time} ({slot.duration}min)
+                </span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => editSlot(slot.id)}>
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => deleteSlot(slot.id)}>
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button 
+              onClick={saveAllSlots} 
+              className="w-full"
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Saving...' : 'Save All Slots'}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </CardContent>
 
-      {/* Time Slot Modal */}
       <TimeSlotModal
         open={showTimeSlotModal}
         onOpenChange={handleModalOpenChange}
         selectedDate={selectedDate || null}
         onSaveSlots={handleSaveTimeSlots}
       />
-      
-      {/* Selected Slots Summary */}
-      <SlotsSummaryCard
-        selectedSlots={selectedSlots}
-        onEditSlot={editSlot}
-        onDeleteSlot={deleteSlot}
-        onSaveAll={saveAllSlots}
-        onClearAll={clearAllSlots}
-      />
-    </div>
+    </Card>
   );
 }
