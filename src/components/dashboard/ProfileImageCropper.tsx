@@ -54,7 +54,6 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
         reader.readAsDataURL(convertedBlob);
       });
     } catch (error) {
-      console.error('HEIC conversion error:', error);
       throw new Error('Failed to convert HEIC image. Please try a different format.');
     }
   };
@@ -113,7 +112,6 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
       }, 100);
 
     } catch (error) {
-      console.error('Error processing image:', error);
       toast({
         title: "Error processing image",
         description: "Failed to process the selected image. Please try again.",
@@ -285,7 +283,6 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
     };
     
     img.onerror = () => {
-      console.error('Error loading image for cropping');
       toast({
         title: "Error",
         description: "Failed to load image for cropping. Please try again.",

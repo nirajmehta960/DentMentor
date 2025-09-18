@@ -178,7 +178,7 @@ export function AvailabilityCalendar() {
       setSelectedSlots([]);
       setPendingDates([]);
     } catch (error) {
-      console.error('Error saving all slots:', error);
+      // Silently handle error
     }
   };
 

@@ -40,7 +40,7 @@ export function useSessionRequests() {
 
         setSessionRequests(data || []);
       } catch (error) {
-        console.error('Error fetching session requests:', error);
+        // Silently handle error
       } finally {
         setIsLoading(false);
       }
@@ -87,7 +87,7 @@ export function useSessionRequests() {
         description: "The session has been scheduled successfully."
       });
     } catch (error) {
-      console.error('Error accepting request:', error);
+      // Silently handle error
       toast({
         title: "Error",
         description: "Failed to accept session request. Please try again.",
@@ -116,7 +116,7 @@ export function useSessionRequests() {
         description: "The session request has been declined."
       });
     } catch (error) {
-      console.error('Error declining request:', error);
+      // Silently handle error
       toast({
         title: "Error",
         description: "Failed to decline session request. Please try again.",

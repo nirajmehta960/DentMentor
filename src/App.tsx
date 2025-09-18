@@ -41,7 +41,7 @@ const App = () => (
             <Route 
               path="/mentors" 
               element={
-                <PublicOrAuthRoute allowedUserTypes={['mentee']}>
+                <PublicOrAuthRoute allowedUserTypes={['mentor', 'mentee']}>
                   <Mentors />
                 </PublicOrAuthRoute>
               } 

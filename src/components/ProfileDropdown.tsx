@@ -94,7 +94,7 @@ export function ProfileDropdown({ isScrolled = false }: ProfileDropdownProps) {
       });
       setShowImageCropper(false);      
     } catch (error) {
-      console.error('Error updating profile picture:', error);
+      // Silently handle error
       toast({
         title: "Error",
         description: "Failed to update profile picture. Please try again.",
@@ -127,7 +127,7 @@ export function ProfileDropdown({ isScrolled = false }: ProfileDropdownProps) {
       }
       
     } catch (error) {
-      console.error('Sign out error:', error);
+      // Silently handle error
       toast({
         title: "Sign out failed",
         description: "There was an error signing out. Please try again.",

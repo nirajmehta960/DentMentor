@@ -13,13 +13,24 @@ interface SpecialtiesLanguagesStepProps {
   onPrevious: () => void;
 }
 
-const specialtyOptions = [
+const areas_of_expertiseOptions = [
   'SOP Review',
   'Mock Interview',
   'CV Review',
   'LOR Guidance',
   'Personal Statement',
   'Application Strategy'
+];
+
+const specialtyOptions = [
+  'General Dentistry',
+  'Orthodontics',
+  'Oral Surgery',
+  'Periodontics',
+  'Endodontics',
+  'Pediatric Dentistry',
+  'Prosthodontics',
+  'Oral Pathology'
 ];
 
 const languageOptions = [
@@ -82,7 +93,8 @@ const availabilityOptions = [
 
 export const SpecialtiesLanguagesStep = ({ data, onNext, onPrevious }: SpecialtiesLanguagesStepProps) => {
   const [formData, setFormData] = useState({
-    specializations: data?.specializations || [],
+    areas_of_expertise: data?.areas_of_expertise || [],
+    speciality: data?.speciality || '',
     languages_spoken: data?.languages_spoken || [],
     hourly_rate: data?.hourly_rate || '',
     availability_preference: data?.availability_preference || ''
@@ -93,10 +105,10 @@ export const SpecialtiesLanguagesStep = ({ data, onNext, onPrevious }: Specialti
   const { toast } = useToast();
 
   const addSpecialty = (specialty: string) => {
-    if (specialty && !formData.specializations.includes(specialty)) {
+    if (specialty && !formData.areas_of_expertise.includes(specialty)) {
       setFormData(prev => ({
         ...prev,
-        specializations: [...prev.specializations, specialty]
+        areas_of_expertise: [...prev.areas_of_expertise, specialty]
       }));
     }
   };
@@ -104,7 +116,7 @@ export const SpecialtiesLanguagesStep = ({ data, onNext, onPrevious }: Specialti
   const removeSpecialty = (specialty: string) => {
     setFormData(prev => ({
       ...prev,
-      specializations: prev.specializations.filter(s => s !== specialty)
+      areas_of_expertise: prev.areas_of_expertise.filter(s => s !== specialty)
     }));
   };
 
@@ -142,7 +154,16 @@ export const SpecialtiesLanguagesStep = ({ data, onNext, onPrevious }: Specialti
     e.preventDefault();
     
     // Validation
-    if (formData.specializations.length === 0) {
+    if (!formData.speciality) {
+      toast({
+        title: "Specialty required",
+        description: "Please select your primary dental specialty.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.areas_of_expertise.length === 0) {
       toast({
         title: "Specialties required",
         description: "Please select at least one area of expertise.",
@@ -202,14 +223,34 @@ export const SpecialtiesLanguagesStep = ({ data, onNext, onPrevious }: Specialti
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Specialty */}
+        <div className="space-y-2">
+          <Label htmlFor="specialty">Specialty *</Label>
+          <Select
+            value={formData.speciality}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, speciality: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select your primary dental specialty" />
+            </SelectTrigger>
+            <SelectContent>
+              {specialtyOptions.map((specialty) => (
+                <SelectItem key={specialty} value={specialty}>
+                  {specialty}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Specialties */}
         <div className="space-y-4">
           <Label>Areas of Expertise *</Label>
           
           {/* Selected Specialties */}
-          {formData.specializations.length > 0 && (
+          {formData.areas_of_expertise.length > 0 && (
             <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg">
-              {formData.specializations.map((specialty) => (
+              {formData.areas_of_expertise.map((specialty) => (
                 <Badge key={specialty} variant="secondary" className="px-3 py-1">
                   {specialty}
                   <button
@@ -226,8 +267,8 @@ export const SpecialtiesLanguagesStep = ({ data, onNext, onPrevious }: Specialti
 
           {/* Specialty Selection */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {specialtyOptions
-              .filter(option => !formData.specializations.includes(option))
+            {areas_of_expertiseOptions
+              .filter(option => !formData.areas_of_expertise.includes(option))
               .map((specialty) => (
                 <Button
                   key={specialty}

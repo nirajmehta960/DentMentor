@@ -49,7 +49,7 @@ async function updateAvailabilityInDB(mentorId: string, date: string, timeSlots:
     .single();
 
   if (error) {
-    console.error('Database error:', error);
+    // Silently handle error
     throw error;
   }
 
@@ -86,7 +86,7 @@ export function useAvailability() {
       });
     },
     onError: (error) => {
-      console.error('Availability update error:', error);
+      // Silently handle error
       toast({
         title: "Error",
         description: "Failed to update availability. Please try again.",

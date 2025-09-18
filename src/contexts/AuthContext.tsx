@@ -91,10 +91,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
-      // Determine onboarding status
+      // Determine onboarding status - use the onboarding_completed field from database
       const onboardingComplete = userType === 'mentor' 
-        ? !!mentorProfile?.dental_school && !!mentorProfile?.specializations
-        : !!menteeProfile?.dental_school_interest;
+        ? !!mentorProfile?.onboarding_completed
+        : !!menteeProfile?.onboarding_completed;
+
+      // Get current onboarding step from profile
+      const currentOnboardingStep = userType === 'mentor' 
+        ? mentorProfile?.onboarding_step || 1
+        : menteeProfile?.onboarding_step || 1;
 
       setState(prev => ({
         ...prev,
@@ -102,6 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         mentorProfile,
         menteeProfile,
         onboardingComplete,
+        currentOnboardingStep,
         isProfileLoading: false,
         isLoading: false,
       }));
@@ -431,12 +437,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [state.user, toast]);
 
   // Update mentor profile function
-  const updateMentorProfile = useCallback(async (profileData: Partial<MentorProfile>) => {
+  const updateMentorProfile = useCallback(async (profileData: Partial<MentorProfile>, updateContext: boolean = true) => {
     if (!state.user || !state.mentorProfile) {
       return { success: false, error: 'No mentor profile found' };
     }
 
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    // Only update loading state if we're updating context
+    if (updateContext) {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+    }
 
     try {
       const { error } = await supabase
@@ -448,17 +457,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error;
       }
 
-      // Update local state
-      setState(prev => ({
-        ...prev,
-        mentorProfile: prev.mentorProfile ? { ...prev.mentorProfile, ...profileData } : null,
-        isLoading: false,
-      }));
+      // Update local state only if updateContext is true
+      if (updateContext) {
+        setState(prev => {
+          const updatedMentorProfile = prev.mentorProfile ? { ...prev.mentorProfile, ...profileData } : null;
+          // Only update currentOnboardingStep if onboarding_step was actually updated
+          const currentOnboardingStep = profileData.hasOwnProperty('onboarding_step') 
+            ? (updatedMentorProfile?.onboarding_step || 1)
+            : prev.currentOnboardingStep;
+          
+          return {
+            ...prev,
+            mentorProfile: updatedMentorProfile,
+            currentOnboardingStep,
+            isLoading: false,
+          };
+        });
+      } else {
+        // Just set loading to false without updating context
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
 
       return { success: true };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Mentor profile update failed';
-      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
+      // Only update context state if updateContext is true
+      if (updateContext) {
+        setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
+      }
       toast({
         title: "Profile update failed",
         description: errorMessage,
@@ -487,11 +513,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // Update local state
-      setState(prev => ({
-        ...prev,
-        menteeProfile: prev.menteeProfile ? { ...prev.menteeProfile, ...profileData } : null,
-        isLoading: false,
-      }));
+      setState(prev => {
+        const updatedMenteeProfile = prev.menteeProfile ? { ...prev.menteeProfile, ...profileData } : null;
+        const currentOnboardingStep = updatedMenteeProfile?.onboarding_step || 1;
+        
+        return {
+          ...prev,
+          menteeProfile: updatedMenteeProfile,
+          currentOnboardingStep,
+          isLoading: false,
+        };
+      });
 
       return { success: true };
     } catch (error) {

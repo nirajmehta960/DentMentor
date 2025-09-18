@@ -77,7 +77,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={dashboardPath} replace />;
   }
 
-  if (user && userType && !requireOnboarding && !onboardingComplete) {
+  if (user && userType && !onboardingComplete) {
     // User hasn't completed onboarding but is trying to access app
     const onboardingPath = userType === 'mentee' ? '/mentee-onboarding' : '/onboarding';
     return <Navigate to={onboardingPath} replace />;

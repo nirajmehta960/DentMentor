@@ -21,7 +21,7 @@ export const useFormPersistence = <T extends Record<string, any>>(
         }));
       }
     } catch (error) {
-      console.error('Error loading persisted form data:', error);
+      // Silently handle error
     }
   }, [key]);
 
@@ -44,7 +44,7 @@ export const useFormPersistence = <T extends Record<string, any>>(
       sessionStorage.setItem(key, JSON.stringify(dataToSave));
       setHasChanges(false);
     } catch (error) {
-      console.error('Error saving form data:', error);
+      // Silently handle error
     }
   }, [data, excludeFields, key]);
 
@@ -70,7 +70,7 @@ export const useFormPersistence = <T extends Record<string, any>>(
       setData(initialData);
       setHasChanges(false);
     } catch (error) {
-      console.error('Error clearing form data:', error);
+      // Silently handle error
     }
   }, [key, initialData]);
 

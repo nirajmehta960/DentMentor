@@ -26,7 +26,7 @@ const Mentors = () => {
   } = useMentorSearch();
 
   if (error) {
-    console.warn('Error loading mentors from database:', error);
+    
   }
 
   return (
