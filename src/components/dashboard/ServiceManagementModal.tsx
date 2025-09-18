@@ -48,7 +48,7 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
           service_title: formData.title,
           service_description: formData.description,
           duration_minutes: 30,
-          price: Math.round(formData.duration30 * 100), // Convert to cents
+          price: formData.duration30, // Store as dollars, not cents
         });
       }
       
@@ -57,7 +57,7 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
           service_title: formData.title,
           service_description: formData.description,
           duration_minutes: 60,
-          price: Math.round(formData.duration60 * 100),
+          price: formData.duration60, // Store as dollars, not cents
         });
       }
       
@@ -66,7 +66,7 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
           service_title: formData.title,
           service_description: formData.description,
           duration_minutes: 120,
-          price: Math.round(formData.duration120 * 100),
+          price: formData.duration120, // Store as dollars, not cents
         });
       }
 
@@ -107,9 +107,9 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
     setFormData({
       title: service.service_title,
       description: service.service_description || '',
-      duration30: service.duration_minutes === 30 ? service.price / 100 : 0,
-      duration60: service.duration_minutes === 60 ? service.price / 100 : 0,
-      duration120: service.duration_minutes === 120 ? service.price / 100 : 0,
+      duration30: service.duration_minutes === 30 ? service.price : 0,
+      duration60: service.duration_minutes === 60 ? service.price : 0,
+      duration120: service.duration_minutes === 120 ? service.price : 0,
     });
   };
 
@@ -176,8 +176,8 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
                     <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <span className="w-16 text-sm">30 min</span>
-                      <div className="flex items-center gap-2 flex-1">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                         <Input
                           type="number"
                           min="0"
@@ -185,6 +185,7 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
                           value={formData.duration30 || ''}
                           onChange={(e) => setFormData(prev => ({ ...prev, duration30: parseFloat(e.target.value) || 0 }))}
                           placeholder="0.00"
+                          className="pl-8"
                         />
                       </div>
                     </div>
@@ -192,8 +193,8 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
                     <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <span className="w-16 text-sm">1 hour</span>
-                      <div className="flex items-center gap-2 flex-1">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                         <Input
                           type="number"
                           min="0"
@@ -201,6 +202,7 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
                           value={formData.duration60 || ''}
                           onChange={(e) => setFormData(prev => ({ ...prev, duration60: parseFloat(e.target.value) || 0 }))}
                           placeholder="0.00"
+                          className="pl-8"
                         />
                       </div>
                     </div>
@@ -208,8 +210,8 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
                     <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <span className="w-16 text-sm">2 hours</span>
-                      <div className="flex items-center gap-2 flex-1">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                         <Input
                           type="number"
                           min="0"
@@ -217,6 +219,7 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
                           value={formData.duration120 || ''}
                           onChange={(e) => setFormData(prev => ({ ...prev, duration120: parseFloat(e.target.value) || 0 }))}
                           placeholder="0.00"
+                          className="pl-8"
                         />
                       </div>
                     </div>
@@ -285,8 +288,7 @@ export function ServiceManagementModal({ isOpen, onClose }: ServiceManagementMod
                               {service.duration_minutes}min
                             </Badge>
                             <Badge variant="outline">
-                              <DollarSign className="w-3 h-3 mr-1" />
-                              ${(service.price / 100).toFixed(2)}
+                              ${service.price.toFixed(2)}
                             </Badge>
                           </div>
                         </div>

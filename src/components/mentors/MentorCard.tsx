@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { QuickPreviewModal } from './QuickPreviewModal';
+import { BookingModal } from '@/components/booking/BookingModal';
 import { Mentor } from '@/hooks/use-mentor-search';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 
@@ -24,6 +25,7 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
   const [showPreview, setShowPreview] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showImage, setShowImage] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
 
   const availability = availabilityConfig[mentor.availability];
 
@@ -163,7 +165,7 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
                 className="flex-1 bg-primary hover:bg-primary/90 text-white transition-all duration-200 hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Handle booking
+                  setShowBooking(true);
                 }}
               >
                 <Calendar className="w-4 h-4 mr-2" />
@@ -271,7 +273,7 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
                     className="bg-primary hover:bg-primary/90 text-white transition-all duration-200 hover:shadow-md"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Handle booking
+                      setShowBooking(true);
                     }}
                   >
                     <Calendar className="w-4 h-4 mr-2" />
@@ -306,6 +308,15 @@ export const MentorCard = ({ mentor, viewMode, index, isVisible }: MentorCardPro
         mentor={mentor}
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
+      />
+      
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={showBooking}
+        onClose={() => setShowBooking(false)}
+        mentorId={mentor.id}
+        mentorName={mentor.name}
+        mentorAvatar={mentor.avatar}
       />
       
       {/* Full Image Modal */}
