@@ -229,7 +229,7 @@ export function ProfileManagement() {
               <div className="flex items-center justify-center gap-1 mb-1">
                 <DollarIcon className="w-4 h-4 text-primary" />
                 <div className="text-2xl font-bold text-primary">
-                  ${mentorProfile?.hourly_rate || 0}
+                  {mentorProfile?.hourly_rate || 0}
                 </div>
               </div>
               <div className="text-xs text-muted-foreground">Hourly Rate</div>
@@ -250,7 +250,6 @@ export function ProfileManagement() {
               onClick={() => setShowServiceModal(true)}
               className="flex-1 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm"
             >
-              <DollarSign className="w-4 h-4 mr-2" />
               Manage Services
             </Button>
           </div>
