@@ -22,7 +22,8 @@ const steps = [
 ];
 
 export const OnboardingLayout = ({ children, currentStep, isEditMode = false }: OnboardingLayoutProps) => {
-  const progress = (currentStep / 5) * 100;
+  // Cap the progress at 100% to prevent showing more than 100%
+  const progress = Math.min((currentStep / 5) * 100, 100);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { toast } = useToast();
   const { signOut } = useAuth();
@@ -115,7 +116,7 @@ export const OnboardingLayout = ({ children, currentStep, isEditMode = false }: 
           </div>
           <Progress value={progress} className="h-2" />
           <div className="flex justify-between text-sm text-muted-foreground mt-2">
-            <span>Step {currentStep} of 5</span>
+            <span>Step {Math.min(currentStep, 5)} of 5</span>
             <span>{Math.round(progress)}% complete</span>
           </div>
         </div>

@@ -61,7 +61,6 @@ export function ProfileManagement() {
       });
 
     } catch (error) {
-      console.error('Error updating profile picture:', error);
       toast({
         title: "Error",
         description: "Failed to update profile picture. Please try again.",

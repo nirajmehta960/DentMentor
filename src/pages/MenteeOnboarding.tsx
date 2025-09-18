@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboardingStepPersistence } from '@/hooks/useFormPersistence';
@@ -14,6 +14,7 @@ const MenteeOnboarding = () => {
     menteeProfile,
     updateMenteeProfile,
     currentOnboardingStep,
+    onboardingComplete,
     isLoading,
     isAuthLoading,
     isProfileLoading
@@ -27,6 +28,13 @@ const MenteeOnboarding = () => {
   const step1Data = useOnboardingStepPersistence(1, 'mentee', menteeProfile || {});
   const step2Data = useOnboardingStepPersistence(2, 'mentee', menteeProfile || {});
   const step3Data = useOnboardingStepPersistence(3, 'mentee', menteeProfile || {});
+
+  // Redirect to mentors page if onboarding is already complete
+  useEffect(() => {
+    if (onboardingComplete) {
+      navigate('/mentors', { replace: true });
+    }
+  }, [onboardingComplete, navigate]);
 
   const handleNext = async (stepData: any) => {
     const nextStep = currentStep + 1;
@@ -45,18 +53,20 @@ const MenteeOnboarding = () => {
     if (success) {
       if (nextStep > 3) {
         // Complete onboarding
-        await updateMenteeProfile({ onboarding_completed: true });
-        
-        // Clear all step persistence data
-        step1Data.clearData();
-        step2Data.clearData();
-        step3Data.clearData();
-        
-        toast({
-          title: "Welcome to DentMentor! 🎉",
-          description: "Your profile is complete. Let's find you the perfect mentor!",
-        });
-        navigate('/mentors');
+        const completionSuccess = await updateMenteeProfile({ onboarding_completed: true });
+        if (completionSuccess) {
+          // Clear all step persistence data
+          step1Data.clearData();
+          step2Data.clearData();
+          step3Data.clearData();
+          
+          toast({
+            title: "Welcome to DentMentor! 🎉",
+            description: "Your profile is complete. Let's find you the perfect mentor!",
+          });
+          // Force redirect to mentors page
+          window.location.href = '/mentors';
+        }
       } else {
         setCurrentStep(nextStep);
       }

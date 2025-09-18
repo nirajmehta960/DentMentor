@@ -39,7 +39,7 @@ export function DashboardNavigation() {
       // Redirect to landing page after successful sign out
       window.location.replace('/');
     } catch (error) {
-      console.error('Error signing out:', error);
+      // Silently handle error
     }
   };
 
@@ -67,7 +67,7 @@ export function DashboardNavigation() {
       toast({ title: 'Profile picture updated', description: 'Your photo has been saved.' });
       setShowImageCropper(false);
     } catch (e) {
-      console.error(e);
+      // Silently handle error
       toast({ title: 'Error updating photo', description: 'Please try again.', variant: 'destructive' });
     }
   }, [user?.id, toast]);
@@ -77,7 +77,7 @@ export function DashboardNavigation() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-r from-primary to-primary/80">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
@@ -90,9 +90,6 @@ export function DashboardNavigation() {
           <div className="flex items-center gap-4">
             {/* Quick Navigation */}
             <nav className="hidden md:flex items-center gap-1">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/mentors">Browse Mentors</Link>
               </Button>

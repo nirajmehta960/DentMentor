@@ -72,7 +72,7 @@ export function useDashboardStats() {
           totalMentees
         });
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        // Silently handle error
       } finally {
         setIsLoading(false);
       }

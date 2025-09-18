@@ -29,6 +29,7 @@ export interface MentorProfile {
   current_status: string | null;
   country_of_origin: string | null;
   specializations: string[] | null;
+  speciality: string | null;
   languages_spoken: string[] | null;
   availability_preference: string | null;
   hourly_rate: number | null;
@@ -93,7 +94,7 @@ export interface AuthActions {
   signInWithGoogle: (userType: 'mentor' | 'mentee') => Promise<{ error?: string }>;
   signOut: () => Promise<{ error?: string }>;
   updateProfile: (updates: Partial<AuthProfile>) => Promise<boolean>;
-  updateMentorProfile: (updates: Partial<MentorProfile>) => Promise<boolean>;
+  updateMentorProfile: (updates: Partial<MentorProfile>, updateContext?: boolean) => Promise<{ success: boolean; error?: string }>;
   updateMenteeProfile: (updates: Partial<MenteeProfile>) => Promise<boolean>;
   refreshProfile: () => Promise<void>;
   clearError: () => void;

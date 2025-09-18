@@ -42,7 +42,7 @@ export function useUpcomingSessions() {
 
         setUpcomingSessions(data || []);
       } catch (error) {
-        console.error('Error fetching upcoming sessions:', error);
+        // Silently handle error
       } finally {
         setIsLoading(false);
       }

@@ -60,7 +60,7 @@ export function useMentors() {
 
 
       if (mentorError) {
-        console.error('Error fetching mentor profiles:', mentorError);
+        // Silently handle error
       }
 
       let mentorsWithProfiles = [];
@@ -180,7 +180,7 @@ export function useMentors() {
 
 
         if (basicError) {
-          console.error('Error fetching basic profiles:', basicError);
+          // Silently handle error
         } else if (basicProfiles && basicProfiles.length > 0) {
           
           // Transform basic profiles to mentor format
@@ -212,7 +212,6 @@ export function useMentors() {
 
       setMentors(mentorsWithProfiles);
     } catch (error) {
-      console.error('Error fetching mentors:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch mentors');
       toast({
         title: "Error loading mentors",

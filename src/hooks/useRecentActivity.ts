@@ -78,7 +78,7 @@ export function useRecentActivity() {
 
         setActivities(mockActivities);
       } catch (error) {
-        console.error('Error fetching recent activity:', error);
+        // Silently handle error
       } finally {
         setIsLoading(false);
       }

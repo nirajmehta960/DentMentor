@@ -49,7 +49,7 @@ export function useMentorServices() {
 
         setServices(data || []);
       } catch (error) {
-        console.error('Error fetching mentor services:', error);
+        // Silently handle error
       } finally {
         setIsLoading(false);
       }
@@ -76,7 +76,6 @@ export function useMentorServices() {
       setServices(prev => [data, ...prev]);
       return data;
     } catch (error) {
-      console.error('Error creating mentor service:', error);
       throw error;
     }
   };
@@ -97,7 +96,6 @@ export function useMentorServices() {
       ));
       return data;
     } catch (error) {
-      console.error('Error updating mentor service:', error);
       throw error;
     }
   };
@@ -113,7 +111,6 @@ export function useMentorServices() {
 
       setServices(prev => prev.filter(service => service.id !== id));
     } catch (error) {
-      console.error('Error deleting mentor service:', error);
       throw error;
     }
   };

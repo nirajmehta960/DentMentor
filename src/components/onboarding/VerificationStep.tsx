@@ -77,7 +77,7 @@ const FileUploadCard = ({
       });
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      // Silently handle error
       toast({
         title: "Upload failed",
         description: error.message,

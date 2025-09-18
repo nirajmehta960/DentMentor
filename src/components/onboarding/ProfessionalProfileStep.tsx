@@ -54,7 +54,6 @@ export const ProfessionalProfileStep = ({ data, onNext, onPrevious }: Profession
 
       setShowImageCropper(false);
     } catch (error: any) {
-      console.error('Error updating photo:', error);
       toast({
         title: "Error updating photo",
         description: "Please try again.",
