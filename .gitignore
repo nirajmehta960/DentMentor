@@ -23,3 +23,14 @@ dist-ssr
 *.sln
 *.sw?
 *.env
+
+# Documentation files
+docs/
+
+# Temporary debug files
+*.sql
+check-*.sql
+fix-*.sql
+test-*.sql
+debug-*.sql
+standardize-*.sql

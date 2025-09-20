@@ -76,6 +76,8 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   };
 
   const canConfirm = acceptedTerms && acceptedPolicy && !isLoading;
+  
+  const isPendingPayment = bookingData?.service?.payment_status === 'pending';
 
   return (
     <div className="space-y-6">
@@ -85,6 +87,18 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         <p className="text-muted-foreground">
           Please review your session details before confirming
         </p>
+        
+        {isPendingPayment && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Payment Required</span>
+            </div>
+            <p className="text-sm text-yellow-700 mt-1">
+              Session reserved — complete payment to confirm
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Booking Summary Card */}

@@ -1,0 +1,29 @@
+{
+  "name": "dentmentor-background-processor",
+  "version": "1.0.0",
+  "description": "Background processor for DentMentor post-booking actions",
+  "main": "background-processor.js",
+  "scripts": {
+    "start": "node background-processor.js",
+    "dev": "nodemon background-processor.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "nodemailer": "^6.9.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "supabase",
+    "background-processing",
+    "notifications",
+    "webhooks"
+  ],
+  "author": "DentMentor Team",
+  "license": "MIT"
+}
