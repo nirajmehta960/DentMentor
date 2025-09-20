@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Clock, MapPin, Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, MapPin, Loader2, Calendar as CalendarIcon, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { fetchMentorAvailability, type NewAvailabilityResponse, type DateAvailability, type TimeSlotData } from '@/lib/api/booking';
 import { type Service } from '@/lib/supabase/booking';
+import { getUserTimezone, formatTimeForDisplay } from '@/lib/utils/booking';
 
 interface AvailabilityCalendarProps {
   mentorId: string;
@@ -135,14 +136,12 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
         const monthString = `${year}-${month}`;
 
-        console.log(`Loading availability for ${mentorId} in ${monthString}`);
 
         const response: NewAvailabilityResponse = await fetchMentorAvailability(mentorId, monthString);
 
         if (response.success) {
           setAvailability(response.availability);
           setUserTimezone(response.user_timezone);
-          console.log('Availability loaded:', response.availability);
         } else {
           setError(response.error || 'Failed to load availability');
           toast({
@@ -226,7 +225,13 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   };
 
   const handleTimeSelect = (time: string) => {
-    if (selectedDate) {
+    if (selectedDate && time) {
+      // Validate time format (HH:MM)
+      const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(time)) {
+        console.error('Invalid time format:', time);
+        return;
+      }
       onDateTimeSelect(selectedDate, time);
     }
   };
@@ -293,7 +298,14 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     const evening: TimeSlotData[] = [];
 
     timeSlots.forEach(slot => {
-      const hour = parseInt(slot.start_time.split(':')[0]);
+      if (!slot.start_time) return; // Skip slots without start_time
+      
+      const timeParts = slot.start_time.split(':');
+      if (timeParts.length < 2) return; // Skip invalid time format
+      
+      const hour = parseInt(timeParts[0]);
+      if (isNaN(hour)) return; // Skip if hour is not a valid number
+      
       if (hour < 12) morning.push(slot);
       else if (hour < 18) afternoon.push(slot);
       else evening.push(slot);

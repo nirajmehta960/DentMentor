@@ -185,7 +185,6 @@ export const ServiceSelection: React.FC<ServiceSelectionProps> = ({
           
           // If no services found, create mock services for testing
           if (servicesToUse.length === 0) {
-            console.log('No services found, creating mock services for testing');
             servicesToUse = [
               {
                 id: `mock-1-${mentorId}`,

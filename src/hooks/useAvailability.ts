@@ -28,10 +28,47 @@ async function fetchAvailability(mentorId: string): Promise<Availability[]> {
 }
 
 async function updateAvailabilityInDB(mentorId: string, date: string, timeSlots: string[]): Promise<Availability> {
+  // Convert string format time slots to proper JSONB format
+  const jsonbTimeSlots = timeSlots.map(slot => {
+    // Handle format: "14:30-15:00:30" or "08:30-09:30:60"
+    if (slot.includes('-') && slot.split(':').length >= 4) {
+      const parts = slot.split('-');
+      const startTime = parts[0];
+      const endTimeAndDuration = parts[1].split(':');
+      const endTime = `${endTimeAndDuration[0]}:${endTimeAndDuration[1]}`;
+      const duration = parseInt(endTimeAndDuration[2] || '60');
+      
+      return {
+        start_time: startTime,
+        end_time: endTime,
+        duration_minutes: duration,
+        is_available: true
+      };
+    }
+    
+    // Handle format: "14:30-15:00" (assume 60 min duration)
+    if (slot.includes('-') && slot.split(':').length === 3) {
+      const [startTime, endTime] = slot.split('-');
+      return {
+        start_time: startTime,
+        end_time: endTime,
+        duration_minutes: 60,
+        is_available: true
+      };
+    }
+    
+    // Fallback: treat as single time slot
+    return {
+      start_time: slot,
+      end_time: slot,
+      duration_minutes: 60,
+      is_available: true
+    };
+  });
+
   // Calculate total duration from time slots
-  const totalDuration = timeSlots.reduce((total, slot) => {
-    const duration = slot.split(':').pop();
-    return total + (parseInt(duration) || 60);
+  const totalDuration = jsonbTimeSlots.reduce((total, slot) => {
+    return total + (slot.duration_minutes || 60);
   }, 0);
 
   const { data, error } = await supabase
@@ -39,8 +76,8 @@ async function updateAvailabilityInDB(mentorId: string, date: string, timeSlots:
     .upsert({
       mentor_id: mentorId,
       date,
-      time_slots: timeSlots,
-      is_available: timeSlots.length > 0,
+      time_slots: jsonbTimeSlots,
+      is_available: jsonbTimeSlots.length > 0,
       duration_minutes: totalDuration || 60 // Include duration_minutes field
     }, {
       onConflict: 'mentor_id,date'

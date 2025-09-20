@@ -10,6 +10,7 @@ import {
   type SessionData
 } from '@/lib/supabase/booking';
 import { supabase } from '@/integrations/supabase/client';
+import { convertToUTC } from '@/lib/utils/booking';
 
 // API Response types
 export interface ServicesResponse {
@@ -84,7 +85,6 @@ export async function fetchMentorServices(mentorId: string): Promise<ServicesRes
     try {
       services = await getMentorServices(mentorId);
     } catch (error) {
-      console.log('No services found in database, will use fallback');
       services = [];
     }
 
@@ -94,7 +94,6 @@ export async function fetchMentorServices(mentorId: string): Promise<ServicesRes
       mentorTimezone = mentorInfo.mentorProfile.country_of_origin || 'UTC';
       mentorAvatar = mentorInfo.avatar || undefined;
     } catch (error) {
-      console.log('Mentor info not found, using defaults');
       // Use defaults already set above
     }
 
@@ -167,8 +166,6 @@ export async function fetchMentorAvailability(
     const startISO = startDate.toISOString().split('T')[0];
     const endISO = endDate.toISOString().split('T')[0];
 
-    console.log(`Fetching availability for mentor ${mentorId} from ${startISO} to ${endISO}`);
-
     // Query Supabase for mentor availability
     const { data: availabilityRows, error } = await supabase
       .from('mentor_availability')
@@ -205,43 +202,93 @@ export async function fetchMentorAvailability(
           timeSlots = [];
         }
 
-        // Convert time slot strings to structured data
-        const slots: TimeSlotData[] = timeSlots.map(slotStr => {
-          // Parse format: "HH:MM-HH:MM:duration" or "HH:MM-HH:MM"
-          const parts = slotStr.split(':');
-          if (parts.length >= 4) {
-            // Format: "12:30-13:30:60"
-            const startTime = `${parts[0]}:${parts[1]}`;
-            const endTime = `${parts[2].split('-')[1]}:${parts[3]}`;
-            const duration = parseInt(parts[4] || '60');
-            
-            return {
-              start_time: startTime,
-              end_time: endTime,
-              duration: duration,
-              is_available: true
+        // Convert time slot objects/strings to structured data
+        const slots: TimeSlotData[] = timeSlots.map(slot => {
+          // Handle new JSONB format: {start_time, end_time, is_available}
+          if (typeof slot === 'object' && slot !== null) {
+            const processedSlot = {
+              start_time: slot.start_time || '',
+              end_time: slot.end_time || '',
+              duration: slot.duration_minutes || 60,
+              is_available: slot.is_available !== false // Default to true if not specified
             };
-          } else if (parts.length === 3) {
-            // Format: "12:30-13:30" (assume 60 min duration)
-            const [startHour, startMin, endPart] = parts;
-            const [endHour, endMin] = endPart.split('-')[1]?.split(':') || ['', ''];
-            
-            return {
-              start_time: `${startHour}:${startMin}`,
-              end_time: `${endHour}:${endMin}`,
-              duration: 60,
-              is_available: true
-            };
-          } else {
-            // Fallback parsing
-            const timeRange = slotStr.split('-');
-            return {
-              start_time: timeRange[0] || '09:00',
-              end_time: timeRange[1] || '10:00',
-              duration: 60,
-              is_available: true
-            };
+            return processedSlot;
           }
+          
+          // Handle legacy string format: "HH:MM-HH:MM:duration" or "HH:MM-HH:MM" or "HH:MM-HH"
+          if (typeof slot === 'string') {
+            // Handle mentor dashboard format: "10:30-11" or "15:00-16"
+            if (slot.match(/^\d{1,2}:\d{2}-\d{1,2}$/)) {
+              const [startTime, endHour] = slot.split('-');
+              const endTime = `${endHour}:00`; // Assume :00 for minutes
+              
+              return {
+                start_time: startTime,
+                end_time: endTime,
+                duration: 60,
+                is_available: true
+              };
+            }
+            
+            // Handle mentor dashboard format: "14:30-15:00:30" or "08:30-09:30:60"
+            if (slot.match(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}:\d+$/)) {
+              const parts = slot.split('-');
+              const startTime = parts[0];
+              const endTimeAndDuration = parts[1].split(':');
+              const endTime = `${endTimeAndDuration[0]}:${endTimeAndDuration[1]}`;
+              const duration = parseInt(endTimeAndDuration[2] || '60');
+              
+              return {
+                start_time: startTime,
+                end_time: endTime,
+                duration: duration,
+                is_available: true
+              };
+            }
+            
+            const parts = slot.split(':');
+            if (parts.length >= 4) {
+              // Format: "12:30-13:30:60"
+              const startTime = `${parts[0]}:${parts[1]}`;
+              const endTime = `${parts[2].split('-')[1]}:${parts[3]}`;
+              const duration = parseInt(parts[4] || '60');
+              
+              return {
+                start_time: startTime,
+                end_time: endTime,
+                duration: duration,
+                is_available: true
+              };
+            } else if (parts.length === 3) {
+              // Format: "12:30-13:30" (assume 60 min duration)
+              const [startHour, startMin, endPart] = parts;
+              const [endHour, endMin] = endPart.split('-')[1]?.split(':') || ['', ''];
+              
+              return {
+                start_time: `${startHour}:${startMin}`,
+                end_time: `${endHour}:${endMin}`,
+                duration: 60,
+                is_available: true
+              };
+            } else {
+              // Fallback parsing
+              const timeRange = slot.split('-');
+              return {
+                start_time: timeRange[0] || '09:00',
+                end_time: timeRange[1] || '10:00',
+                duration: 60,
+                is_available: true
+              };
+            }
+          }
+          
+          // Fallback for invalid format
+          return {
+            start_time: typeof slot === 'string' ? slot : '09:00',
+            end_time: typeof slot === 'string' ? slot : '10:00',
+            duration: 60,
+            is_available: false
+          };
         });
 
         availability[dateStr] = {
@@ -253,7 +300,6 @@ export async function fetchMentorAvailability(
 
     // If no real data found, add some mock data for testing
     if (Object.keys(availability).length === 0) {
-      console.log('No availability data found, generating mock data');
       return generateMockAvailabilityResponse(startISO, endISO);
     }
 
@@ -418,7 +464,7 @@ function generateMockAvailability(startISO: string, endISO: string): Availabilit
 }
 
 /**
- * Create booking API endpoint
+ * Create booking API endpoint using Supabase Edge Function
  * POST /api/booking/book
  */
 export async function createBooking(bookingRequest: BookingRequest): Promise<BookingResponse> {
@@ -435,8 +481,6 @@ export async function createBooking(bookingRequest: BookingRequest): Promise<Boo
 
     // Check if this is a mock service (for testing)
     if (serviceId.startsWith('mock-')) {
-      console.log('Creating mock booking for testing');
-      
       // Create a mock successful booking response
       return {
         success: true,
@@ -453,44 +497,15 @@ export async function createBooking(bookingRequest: BookingRequest): Promise<Boo
       };
     }
 
-    // For real bookings, proceed with validation
-    try {
-      await validateBookingData({ mentorId, serviceId, date, time });
-    } catch (error) {
-      console.log('Validation failed, but proceeding with mock booking for testing');
-      return {
-        success: true,
-        session: {
-          id: `mock-session-${Date.now()}`,
-          session_date: `${date}T${time}:00Z`,
-          status: 'scheduled',
-          payment_status: 'pending',
-          mentor_name: 'Test Mentor',
-          service_title: 'Test Service',
-          price: 100,
-          duration_minutes: 60
-        }
-      };
-    }
-
-    // Get service details for session creation
+    // Get service details for duration and price
     let services: Service[] = [];
     try {
       services = await getMentorServices(mentorId);
     } catch (error) {
-      console.log('Could not fetch services, using mock data');
       return {
-        success: true,
-        session: {
-          id: `mock-session-${Date.now()}`,
-          session_date: `${date}T${time}:00Z`,
-          status: 'scheduled',
-          payment_status: 'pending',
-          mentor_name: 'Test Mentor',
-          service_title: 'Test Service',
-          price: 100,
-          duration_minutes: 60
-        }
+        success: false,
+        error: 'Service not found',
+        code: 'INVALID_SERVICE'
       };
     }
     
@@ -505,75 +520,71 @@ export async function createBooking(bookingRequest: BookingRequest): Promise<Boo
     }
 
     // Create session date in UTC
-    const sessionDateUtc = new Date(`${date}T${time}:00`).toISOString();
+    const sessionDateUtc = convertToUTC(date, time);
 
-    const sessionData: SessionData = {
-      mentorId,
-      menteeId,
-      sessionDateUtc,
-      duration: service.duration_minutes || 60,
-      price: service.price,
-      serviceId
-    };
+    // Generate idempotency key for this booking
+    const idempotencyKey = `${mentorId}-${serviceId}-${date}-${time}-${menteeId}`;
 
-    // Try to create the session
-    try {
-      const session = await createSession(sessionData);
-      
-      // Get mentor info for response
-      let mentorName = 'Mentor';
-      try {
-        const mentorInfo = await getMentorInfo(mentorId);
-        mentorName = mentorInfo.name;
-      } catch (error) {
-        console.log('Could not get mentor info, using default name');
-      }
+    // Call the Supabase RPC function
+    const { data: rpcResponse, error } = await supabase.rpc('instant_book_simple', {
+      p_mentee_user_id: menteeId,
+      p_mentor_id: mentorId,
+      p_service_id: serviceId,
+      p_session_start_utc: sessionDateUtc,
+      p_duration_minutes: service.duration_minutes || 60,
+      p_idempotency_key: idempotencyKey
+    });
 
+    if (error) {
+      console.error('RPC error:', error);
       return {
-        success: true,
-        session: {
-          id: session.id,
-          session_date: session.session_date,
-          status: session.status,
-          payment_status: session.payment_status || 'pending',
-          mentor_name: mentorName,
-          service_title: service.service_title,
-          price: service.price,
-          duration_minutes: service.duration_minutes || 60
-        }
-      };
-    } catch (error) {
-      console.log('Session creation failed, returning mock success for testing');
-      return {
-        success: true,
-        session: {
-          id: `mock-session-${Date.now()}`,
-          session_date: sessionDateUtc,
-          status: 'scheduled',
-          payment_status: 'pending',
-          mentor_name: 'Test Mentor',
-          service_title: service.service_title,
-          price: service.price,
-          duration_minutes: service.duration_minutes || 60
-        }
+        success: false,
+        error: error.message || 'Failed to create booking',
+        code: 'BOOKING_FAILED'
       };
     }
+
+    // Check if rpcResponse is null, undefined, or empty object
+    if (!rpcResponse || (typeof rpcResponse === 'object' && Object.keys(rpcResponse).length === 0)) {
+      return {
+        success: false,
+        error: 'No response from booking service',
+        code: 'NO_RESPONSE'
+      };
+    }
+
+    // Check RPC response status
+    if (rpcResponse.status === 'error') {
+      return {
+        success: false,
+        error: rpcResponse.message,
+        code: rpcResponse.code,
+        alternatives: rpcResponse.details?.alternatives
+      };
+    }
+
+    // Convert RPC response to expected format
+    if (rpcResponse.status === 'ok' && rpcResponse.session) {
+      return {
+        success: true,
+        session: rpcResponse.session
+      };
+    }
+
+    // Fallback error
+    return {
+      success: false,
+      error: 'Unexpected response format',
+      code: 'UNKNOWN_ERROR'
+    };
+
   } catch (error) {
     console.error('Error in createBooking:', error);
     
-    // For testing, return a mock success even on errors
     return {
-      success: true,
-      session: {
-        id: `mock-session-${Date.now()}`,
-        session_date: `${bookingRequest.date}T${bookingRequest.time}:00Z`,
-        status: 'scheduled',
-        payment_status: 'pending',
-        mentor_name: 'Test Mentor',
-        service_title: 'Test Service',
-        price: 100,
-        duration_minutes: 60
-      }
+      success: false,
+      error: 'Internal error occurred',
+      code: 'INTERNAL_ERROR'
     };
   }
 }
