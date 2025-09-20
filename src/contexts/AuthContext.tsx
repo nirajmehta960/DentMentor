@@ -136,6 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           async (event, session) => {
             if (!mounted || isProcessingAuthChange) return;
             
+            
             // Clear any pending state changes
             if (authStateChangeTimeout) {
               clearTimeout(authStateChangeTimeout);

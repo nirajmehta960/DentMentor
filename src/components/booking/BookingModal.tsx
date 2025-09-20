@@ -128,6 +128,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       return;
     }
 
+
     // Generate idempotency key
     const key = generateIdempotencyKey(mentorId, selectedService.id, selectedDate, selectedTime, user.id);
     setIdempotencyKey(key);
@@ -242,8 +243,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         });
       }
     } catch (error: any) {
-      console.error('Booking error:', error);
-      
       // Handle specific error types
       let errorCode = 'INTERNAL_ERROR';
       let errorMessage = error.message || 'An unexpected error occurred';
@@ -337,10 +336,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </p>
             
             <div className="bg-muted/30 rounded-lg p-4 space-y-2 text-sm">
-              <div><strong>Session ID:</strong> {bookingResult.id}</div>
-              <div><strong>Service:</strong> {bookingResult.service_title}</div>
-              <div><strong>Duration:</strong> {bookingResult.duration_minutes} minutes</div>
-              <div><strong>Price:</strong> ${bookingResult.price}</div>
+              <div><strong>Service:</strong> {selectedService?.service_title || 'Service'}</div>
+              <div><strong>Duration:</strong> {bookingResult.duration_minutes || selectedService?.duration_minutes || 60} minutes</div>
+              <div><strong>Price:</strong> ${bookingResult.price_paid || selectedService?.price || 0}</div>
             </div>
 
             <div className="space-y-2 text-sm text-muted-foreground">

@@ -479,6 +479,34 @@ export async function createBooking(bookingRequest: BookingRequest): Promise<Boo
       };
     }
 
+    // Simple authentication check - don't interfere with existing working flow
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    
+    if (authError) {
+      return {
+        success: false,
+        error: 'Authentication error. Please sign in again.',
+        code: 'UNAUTHORIZED'
+      };
+    }
+
+    if (!session || !session.user) {
+      return {
+        success: false,
+        error: 'Please sign in to continue with your booking.',
+        code: 'UNAUTHORIZED'
+      };
+    }
+
+    // Verify the mentee ID matches the authenticated user
+    if (menteeId !== session.user.id) {
+      return {
+        success: false,
+        error: 'Authentication mismatch. Please refresh and try again.',
+        code: 'AUTH_MISMATCH'
+      };
+    }
+
     // Check if this is a mock service (for testing)
     if (serviceId.startsWith('mock-')) {
       // Create a mock successful booking response
@@ -536,7 +564,6 @@ export async function createBooking(bookingRequest: BookingRequest): Promise<Boo
     });
 
     if (error) {
-      console.error('RPC error:', error);
       return {
         success: false,
         error: error.message || 'Failed to create booking',
@@ -579,8 +606,6 @@ export async function createBooking(bookingRequest: BookingRequest): Promise<Boo
     };
 
   } catch (error) {
-    console.error('Error in createBooking:', error);
-    
     return {
       success: false,
       error: 'Internal error occurred',

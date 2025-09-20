@@ -237,7 +237,6 @@ serve(async (req) => {
     })
 
     if (rpcError || !rpcResult || rpcResult.length === 0) {
-      console.error('RPC Error:', rpcError)
       return new Response(
         JSON.stringify({
           success: false,
@@ -258,6 +257,7 @@ serve(async (req) => {
       let statusCode = 400
       let alternatives: { dates: string[]; times: string[] } | undefined
 
+
       switch (result.error_code) {
         case 'TIME_CONFLICT':
         case 'SLOT_UNAVAILABLE':
@@ -269,12 +269,22 @@ serve(async (req) => {
           statusCode = 404
           break
         case 'MENTOR_NOT_FOUND':
+        case 'MENTOR_INACTIVE':
+        case 'MENTOR_UNVERIFIED':
+          statusCode = 404
+          break
         case 'SERVICE_NOT_FOUND':
           statusCode = 404
           break
         case 'NO_AVAILABILITY':
           statusCode = 404
           alternatives = await generateAlternatives(supabase, mentor_id, sessionStartDate.toISOString().split('T')[0])
+          break
+        case 'VALIDATION_ERROR':
+          statusCode = 400
+          break
+        case 'INTERNAL_ERROR':
+          statusCode = 500
           break
         default:
           statusCode = 400
@@ -306,7 +316,6 @@ serve(async (req) => {
       .single()
 
     if (sessionError || !sessionDetails) {
-      console.error('Session fetch error:', sessionError)
       return new Response(
         JSON.stringify({
           success: false,
@@ -357,7 +366,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Unexpected error:', error)
     return new Response(
       JSON.stringify({
         success: false,
@@ -416,7 +424,6 @@ async function generateAlternatives(supabase: any, mentorId: string, requestedDa
       times: [...new Set(alternativeTimes)].slice(0, 8)
     }
   } catch (error) {
-    console.error('Error generating alternatives:', error)
     return { dates: [], times: [] }
   }
 }

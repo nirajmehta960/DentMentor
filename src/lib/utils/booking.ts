@@ -197,6 +197,22 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         action: 'Choose Another Mentor'
       };
     
+    case 'UNAUTHORIZED':
+      return {
+        code: errorCode,
+        title: 'Authentication Required',
+        message: 'Please sign in to continue with your booking.',
+        action: 'Sign In'
+      };
+    
+    case 'AUTH_MISMATCH':
+      return {
+        code: errorCode,
+        title: 'Authentication Error',
+        message: 'There was an authentication issue. Please refresh the page and try again.',
+        action: 'Refresh Page'
+      };
+    
     case 'SERVICE_INVALID':
       return {
         code: errorCode,
