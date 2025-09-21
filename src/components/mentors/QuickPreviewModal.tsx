@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Mentor } from '@/hooks/use-mentor-search';
+import { BookingModal } from '@/components/booking/BookingModal';
+import { Mentor } from '@/hooks/useMentors';
 import { useState } from 'react';
 
 interface QuickPreviewModalProps {
@@ -22,6 +23,7 @@ const availabilityConfig = {
 export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModalProps) => {
   const availability = availabilityConfig[mentor.availability];
   const [showPhoto, setShowPhoto] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
 
   return (
     <TooltipProvider>
@@ -36,8 +38,14 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
                 <img
                   src={mentor.avatar}
                   alt={mentor.name}
-                  className="w-28 h-28 rounded-2xl object-cover ring-4 ring-white shadow-lg cursor-pointer object-center"
+                  className="w-32 h-32 rounded-full object-cover border-2 border-primary/20 shadow-lg cursor-pointer object-center hover:border-primary/40 hover:shadow-xl transition-all duration-300"
                   onClick={(e) => { e.stopPropagation(); setShowPhoto(true); }}
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
+                  }}
                 />
                 
                 {/* Availability Indicator */}
@@ -49,8 +57,8 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
               
               <div className="flex-1">
                 {/* Name with verification tick */}
-                <div className="flex items-center gap-1 mb-1">
-                  <h2 className="text-2xl font-bold text-foreground">{mentor.name}</h2>
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-2xl font-bold text-foreground">Dr. {mentor.name}</h2>
                   {mentor.verified && (
                     <Tooltip>
                       <TooltipTrigger>
@@ -63,15 +71,44 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
                   )}
                 </div>
                 {mentor.professionalHeadline && (
-                  <p className="text-muted-foreground mb-1">{mentor.professionalHeadline}</p>
+                  <p className="text-muted-foreground mb-2 font-medium">{mentor.professionalHeadline}</p>
                 )}
-                <div className="space-y-0.5">
-                  {mentor.dentalSchool || mentor.school ? (
-                    <p className="text-primary font-medium">🎓 {mentor.dentalSchool || mentor.school}</p>
-                  ) : null}
-                  {mentor.bachelorUniversity ? (
-                    <p className="text-primary font-medium">🎓 {mentor.bachelorUniversity}</p>
-                  ) : null}
+                {/* Education Section */}
+                <div className="space-y-1.5 mt-3">
+                  {mentor.usDentalSchool && (
+                    <p className="text-sm text-primary font-semibold flex items-center gap-2">
+                      <span>🎓</span>
+                      {mentor.usDentalSchool}
+                    </p>
+                  )}
+                  {mentor.mdsSpecialization && (
+                    <p className="text-sm text-primary font-semibold flex items-center gap-2">
+                      <span>🎓</span>
+                      {mentor.mdsUniversity 
+                        ? `MDS ${mentor.mdsSpecialization} - ${mentor.mdsUniversity}`
+                        : `MDS ${mentor.mdsSpecialization}`
+                      }
+                    </p>
+                  )}
+                  {mentor.bdsUniversity && (
+                    <p className="text-sm text-primary font-semibold flex items-center gap-2">
+                      <span>🎓</span>
+                      BDS - {mentor.bdsUniversity}
+                    </p>
+                  )}
+                  {/* Legacy fields for backward compatibility */}
+                  {(mentor.dentalSchool || mentor.school) && !mentor.usDentalSchool && (
+                    <p className="text-sm text-primary font-semibold flex items-center gap-2">
+                      <span>🎓</span>
+                      {mentor.dentalSchool || mentor.school}
+                    </p>
+                  )}
+                  {mentor.bachelorUniversity && !mentor.bdsUniversity && (
+                    <p className="text-sm text-primary font-semibold flex items-center gap-2">
+                      <span>🎓</span>
+                      {mentor.bachelorUniversity}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mt-3">
@@ -99,10 +136,6 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
                     <span className="text-muted-foreground">({mentor.reviews} reviews)</span>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <span>Responds in {mentor.responseTime}</span>
-                  </div>
                 </div>
               </div>
               
@@ -114,46 +147,87 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
 
             <Separator />
 
-            {/* Bio */}
+            {/* About Section */}
             <div>
-              <h3 className="font-semibold text-foreground mb-2">About</h3>
-              <p className="text-muted-foreground leading-relaxed">{mentor.bio}</p>
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                About
+              </h3>
+              <p className="text-muted-foreground leading-relaxed pl-6">{mentor.professionalBio || mentor.bio}</p>
             </div>
 
-            {/* Specializations */}
+            <Separator />
+
+            {/* Services Section */}
             <div>
-              <h3 className="font-semibold text-foreground mb-3">Specializations</h3>
-              <div className="flex flex-wrap gap-2">
-                {mentor.tags.map((tag, index) => (
-                  <Badge key={tag} variant="secondary" className="text-sm">
-                    {tag}
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                Services
+              </h3>
+              <div className="pl-6">
+                {mentor.mentorServices && mentor.mentorServices.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    {mentor.mentorServices.map((service, index) => (
+                      <div key={index} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="text-primary flex-shrink-0">•</span>
+                        <span className="truncate">{service.service_title}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : mentor.areasOfExpertise && mentor.areasOfExpertise.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    {mentor.areasOfExpertise.map((area, index) => (
+                      <div key={index} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="text-primary flex-shrink-0">•</span>
+                        <span className="truncate">{area}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : mentor.tags && mentor.tags.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    {mentor.tags.map((tag, index) => (
+                      <div key={index} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="text-primary flex-shrink-0">•</span>
+                        <span className="truncate">{tag}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No areas of expertise specified</p>
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Specialization Section */}
+            <div>
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Star className="w-4 h-4" />
+                Specialization
+              </h3>
+              <div className="pl-6">
+                {mentor.speciality ? (
+                  <Badge variant="secondary" className="text-sm">
+                    {mentor.speciality}
                   </Badge>
-                ))}
+                ) : (
+                  <p className="text-sm text-muted-foreground">No specialization specified</p>
+                )}
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Users className="w-4 h-4 text-primary" />
-                  <div className="text-xl font-bold text-primary">{mentor.sessions || 0}</div>
-                </div>
-                <div className="text-xs text-muted-foreground">Sessions</div>
+            {/* Rating and Sessions */}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 text-primary" />
+                <span className="font-semibold">{mentor.rating}</span>
+                <span>({mentor.reviews} reviews)</span>
               </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Star className="w-4 h-4 text-primary" />
-                  <div className="text-xl font-bold text-primary">{mentor.rating}</div>
-                </div>
-                <div className="text-xs text-muted-foreground">Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Award className="w-4 h-4 text-primary" />
-                  <div className="text-xl font-bold text-primary">{mentor.reviews}</div>
-                </div>
-                <div className="text-xs text-muted-foreground">Reviews</div>
+              <span>•</span>
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4 text-primary" />
+                <span>{mentor.sessions || mentor.sessionCount || 0} sessions</span>
               </div>
             </div>
 
@@ -161,48 +235,58 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
             <div className="flex gap-3">
               <Button 
                 size="lg" 
-                className="flex-1 bg-primary hover:bg-primary/90 text-white transition-all duration-200 hover:shadow-md"
+                className="w-full bg-primary hover:bg-primary/90 text-white transition-all duration-200 hover:shadow-md"
                 onClick={() => {
-                  // Handle booking
+                  setShowBooking(true);
                   onClose();
                 }}
               >
                 <Calendar className="w-5 h-5 mr-2" />
                 Book Session
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="flex-1 border-primary/20 hover:bg-primary/5 transition-all duration-200"
-                onClick={() => {
-                  // Handle message
-                  onClose();
-                }}
-              >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Send Message
-              </Button>
             </div>
           </div>
         </DialogContent>
 
-        {/* Full Image Modal */}
+        {/* Full Image Modal - Clean Circular Image Only */}
         <Dialog open={showPhoto} onOpenChange={setShowPhoto}>
-          <DialogContent className="max-w-[50vw] w-[50vw]">
-            <DialogHeader>
-              <h2 className="text-lg font-semibold">{mentor.name}</h2>
-            </DialogHeader>
-            <div className="flex justify-center">
+          <DialogContent className="max-w-[100vw] max-h-[100vh] p-0 bg-transparent border-none shadow-none">
+            <div className="relative flex items-center justify-center w-screen h-screen bg-black/80">
+              {/* Close button */}
+              <button
+                onClick={() => setShowPhoto(false)}
+                className="absolute top-6 right-6 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-colors"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              
+              {/* Large circular profile image */}
               <img
                 src={mentor.avatar}
                 alt={mentor.name}
-                className="max-w-full max-h-[50vh] object-cover rounded-lg"
-                style={{ objectPosition: 'center top' }}
+                className="w-[500px] h-[500px] object-cover rounded-full shadow-2xl"
+                loading="lazy"
+                decoding="async"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.svg';
+                }}
               />
             </div>
           </DialogContent>
         </Dialog>
       </Dialog>
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={showBooking}
+        onClose={() => setShowBooking(false)}
+        mentorId={mentor.id}
+        mentorName={mentor.name}
+        mentorAvatar={mentor.avatar}
+      />
     </TooltipProvider>
   );
 };

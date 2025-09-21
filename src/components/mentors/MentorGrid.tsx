@@ -38,7 +38,7 @@ export const MentorGrid = ({ mentors, loading, viewMode, onLoadMore, hasMore }: 
 
   if (loading && mentors.length === 0) {
     return (
-      <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1'}`}>
+      <div className={`grid gap-6 items-stretch ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
         {Array.from({ length: 6 }).map((_, index) => (
           <LoadingSkeleton key={index} viewMode={viewMode} />
         ))}
@@ -67,9 +67,9 @@ export const MentorGrid = ({ mentors, loading, viewMode, onLoadMore, hasMore }: 
 
       {/* Mentor Grid */}
       <div 
-        className={`grid gap-6 ${
+        className={`grid gap-6 items-stretch ${
           viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-3' 
+            ? 'grid-cols-1 md:grid-cols-2' 
             : 'grid-cols-1'
         }`}
       >
@@ -86,7 +86,7 @@ export const MentorGrid = ({ mentors, loading, viewMode, onLoadMore, hasMore }: 
 
       {/* Loading More */}
       {loading && mentors.length > 0 && (
-        <div className="grid gap-6 mt-6 grid-cols-1 md:grid-cols-3">
+        <div className="grid gap-6 mt-6 items-stretch grid-cols-1 md:grid-cols-2">
           {Array.from({ length: 3 }).map((_, index) => (
             <div 
               key={index}
