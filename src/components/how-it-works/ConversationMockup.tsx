@@ -12,7 +12,7 @@ const ConversationMockup = () => {
       id: 1,
       type: 'received',
       sender: 'Dr. Sarah Chen',
-      message: "Hi Maria! I've reviewed your NBDE Part I results. You're doing great with operative dentistry, but let's focus on improving your oral pathology scores.",
+      message: "Hi Maria! I've reviewed your CV and SOP. Your experience is impressive, but let's strengthen your personal statement to better highlight your unique journey.",
       time: '2:14 PM',
       avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face'
     },
@@ -20,14 +20,14 @@ const ConversationMockup = () => {
       id: 2,
       type: 'sent',
       sender: 'You',
-      message: "Thank you Dr. Chen! I've been struggling with differentiating between various lesions. Could you help me with a study plan?",
+      message: "Thank you Dr. Chen! I've been struggling with how to present my international background. Could you help me with the application strategy?",
       time: '2:16 PM'
     },
     {
       id: 3,
       type: 'received',
       sender: 'Dr. Sarah Chen',
-      message: "Absolutely! I'll create a structured approach focusing on high-yield topics. We'll use visual cases and mnemonics that helped me during my residency at Harvard.",
+      message: "Absolutely! I'll help you craft a compelling narrative that showcases your strengths. We'll focus on schools that value diverse experiences like yours.",
       time: '2:18 PM',
       avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face'
     },
@@ -35,7 +35,7 @@ const ConversationMockup = () => {
       id: 4,
       type: 'received',
       sender: 'Dr. Sarah Chen',
-      message: "I'm also scheduling a mock exam session for next week. This will help identify any remaining knowledge gaps before your real exam.",
+      message: "I'm also scheduling a mock interview session for next week. This will help you practice common questions and build confidence for the real interviews.",
       time: '2:19 PM',
       avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face'
     },
@@ -43,7 +43,7 @@ const ConversationMockup = () => {
       id: 5,
       type: 'sent',
       sender: 'You',
-      message: "That sounds perfect! I really appreciate your personalized approach. It's so different from studying alone.",
+      message: "That sounds perfect! I really appreciate your personalized approach. It's so different from trying to figure everything out alone.",
       time: '2:21 PM'
     }
   ];
@@ -223,9 +223,9 @@ const ConversationMockup = () => {
                     <Phone className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-2">24/7 Availability</h4>
+                    <h4 className="font-semibold text-foreground mb-2">Flexible Scheduling</h4>
                     <p className="text-sm text-muted-foreground">
-                      Connect with mentors across different time zones whenever you need help
+                      Schedule sessions with mentors at times that work for both of you
                     </p>
                   </div>
                 </div>
@@ -234,8 +234,8 @@ const ConversationMockup = () => {
               {/* Success Quote */}
               <div className="bg-gradient-primary rounded-2xl p-6 text-white">
                 <blockquote className="text-lg font-medium mb-4">
-                  "The personalized feedback and constant encouragement from my mentor 
-                  made all the difference in my NBDE preparation."
+                  "The personalized CV review and mock interview sessions from my mentor 
+                  made all the difference in my dental school application success."
                 </blockquote>
                 <footer className="flex items-center gap-3">
                   <img
@@ -245,7 +245,7 @@ const ConversationMockup = () => {
                   />
                   <div>
                     <div className="font-semibold">Maria Rodriguez</div>
-                    <div className="text-white/80 text-sm">Passed NBDE Part I & II</div>
+                    <div className="text-white/80 text-sm">Accepted to Harvard Dental School</div>
                   </div>
                 </footer>
               </div>

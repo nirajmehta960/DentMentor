@@ -8,7 +8,7 @@ const SuccessMetrics = () => {
   const successRate = useCounterAnimation(85, 2500);
   const totalStudents = useCounterAnimation(1200, 3000);
   const mentors = useCounterAnimation(500, 2000);
-  const avgWeeks = useCounterAnimation(12, 1500);
+  const avgWeeks = useCounterAnimation(4, 1500);
   const countries = useCounterAnimation(45, 2800);
   const satisfaction = useCounterAnimation(98, 2200);
 
@@ -17,8 +17,8 @@ const SuccessMetrics = () => {
       ref: successRate.ref,
       value: successRate.count,
       suffix: '%',
-      title: 'NBDE Pass Rate',
-      description: 'First-time pass rate',
+      title: 'Application Success Rate',
+      description: 'Students accepted',
       icon: TrendingUp,
       color: 'primary'
     },
@@ -26,26 +26,26 @@ const SuccessMetrics = () => {
       ref: totalStudents.ref,
       value: totalStudents.count,
       suffix: '+',
-      title: 'Success Stories',
-      description: 'Graduates helped',
+      title: 'Students Guided',
+      description: 'Active mentorship',
       icon: Users,
       color: 'secondary'
     },
     {
       ref: mentors.ref,
-      value: mentors.count,
+      value: 15,
       suffix: '+',
-      title: 'Expert Mentors',
-      description: 'Verified professionals',
+      title: 'Verified Mentors',
+      description: 'Application experts',
       icon: Award,
       color: 'accent'
     },
     {
       ref: avgWeeks.ref,
       value: avgWeeks.count,
-      suffix: '',
-      title: 'Average Weeks',
-      description: 'To achieve goals',
+      suffix: '+',
+      title: 'Services Offered',
+      description: 'CV, Interview, SOP, Strategy',
       icon: Clock,
       color: 'primary'
     },
@@ -174,21 +174,21 @@ const SuccessMetrics = () => {
 
             <div className="relative z-10">
               <h3 className="text-3xl md:text-4xl font-bold mb-6">
-                🏆 Industry-Leading Success Rate
+                🏆 Industry-Leading Application Success Rate
               </h3>
               <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
-                Our comprehensive mentorship approach has achieved the highest success rates 
-                in the industry, with most students passing their exams on the first attempt.
+                Our personalized mentorship approach has helped students achieve outstanding 
+                application success rates, landing interviews and acceptances at top programs.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
                   <div className="text-2xl font-bold mb-2">85%</div>
-                  <div className="text-white/80">First-Time Pass Rate</div>
+                  <div className="text-white/80">Application Success Rate</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
                   <div className="text-2xl font-bold mb-2">95%</div>
-                  <div className="text-white/80">Career Placement</div>
+                  <div className="text-white/80">Interview Acceptance Rate</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
                   <div className="text-2xl font-bold mb-2">98%</div>
