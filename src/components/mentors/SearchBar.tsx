@@ -10,12 +10,23 @@ interface SearchBarProps {
 }
 
 const popularSearches = [
+  'India',
+  'Nepal',
+  'Boston University Henry M. Goldman School of Dental Medicine',
+  'Oral Surgery',
   'Orthodontics',
-  'NBDE Prep',
-  'Residency Applications',
-  'Board Preparation',
-  'Clinical Skills',
-  'Oral Surgery'
+  'General Dentistry',
+  'Endodontics',
+  'Periodontics',
+  'Pediatric Dentistry',
+  'Prosthodontics',
+  'Oral Pathology',
+  'NYU',
+  'Manipal College',
+  'MDS',
+  'BDS',
+  'DDS',
+  'DMD'
 ];
 
 export const SearchBar = ({ value, onChange, placeholder }: SearchBarProps) => {
@@ -100,7 +111,7 @@ export const SearchBar = ({ value, onChange, placeholder }: SearchBarProps) => {
 
       {/* Popular Searches Dropdown */}
       {showSuggestions && (
-        <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl border border-border z-50 overflow-hidden animate-slide-in-top">
+        <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl border border-border z-50 overflow-hidden">
           <div className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4 h-4 text-primary" />
@@ -108,12 +119,11 @@ export const SearchBar = ({ value, onChange, placeholder }: SearchBarProps) => {
             </div>
             
             <div className="flex flex-wrap gap-2">
-              {popularSearches.map((search, index) => (
+              {popularSearches.map((search) => (
                 <Badge
                   key={search}
                   variant="secondary"
-                  className="cursor-pointer hover:bg-primary hover:text-white transition-all duration-200 animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  className="cursor-pointer hover:bg-primary hover:text-white transition-colors duration-200"
                   onClick={() => handleSuggestionClick(search)}
                 >
                   {search}

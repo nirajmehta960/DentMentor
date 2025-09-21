@@ -1,28 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useMentors } from './useMentors';
-
-export interface Mentor {
-  id: string;
-  name: string;
-  specialty: string;
-  school: string;
-  experience: number;
-  rating: number;
-  reviews: number;
-  location: string;
-  avatar: string;
-  bio: string;
-  price: number;
-  languages: string[];
-  availability: 'available' | 'busy' | 'offline';
-  verified: boolean;
-  responseTime: string;
-  sessionCount: number;
-  tags: string[];
-  professionalHeadline?: string;
-  bachelorUniversity?: string | null;
-  dentalSchool?: string | null;
-}
+import { useMentors, Mentor } from './useMentors';
 
 export interface Filters {
   specialty: string[];
@@ -70,14 +47,21 @@ export const useMentorSearch = () => {
         const query = searchQuery.toLowerCase();
         const matchesSearch = 
           mentor.name.toLowerCase().includes(query) ||
-          mentor.specialty.toLowerCase().includes(query) ||
+          (mentor.speciality && mentor.speciality.toLowerCase().includes(query)) ||
+          (mentor.specialty && mentor.specialty.toLowerCase().includes(query)) ||
           mentor.location.toLowerCase().includes(query) ||
-          mentor.bio.toLowerCase().includes(query);
+          (mentor.usDentalSchool && mentor.usDentalSchool.toLowerCase().includes(query)) ||
+          (mentor.mdsSpecialization && mentor.mdsSpecialization.toLowerCase().includes(query)) ||
+          (mentor.mdsUniversity && mentor.mdsUniversity.toLowerCase().includes(query)) ||
+          (mentor.bdsUniversity && mentor.bdsUniversity.toLowerCase().includes(query)) ||
+          (mentor.professionalBio && mentor.professionalBio.toLowerCase().includes(query)) ||
+          (mentor.bio && mentor.bio.toLowerCase().includes(query)) ||
+          (mentor.professionalHeadline && mentor.professionalHeadline.toLowerCase().includes(query));
         if (!matchesSearch) return false;
       }
 
       // Specialty filter
-      if (filters.specialty.length > 0 && !filters.specialty.includes(mentor.specialty)) {
+      if (filters.specialty.length > 0 && !filters.specialty.includes(mentor.speciality || mentor.specialty)) {
         return false;
       }
 

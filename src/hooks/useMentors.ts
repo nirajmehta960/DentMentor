@@ -22,9 +22,27 @@ export interface Mentor {
   sessionCount: number;
   tags: string[];
   isProfileComplete?: boolean;
+  // Database schema fields
   professionalHeadline?: string;
+  professionalBio?: string;
+  usDentalSchool?: string | null;
+  mdsSpecialization?: string | null;
+  mdsUniversity?: string | null;
+  bdsUniversity?: string | null;
+  areasOfExpertise?: string[];
+  speciality?: string;
+  // Mentor services from mentor_services table
+  mentorServices?: Array<{
+    id: string;
+    service_title: string;
+    service_description?: string;
+    price: number;
+    duration_minutes: number;
+  }>;
+  // Legacy fields for backward compatibility
   bachelorUniversity?: string | null;
   dentalSchool?: string | null;
+  sessions?: number;
 }
 
 export interface MentorFilters {
@@ -66,7 +84,7 @@ export function useMentors() {
       let mentorsWithProfiles = [];
       if (mentorProfiles && mentorProfiles.length > 0) {
         
-        // Step 2: Get corresponding profile data for each mentor
+        // Step 2: Get corresponding profile data and services for each mentor
         mentorsWithProfiles = await Promise.all(
           mentorProfiles.map(async (mentorProfile) => {
             
@@ -77,6 +95,13 @@ export function useMentors() {
               .eq('user_id', mentorProfile.user_id)
               .eq('user_type', 'mentor')
               .single();
+
+            // Fetch mentor services
+            const { data: mentorServices, error: servicesError } = await supabase
+              .from('mentor_services')
+              .select('id, service_title, service_description, price, duration_minutes')
+              .eq('mentor_id', mentorProfile.id)
+              .eq('is_active', true);
 
 
             let fullName = 'Dr. Anonymous';
@@ -161,9 +186,21 @@ export function useMentors() {
               sessionCount: mentorProfile.total_sessions || 0,
               tags: mentorProfile.specializations || [specialty],
               isProfileComplete: true,
+              // Database schema fields
               professionalHeadline: mentorProfile.professional_headline || undefined,
+              professionalBio: mentorProfile.professional_bio || undefined,
+              usDentalSchool: mentorProfile.us_dental_school || null,
+              mdsSpecialization: mentorProfile.mds_specialization || null,
+              mdsUniversity: mentorProfile.mds_university || null,
+              bdsUniversity: mentorProfile.bds_university || null,
+              areasOfExpertise: mentorProfile.specializations || undefined,
+              speciality: mentorProfile.speciality || null,
+              // Mentor services
+              mentorServices: mentorServices || undefined,
+              // Legacy fields for backward compatibility
               bachelorUniversity: mentorProfile.bds_university || null,
-              dentalSchool: mentorProfile.us_dental_school || null
+              dentalSchool: mentorProfile.us_dental_school || null,
+              sessions: mentorProfile.total_sessions || 0
             };
           })
         );
@@ -203,9 +240,21 @@ export function useMentors() {
             sessionCount: 0,
             tags: ['General Dentistry'],
             isProfileComplete: false,
+            // Database schema fields - all null for incomplete profiles
             professionalHeadline: undefined,
+            professionalBio: undefined,
+            usDentalSchool: null,
+            mdsSpecialization: null,
+            mdsUniversity: null,
+            bdsUniversity: null,
+            areasOfExpertise: undefined,
+            speciality: null,
+            // Mentor services - empty for incomplete profiles
+            mentorServices: undefined,
+            // Legacy fields for backward compatibility
             bachelorUniversity: null,
-            dentalSchool: null
+            dentalSchool: null,
+            sessions: 0
           }));
         }
       }
