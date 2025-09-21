@@ -9,24 +9,24 @@ const HeroSection = () => {
   return (
     <section 
       ref={heroRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20"
     >
       {/* Parallax Background Elements */}
       <div className="absolute inset-0">
         <div 
-          className="absolute top-20 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl"
+          className="absolute top-20 left-10 w-64 h-64 bg-white/30 rounded-full blur-3xl"
           style={{ 
             transform: `translateY(${scrollProgress * 0.3}px) rotate(${scrollProgress * 0.5}deg)` 
           }}
         ></div>
         <div 
-          className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+          className="absolute bottom-20 right-10 w-96 h-96 bg-accent/30 rounded-full blur-3xl"
           style={{ 
             transform: `translateY(-${scrollProgress * 0.5}px) rotate(-${scrollProgress * 0.3}deg)` 
           }}
         ></div>
         <div 
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white/20 rounded-full blur-3xl"
           style={{ 
             transform: `translate(-50%, -50%) scale(${1 + scrollProgress * 0.001})` 
           }}

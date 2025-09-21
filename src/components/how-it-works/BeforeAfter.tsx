@@ -1,6 +1,7 @@
 import { ArrowRight, X, Check, AlertCircle, Target } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const BeforeAfter = () => {
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ threshold: 0.1 });
@@ -112,7 +113,7 @@ const BeforeAfter = () => {
                 <div
                   key={index}
                   className={`scroll-animate-left ${sectionVisible ? 'animate-in' : ''} 
-                    p-8 bg-background rounded-3xl border-2 border-destructive/20 relative group`}
+                    p-8 bg-background rounded-3xl border-2 border-destructive/20 relative group hover:border-destructive/40 hover:shadow-lg transition-all duration-300`}
                   style={{ transitionDelay: `${index * 150}ms` }}
                 >
                   {/* Negative Indicator */}
@@ -153,7 +154,7 @@ const BeforeAfter = () => {
                 <div
                   key={index}
                   className={`scroll-animate-right ${sectionVisible ? 'animate-in' : ''} 
-                    p-8 bg-background rounded-3xl border-2 border-primary/20 relative group hover:border-primary/40 transition-colors`}
+                    p-8 bg-background rounded-3xl border-2 border-primary/20 relative group hover:border-primary/40 hover:shadow-lg transition-all duration-300`}
                   style={{ transitionDelay: `${index * 150}ms` }}
                 >
                   {/* Positive Indicator */}
@@ -187,26 +188,26 @@ const BeforeAfter = () => {
 
         {/* Transformation Arrow */}
         <div className={`flex justify-center mt-12 scroll-animate ${sectionVisible ? 'animate-in' : ''}`} style={{ transitionDelay: '600ms' }}>
-          <div className="flex items-center gap-4 p-4 bg-gradient-primary rounded-2xl text-white">
+          <Link to="/auth" className="flex items-center gap-4 p-4 bg-gradient-primary rounded-2xl text-white hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer">
             <span className="font-semibold">Transform Your Journey</span>
             <ArrowRight className="w-6 h-6" />
-          </div>
+          </Link>
         </div>
 
-        {/* Success Stats */}
+        {/* Key Benefits */}
         <div className={`mt-16 scroll-animate ${sectionVisible ? 'animate-in' : ''}`} style={{ transitionDelay: '800ms' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">87%</div>
-              <div className="text-muted-foreground">Application Success Rate</div>
+              <div className="text-4xl font-bold text-primary mb-2">4</div>
+              <div className="text-muted-foreground">Core Services</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-secondary mb-2">6</div>
-              <div className="text-muted-foreground">Month Application Cycle</div>
+              <div className="text-4xl font-bold text-secondary mb-2">15+</div>
+              <div className="text-muted-foreground">Verified Mentors</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-accent mb-2">94%</div>
-              <div className="text-muted-foreground">Mentor Satisfaction Rate</div>
+              <div className="text-4xl font-bold text-accent mb-2">1:1</div>
+              <div className="text-muted-foreground">Personalized Guidance</div>
             </div>
           </div>
         </div>

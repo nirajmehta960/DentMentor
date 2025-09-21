@@ -5,20 +5,20 @@ const SuccessMetrics = () => {
   const { ref: sectionRef, isVisible: sectionVisible } = useScrollAnimation({ threshold: 0.1 });
   
   // Counter animations for key metrics
-  const successRate = useCounterAnimation(85, 2500);
-  const totalStudents = useCounterAnimation(1200, 3000);
-  const mentors = useCounterAnimation(500, 2000);
+  const successRate = useCounterAnimation(15, 2500);
+  const totalStudents = useCounterAnimation(50, 3000);
+  const mentors = useCounterAnimation(15, 2000);
   const avgWeeks = useCounterAnimation(4, 1500);
-  const countries = useCounterAnimation(45, 2800);
-  const satisfaction = useCounterAnimation(98, 2200);
+  const countries = useCounterAnimation(8, 2800);
+  const satisfaction = useCounterAnimation(95, 2200);
 
   const metrics = [
     {
       ref: successRate.ref,
       value: successRate.count,
-      suffix: '%',
-      title: 'Application Success Rate',
-      description: 'Students accepted',
+      suffix: '+',
+      title: 'Active Students',
+      description: 'Currently mentoring',
       icon: TrendingUp,
       color: 'primary'
     },
@@ -26,8 +26,8 @@ const SuccessMetrics = () => {
       ref: totalStudents.ref,
       value: totalStudents.count,
       suffix: '+',
-      title: 'Students Guided',
-      description: 'Active mentorship',
+      title: 'Students Helped',
+      description: 'Total mentored',
       icon: Users,
       color: 'secondary'
     },
@@ -43,8 +43,8 @@ const SuccessMetrics = () => {
     {
       ref: avgWeeks.ref,
       value: avgWeeks.count,
-      suffix: '+',
-      title: 'Services Offered',
+      suffix: '',
+      title: 'Core Services',
       description: 'CV, Interview, SOP, Strategy',
       icon: Clock,
       color: 'primary'
@@ -54,7 +54,7 @@ const SuccessMetrics = () => {
       value: countries.count,
       suffix: '+',
       title: 'Countries',
-      description: 'Students served',
+      description: 'Students from',
       icon: Globe,
       color: 'secondary'
     },
@@ -62,8 +62,8 @@ const SuccessMetrics = () => {
       ref: satisfaction.ref,
       value: satisfaction.count,
       suffix: '%',
-      title: 'Satisfaction',
-      description: 'Student rating',
+      title: 'Platform Rating',
+      description: 'User satisfaction',
       icon: Star,
       color: 'accent'
     }
@@ -82,11 +82,11 @@ const SuccessMetrics = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-primary mb-6">
-            Proven Results That Speak
+            Our Platform at a Glance
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Real numbers from real students who've transformed their careers through 
-            DentMentor's comprehensive mentorship program.
+            Building a community of dental professionals dedicated to helping 
+            international students achieve their dreams in U.S. dental programs.
           </p>
         </div>
 

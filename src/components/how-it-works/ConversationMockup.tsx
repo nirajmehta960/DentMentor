@@ -72,7 +72,7 @@ const ConversationMockup = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-primary mb-6">
-            Real Mentorship in Action
+            Live Mentorship Experience
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Experience the personalized guidance and support that makes DentMentor different. 
@@ -99,13 +99,13 @@ const ConversationMockup = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <button className="p-2 hover:bg-white/20 hover:scale-110 rounded-lg transition-all duration-200">
                       <Video className="w-5 h-5" />
                     </button>
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <button className="p-2 hover:bg-white/20 hover:scale-110 rounded-lg transition-all duration-200">
                       <Phone className="w-5 h-5" />
                     </button>
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <button className="p-2 hover:bg-white/20 hover:scale-110 rounded-lg transition-all duration-200">
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                   </div>
@@ -174,7 +174,7 @@ const ConversationMockup = () => {
                       className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
                       disabled
                     />
-                    <button className="p-2 bg-gradient-primary text-white rounded-xl hover:shadow-medium transition-all">
+                    <button className="p-2 bg-gradient-primary text-white rounded-xl hover:shadow-lg hover:scale-110 transition-all duration-200">
                       <Send className="w-4 h-4" />
                     </button>
                   </div>

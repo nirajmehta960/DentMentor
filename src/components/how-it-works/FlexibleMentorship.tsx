@@ -9,21 +9,21 @@ const FlexibleMentorship = () => {
   const focusAreas = [
     {
       icon: Target,
-      title: 'Application Strategy Sessions',
-      description: 'One-on-one guidance tailored to your specific goals',
-      details: ['Dental school applications', 'Residency matching', 'Career transitions', 'Personalized roadmap based on your background']
+      title: 'Application Strategy',
+      description: 'Personalized guidance for your dental school application journey',
+      details: ['School selection strategy', 'Timeline planning', 'Application optimization', 'Goal setting']
     },
     {
       icon: Users,
-      title: 'Profile Optimization Sessions',
-      description: 'Transform your application materials for maximum impact',
-      details: ['SOP and personal statement refinement', 'Resume and CV enhancement', 'Application portfolio review', 'Professional narrative development']
+      title: 'Document Review',
+      description: 'Professional feedback on your application materials',
+      details: ['CV/Resume review', 'Personal statement feedback', 'Application essay guidance', 'Portfolio optimization']
     },
     {
       icon: Star,
-      title: 'Interview Mastery Sessions',
-      description: 'Build confidence and excel in your interviews',
-      details: ['Mock interviews with real-time feedback', 'Behavioral question preparation', 'Communication skills development', 'Confidence building techniques']
+      title: 'Interview Preparation',
+      description: 'Build confidence for dental school interviews',
+      details: ['Mock interview sessions', 'Question preparation', 'Communication skills', 'Confidence building']
     }
   ];
 
@@ -92,16 +92,20 @@ const FlexibleMentorship = () => {
               return (
                 <div
                   key={index}
-                  className={`card-hover rounded-3xl p-8 scroll-animate ${sectionVisible ? 'animate-in' : ''}`}
+                  className={`card-hover rounded-3xl p-8 scroll-animate ${sectionVisible ? 'animate-in' : ''} group relative overflow-hidden`}
                   style={{ transitionDelay: `${index * 150}ms` }}
                 >
-                  <div className="flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-6">
-                    <Icon className="w-8 h-8 text-white" />
-                  </div>
+                  {/* Background Gradient */}
+                  <div className="absolute inset-0 bg-gradient-primary opacity-5 group-hover:opacity-10 transition-opacity"></div>
                   
-                  <h4 className="text-xl font-bold text-foreground mb-4">
-                    {area.title}
-                  </h4>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-6 group-hover:scale-110 transition-transform">
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+                    
+                    <h4 className="text-xl font-bold text-foreground mb-4 group-hover:scale-105 transition-transform">
+                      {area.title}
+                    </h4>
                   
                   <p className="text-muted-foreground mb-6">
                     {area.description}
@@ -115,6 +119,7 @@ const FlexibleMentorship = () => {
                       </li>
                     ))}
                   </ul>
+                  </div>
                 </div>
               );
             })}
@@ -133,35 +138,40 @@ const FlexibleMentorship = () => {
               return (
                 <div
                   key={index}
-                  className={`card-hover rounded-3xl p-8 text-center relative overflow-hidden scroll-animate ${sectionVisible ? 'animate-in' : ''} ${
+                  className={`card-hover rounded-3xl p-8 text-center relative overflow-hidden scroll-animate ${sectionVisible ? 'animate-in' : ''} group ${
                     session.popular ? 'ring-2 ring-primary/20 shadow-large' : ''
                   }`}
                   style={{ transitionDelay: `${(index + 3) * 150}ms` }}
                 >
+                  {/* Background Gradient */}
+                  <div className={`absolute inset-0 bg-gradient-${index % 2 === 0 ? 'secondary' : 'accent'} opacity-5 group-hover:opacity-10 transition-opacity`}></div>
+                  
                   {session.popular && (
-                    <div className="absolute top-4 right-4 bg-gradient-primary text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    <div className="absolute top-4 right-4 bg-gradient-primary text-white px-3 py-1 rounded-full text-sm font-semibold z-20">
                       🔥 Most Popular
                     </div>
                   )}
                   
-                  <div className={`flex items-center justify-center w-16 h-16 bg-gradient-${index % 2 === 0 ? 'secondary' : 'accent'} rounded-2xl mb-6 mx-auto`}>
-                    <Icon className="w-8 h-8 text-white" />
-                  </div>
-                  
-                  <h4 className="text-xl font-bold text-foreground mb-2">
-                    {session.title}
-                  </h4>
+                  <div className="relative z-10">
+                    <div className={`flex items-center justify-center w-16 h-16 bg-gradient-${index % 2 === 0 ? 'secondary' : 'accent'} rounded-2xl mb-6 mx-auto group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+                    
+                    <h4 className="text-xl font-bold text-foreground mb-2 group-hover:scale-105 transition-transform">
+                      {session.title}
+                    </h4>
                   
                   <p className="text-muted-foreground mb-4">
                     {session.subtitle}
                   </p>
                   
-                  <div className="text-2xl font-bold text-primary mb-2">
-                    {session.price}
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    {session.duration}
+                    <div className="text-2xl font-bold text-primary mb-2">
+                      {session.price}
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">
+                      {session.duration}
+                    </div>
                   </div>
                 </div>
               );
@@ -169,10 +179,10 @@ const FlexibleMentorship = () => {
           </div>
         </div>
 
-        {/* Success Stories */}
+        {/* Success Journey */}
         <div className="mb-20">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-primary mb-4">🏆 Success Happens at Your Pace</h3>
+            <h3 className="text-3xl font-bold text-primary mb-4">🏆 Your Success Journey</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -183,7 +193,7 @@ const FlexibleMentorship = () => {
                 style={{ transitionDelay: `${(index + 6) * 150}ms` }}
               >
                 <div className="text-lg font-semibold text-primary mb-4">
-                  {story.timeframe} Success Stories
+                  {story.timeframe}
                 </div>
                 
                 <blockquote className="text-muted-foreground italic text-lg">
@@ -233,7 +243,7 @@ const FlexibleMentorship = () => {
           
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Book your first session today and get personalized guidance from verified mentors 
-            who've helped hundreds of students succeed.
+            who understand the dental school application process.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-3xl mx-auto text-left">
