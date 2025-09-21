@@ -16,8 +16,8 @@ export function WelcomeBar() {
       mentorProfile.professional_bio,
       mentorProfile.specializations?.length,
       mentorProfile.hourly_rate,
-      mentorProfile.bachelor_university,
-      mentorProfile.dental_school,
+      mentorProfile.bds_university,
+      mentorProfile.us_dental_school,
       mentorProfile.profile_photo_url
     ];
     

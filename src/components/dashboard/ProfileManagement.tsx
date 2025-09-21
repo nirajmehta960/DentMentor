@@ -104,8 +104,8 @@ export function ProfileManagement() {
 
   // Determine current status based on education
   const getCurrentStatus = () => {
-    if (mentorProfile?.dental_school) {
-      return `Graduate from ${mentorProfile.dental_school}`;
+    if (mentorProfile?.us_dental_school) {
+      return `Graduate from ${mentorProfile.us_dental_school}`;
     }
     return 'Current Student';
   };

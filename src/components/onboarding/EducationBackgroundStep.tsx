@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,17 @@ interface EducationBackgroundStepProps {
   onNext: (data: any) => void;
   onPrevious: () => void;
 }
+
+const mdsSpecializationOptions = [
+  'General Dentistry',
+  'Orthodontics',
+  'Oral Surgery',
+  'Periodontics',
+  'Endodontics',
+  'Pediatric Dentistry',
+  'Prosthodontics',
+  'Oral Pathology'
+];
 
 const usDentalSchools = [
   'A.T. Still University - Arizona School of Dentistry & Oral Health',
@@ -74,40 +85,55 @@ const usDentalSchools = [
 
 export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationBackgroundStepProps) => {
   const [formData, setFormData] = useState({
-    bachelor_university: data?.bachelor_university || '',
-    bachelor_graduation_year: data?.bachelor_graduation_year || '',
-    masters_university: data?.masters_university || '',
-    master_graduation_year: data?.master_graduation_year || '',
-    dental_school: data?.dental_school || '',
-    dental_school_graduation_year: data?.dental_school_graduation_year || '',
+    bds_university: data?.bds_university || '',
+    bds_graduation_year: data?.bds_graduation_year || '',
+    mds_university: data?.mds_university || '',
+    mds_graduation_year: data?.mds_graduation_year || '',
+    mds_specialization: data?.mds_specialization || '',
+    us_dental_school: data?.us_dental_school || '',
+    us_dental_school_graduation_year: data?.us_dental_school_graduation_year || '',
     current_status: data?.current_status || ''
   });
 
   const { toast } = useToast();
 
+  // Update form data when data prop changes (for edit mode)
+  useEffect(() => {
+    setFormData({
+      bds_university: data?.bds_university || '',
+      bds_graduation_year: data?.bds_graduation_year || '',
+      mds_university: data?.mds_university || '',
+      mds_graduation_year: data?.mds_graduation_year || '',
+      mds_specialization: data?.mds_specialization || '',
+      us_dental_school: data?.us_dental_school || '',
+      us_dental_school_graduation_year: data?.us_dental_school_graduation_year || '',
+      current_status: data?.current_status || ''
+    });
+  }, [data]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.bachelor_university.trim()) {
+    if (!formData.bds_university.trim()) {
       toast({
-        title: "Bachelor's university required",
-        description: "Please enter your bachelor's university.",
+        title: "BDS university required",
+        description: "Please enter your BDS university.",
         variant: "destructive"
       });
       return;
     }
 
-    if (!formData.bachelor_graduation_year) {
+    if (!formData.bds_graduation_year) {
       toast({
-        title: "Bachelor's graduation year required",
-        description: "Please enter your bachelor's graduation year.",
+        title: "BDS graduation year required",
+        description: "Please enter your BDS graduation year.",
         variant: "destructive"
       });
       return;
     }
 
-    if (!formData.dental_school) {
+    if (!formData.us_dental_school) {
       toast({
         title: "US dental school required",
         description: "Please select your US dental school.",
@@ -116,7 +142,7 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
       return;
     }
 
-    if (!formData.dental_school_graduation_year) {
+    if (!formData.us_dental_school_graduation_year) {
       toast({
         title: "Dental school graduation year required",
         description: "Please enter your dental school graduation year.",
@@ -137,8 +163,9 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
     // Clean up the data before sending - convert empty strings to null for optional fields
     const cleanedData = {
       ...formData,
-      masters_university: formData.masters_university.trim() || null,
-      master_graduation_year: formData.master_graduation_year || null
+      mds_university: formData.mds_university.trim() || null,
+      mds_graduation_year: formData.mds_graduation_year || null,
+      mds_specialization: formData.mds_specialization.trim() || null
     };
 
     onNext(cleanedData);
@@ -158,23 +185,23 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Bachelor's University */}
+        {/* BDS University */}
         <div className="space-y-2">
-          <Label htmlFor="bachelor-university">Bachelor's University *</Label>
+          <Label htmlFor="bds-university">BDS University *</Label>
           <Input
-            id="bachelor-university"
+            id="bds-university"
             placeholder="e.g., University of Mumbai, University of Cairo"
-            value={formData.bachelor_university}
-            onChange={(e) => setFormData(prev => ({ ...prev, bachelor_university: e.target.value }))}
+            value={formData.bds_university}
+            onChange={(e) => setFormData(prev => ({ ...prev, bds_university: e.target.value }))}
           />
         </div>
 
-        {/* Bachelor's Graduation Year */}
+        {/* BDS Graduation Year */}
         <div className="space-y-2">
-          <Label htmlFor="bachelor-year">Bachelor's Graduation Year *</Label>
+          <Label htmlFor="bds-year">BDS Graduation Year *</Label>
           <Select
-            value={formData.bachelor_graduation_year.toString()}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, bachelor_graduation_year: parseInt(value) }))}
+            value={formData.bds_graduation_year.toString()}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, bds_graduation_year: parseInt(value) }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select graduation year" />
@@ -189,23 +216,23 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
           </Select>
         </div>
 
-        {/* Master's University */}
+        {/* MDS University */}
         <div className="space-y-2">
-          <Label htmlFor="masters-university">Master's University</Label>
+          <Label htmlFor="mds-university">MDS University</Label>
           <Input
-            id="masters-university"
+            id="mds-university"
             placeholder="e.g., University of Mumbai, University of Cairo"
-            value={formData.masters_university}
-            onChange={(e) => setFormData(prev => ({ ...prev, masters_university: e.target.value }))}
+            value={formData.mds_university}
+            onChange={(e) => setFormData(prev => ({ ...prev, mds_university: e.target.value }))}
           />
         </div>
 
-        {/* Master's Graduation Year */}
+        {/* MDS Graduation Year */}
         <div className="space-y-2">
-          <Label htmlFor="master-year">Master's Graduation Year</Label>
+          <Label htmlFor="mds-year">MDS Graduation Year</Label>
           <Select
-            value={formData.master_graduation_year.toString()}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, master_graduation_year: parseInt(value) }))}
+            value={formData.mds_graduation_year.toString()}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, mds_graduation_year: parseInt(value) }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select graduation year" />
@@ -214,6 +241,26 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
               {years.map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* MDS Specialization */}
+        <div className="space-y-2">
+          <Label htmlFor="mds-specialization">MDS Specialization</Label>
+          <Select
+            value={formData.mds_specialization}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, mds_specialization: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select your MDS specialization" />
+            </SelectTrigger>
+            <SelectContent>
+              {mdsSpecializationOptions.map((specialization) => (
+                <SelectItem key={specialization} value={specialization}>
+                  {specialization}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -224,8 +271,8 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
         <div className="space-y-2">
           <Label htmlFor="dental-school">US Dental School *</Label>
           <Select
-            value={formData.dental_school}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, dental_school: value }))}
+            value={formData.us_dental_school}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, us_dental_school: value }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select your US dental school" />
@@ -244,8 +291,8 @@ export const EducationBackgroundStep = ({ data, onNext, onPrevious }: EducationB
         <div className="space-y-2">
           <Label htmlFor="dental-year">US Dental School Graduation Year / Expected *</Label>
           <Select
-            value={formData.dental_school_graduation_year.toString()}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, dental_school_graduation_year: parseInt(value) }))}
+            value={formData.us_dental_school_graduation_year.toString()}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, us_dental_school_graduation_year: parseInt(value) }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select graduation year" />

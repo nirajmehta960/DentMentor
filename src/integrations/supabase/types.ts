@@ -225,14 +225,17 @@ export type Database = {
           admission_letter_url: string | null
           availability_preference: string | null
           average_rating: number | null
-          bachelor_graduation_year: number | null
-          bachelor_university: string | null
+          bds_graduation_year: number | null
+          bds_university: string | null
+          mds_graduation_year: number | null
+          mds_specialization: string | null
+          mds_university: string | null
           country_of_origin: string | null
           created_at: string
           current_status: string | null
           degree_certificate_url: string | null
-          dental_school: string | null
-          dental_school_graduation_year: number | null
+          us_dental_school: string | null
+          us_dental_school_graduation_year: number | null
           hourly_rate: number | null
           id: string
           is_active: boolean | null
@@ -258,14 +261,17 @@ export type Database = {
           admission_letter_url?: string | null
           availability_preference?: string | null
           average_rating?: number | null
-          bachelor_graduation_year?: number | null
-          bachelor_university?: string | null
+          bds_graduation_year?: number | null
+          bds_university?: string | null
           country_of_origin?: string | null
           created_at?: string
           current_status?: string | null
           degree_certificate_url?: string | null
-          dental_school?: string | null
-          dental_school_graduation_year?: number | null
+          mds_graduation_year?: number | null
+          mds_specialization?: string | null
+          mds_university?: string | null
+          us_dental_school?: string | null
+          us_dental_school_graduation_year?: number | null
           hourly_rate?: number | null
           id?: string
           is_active?: boolean | null
@@ -291,14 +297,17 @@ export type Database = {
           admission_letter_url?: string | null
           availability_preference?: string | null
           average_rating?: number | null
-          bachelor_graduation_year?: number | null
-          bachelor_university?: string | null
+          bds_graduation_year?: number | null
+          bds_university?: string | null
           country_of_origin?: string | null
           created_at?: string
           current_status?: string | null
           degree_certificate_url?: string | null
-          dental_school?: string | null
-          dental_school_graduation_year?: number | null
+          mds_graduation_year?: number | null
+          mds_specialization?: string | null
+          mds_university?: string | null
+          us_dental_school?: string | null
+          us_dental_school_graduation_year?: number | null
           hourly_rate?: number | null
           id?: string
           is_active?: boolean | null
@@ -806,33 +815,60 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          amount_cents: number | null
           created_at: string
+          currency: string | null
           description: string | null
           id: string
+          mentee_id: string | null
           mentor_id: string
+          metadata: Json | null
+          payment_intent_id: string | null
+          processed_at: string | null
           reference_id: string | null
           session_id: string | null
+          status: string | null
+          stripe_transaction_id: string | null
           transaction_type: string
+          updated_at: string
         }
         Insert: {
           amount: number
+          amount_cents?: number | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
+          mentee_id?: string | null
           mentor_id: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          processed_at?: string | null
           reference_id?: string | null
           session_id?: string | null
+          status?: string | null
+          stripe_transaction_id?: string | null
           transaction_type: string
+          updated_at?: string
         }
         Update: {
           amount?: number
+          amount_cents?: number | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
+          mentee_id?: string | null
           mentor_id?: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          processed_at?: string | null
           reference_id?: string | null
           session_id?: string | null
+          status?: string | null
+          stripe_transaction_id?: string | null
           transaction_type?: string
+          updated_at?: string
         }
         Relationships: [
           {

@@ -121,8 +121,8 @@ export function useMentors() {
 
             // Determine school from professional data
             let school = 'Dental School';
-            if (mentorProfile.dental_school) {
-              school = mentorProfile.dental_school;
+            if (mentorProfile.us_dental_school) {
+              school = mentorProfile.us_dental_school;
             } else if (mentorProfile.professional_headline) {
               // Extract school from headline like "DDS @ NYU" or "DMD @ BU"
               const headline = mentorProfile.professional_headline;
@@ -162,8 +162,8 @@ export function useMentors() {
               tags: mentorProfile.specializations || [specialty],
               isProfileComplete: true,
               professionalHeadline: mentorProfile.professional_headline || undefined,
-              bachelorUniversity: mentorProfile.bachelor_university || null,
-              dentalSchool: mentorProfile.dental_school || null
+              bachelorUniversity: mentorProfile.bds_university || null,
+              dentalSchool: mentorProfile.us_dental_school || null
             };
           })
         );

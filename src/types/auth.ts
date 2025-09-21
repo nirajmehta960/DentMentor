@@ -22,10 +22,13 @@ export interface MentorProfile {
   professional_headline: string | null;
   professional_bio: string | null;
   years_experience: number | null;
-  bachelor_university: string | null;
-  bachelor_graduation_year: number | null;
-  dental_school: string | null;
-  dental_school_graduation_year: number | null;
+  bds_university: string | null;
+  bds_graduation_year: number | null;
+  mds_university: string | null;
+  mds_graduation_year: number | null;
+  mds_specialization: string | null;
+  us_dental_school: string | null;
+  us_dental_school_graduation_year: number | null;
   current_status: string | null;
   country_of_origin: string | null;
   specializations: string[] | null;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -103,6 +103,17 @@ export const SpecialtiesLanguagesStep = ({ data, onNext, onPrevious }: Specialti
   const [customSpecialty, setCustomSpecialty] = useState('');
   const [customLanguage, setCustomLanguage] = useState('');
   const { toast } = useToast();
+
+  // Update form data when data prop changes (for edit mode)
+  useEffect(() => {
+    setFormData({
+      areas_of_expertise: data?.areas_of_expertise || [],
+      speciality: data?.speciality || '',
+      languages_spoken: data?.languages_spoken || [],
+      hourly_rate: data?.hourly_rate || '',
+      availability_preference: data?.availability_preference || ''
+    });
+  }, [data]);
 
   const addSpecialty = (specialty: string) => {
     if (specialty && !formData.areas_of_expertise.includes(specialty)) {

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -173,6 +173,15 @@ export const VerificationStep = ({ data, onNext, onPrevious, onSkip }: Verificat
 
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+
+  // Update uploads when data prop changes (for edit mode)
+  useEffect(() => {
+    setUploads({
+      degree_certificate_url: data?.degree_certificate_url || null,
+      admission_letter_url: data?.admission_letter_url || null,
+      student_id_url: data?.student_id_url || null
+    });
+  }, [data]);
 
   const handleFileUpload = (field: string, file: UploadedFile) => {
     setUploads(prev => ({ ...prev, [field]: file.url }));

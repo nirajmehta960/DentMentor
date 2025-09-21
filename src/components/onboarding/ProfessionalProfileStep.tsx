@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +39,20 @@ export const ProfessionalProfileStep = ({ data, onNext, onPrevious }: Profession
   const [photoPreview, setPhotoPreview] = useState(data?.profile_photo_url || '');
   const [showImageCropper, setShowImageCropper] = useState(false);
   const { toast } = useToast();
+
+  // Update form data when data prop changes (for edit mode)
+  useEffect(() => {
+    setFormData({
+      profile_photo_url: data?.profile_photo_url || '',
+      professional_headline: data?.professional_headline || '',
+      professional_bio: data?.professional_bio || '',
+      country_of_origin: data?.country_of_origin || '',
+      years_experience: data?.years_experience || '',
+      linkedin_url: data?.linkedin_url || '',
+      email: data?.email || ''
+    });
+    setPhotoPreview(data?.profile_photo_url || '');
+  }, [data]);
 
   const handleImageSaved = async (croppedImage: string) => {
     try {
