@@ -30,7 +30,7 @@ const ProcessSteps = () => {
       icon: Video,
       title: 'Get Expert Guidance',
       description: 'Receive personalized mentorship across all aspects of your dental school application journey.',
-      features: ['CV/Resume Review', 'Mock Interview Sessions', 'SOP Review & Feedback', 'Application Strategy Consultation'],
+      features: ['Personalized mentorship', 'Application strategy', 'Interview preparation', 'Document review'],
       delay: 300
     },
     {
@@ -118,7 +118,7 @@ const ProcessSteps = () => {
                   style={{ transitionDelay: `${step.delay + 200}ms` }}
                 >
                   <div className="relative">
-                    <div className={`w-full h-80 bg-gradient-${index % 2 === 0 ? 'primary' : index % 3 === 1 ? 'secondary' : 'accent'} rounded-3xl flex items-center justify-center relative overflow-hidden group`}>
+                    <div className={`w-full h-80 bg-gradient-${index % 2 === 0 ? 'primary' : index % 3 === 1 ? 'secondary' : 'accent'} rounded-3xl flex items-center justify-center relative overflow-hidden group hover:scale-105 hover:shadow-2xl transition-all duration-300`}>
                       <Icon className="w-32 h-32 text-white/20 absolute" />
                       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
                       

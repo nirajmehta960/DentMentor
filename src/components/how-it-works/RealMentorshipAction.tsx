@@ -7,59 +7,59 @@ const RealMentorshipAction = () => {
   const mentorshipAreas = [
     {
       icon: FileText,
-      title: 'Personal Statement Excellence',
-      description: 'Transform your story into a compelling narrative that stands out',
+      title: 'Personal Statement Review',
+      description: 'Professional feedback on your application essays and personal statements',
       features: [
-        'One-on-one writing workshops with dental professionals',
-        'Multiple draft reviews and personalized feedback',
-        'Storytelling techniques that highlight your unique journey',
-        'School-specific customization for each application'
+        'One-on-one writing guidance',
+        'Multiple draft reviews',
+        'Storytelling techniques',
+        'School-specific customization'
       ],
       color: 'primary'
     },
     {
       icon: MessageSquare,
-      title: 'Interview Mastery Program',
-      description: 'Build confidence and excel in dental school interviews',
+      title: 'Interview Preparation',
+      description: 'Mock interviews and confidence building for dental school interviews',
       features: [
-        'Mock interviews with current dental students and faculty',
-        'Real-time feedback on communication and presentation',
-        'Question banks specific to dental school interviews',
-        'Body language and confidence coaching'
+        'Mock interview sessions',
+        'Real-time feedback',
+        'Question preparation',
+        'Communication coaching'
       ],
       color: 'secondary'
     },
     {
       icon: Target,
-      title: 'Strategic School Selection',
-      description: 'Choose the right dental schools to maximize your acceptance chances',
+      title: 'Application Strategy',
+      description: 'Strategic guidance for school selection and application planning',
       features: [
-        'In-depth analysis of school requirements and preferences',
-        'GPA and DAT score evaluation for realistic target schools',
-        'Geographic and specialty preference optimization',
-        'Application timeline and deadline management'
+        'School requirement analysis',
+        'Application timeline planning',
+        'Goal setting and optimization',
+        'Deadline management'
       ],
       color: 'accent'
     },
     {
       icon: Award,
-      title: 'Research & Experience Guidance',
-      description: 'Build a competitive profile with meaningful experiences',
+      title: 'CV/Resume Enhancement',
+      description: 'Professional review and optimization of your application materials',
       features: [
-        'Research opportunity identification and application help',
-        'Shadowing experience coordination and documentation',
-        'Volunteer work strategizing for maximum impact',
-        'Leadership role development and positioning'
+        'Document structure review',
+        'Experience highlighting',
+        'Skills optimization',
+        'Professional presentation'
       ],
       color: 'primary'
     }
   ];
 
-  const successMetrics = [
-    { metric: '95%', label: 'of our mentees get accepted to their top 3 dental school choices' },
-    { metric: '87%', label: 'receive interviews from 5+ dental schools' },
-    { metric: '3.2x', label: 'higher acceptance rate compared to national average' },
-    { metric: '92%', label: 'satisfaction rate with mentor matching and guidance' }
+  const platformFeatures = [
+    { metric: '15+', label: 'Verified dental professionals ready to mentor you' },
+    { metric: '4', label: 'Core services covering your entire application journey' },
+    { metric: '1:1', label: 'Personalized mentorship sessions tailored to your needs' },
+    { metric: '24/7', label: 'Access to platform resources and mentor communication' }
   ];
 
   return (
@@ -67,9 +67,9 @@ const RealMentorshipAction = () => {
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-3 mb-6 bg-gradient-primary rounded-2xl px-6 py-3">
+          <div className="inline-flex items-center gap-3 mb-6 bg-gradient-primary rounded-2xl px-6 py-3 hover:shadow-lg hover:scale-105 transition-all duration-300">
             <GraduationCap className="w-6 h-6 text-white" />
-            <span className="text-white font-semibold">Real Mentorship in Action</span>
+            <span className="text-white font-semibold">Admission Guidance Services</span>
           </div>
           
           <h2 className="text-4xl md:text-5xl font-bold text-primary mb-6">
@@ -89,16 +89,20 @@ const RealMentorshipAction = () => {
             return (
               <div
                 key={index}
-                className={`card-hover rounded-3xl p-8 scroll-animate ${sectionVisible ? 'animate-in' : ''}`}
+                className={`card-hover rounded-3xl p-8 scroll-animate ${sectionVisible ? 'animate-in' : ''} group relative overflow-hidden`}
                 style={{ transitionDelay: `${index * 150}ms` }}
               >
-                <div className={`flex items-center justify-center w-16 h-16 bg-gradient-${area.color} rounded-2xl mb-6`}>
-                  <Icon className="w-8 h-8 text-white" />
-                </div>
+                {/* Background Gradient */}
+                <div className={`absolute inset-0 bg-gradient-${area.color} opacity-5 group-hover:opacity-10 transition-opacity`}></div>
                 
-                <h3 className="text-2xl font-bold text-foreground mb-4">
-                  {area.title}
-                </h3>
+                <div className="relative z-10">
+                  <div className={`flex items-center justify-center w-16 h-16 bg-gradient-${area.color} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
+                    <Icon className="w-8 h-8 text-white" />
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-foreground mb-4 group-hover:scale-105 transition-transform">
+                    {area.title}
+                  </h3>
                 
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
                   {area.description}
@@ -112,25 +116,26 @@ const RealMentorshipAction = () => {
                     </li>
                   ))}
                 </ul>
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Success Metrics */}
+        {/* Platform Features */}
         <div className={`scroll-animate ${sectionVisible ? 'animate-in' : ''}`} style={{ transitionDelay: '600ms' }}>
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold text-primary mb-4">
-              Proven Results That Speak for Themselves
+              Why Choose DentMentor
             </h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our mentors don't just provide advice—they deliver measurable results 
-              that transform your dental school application success.
+              Our platform connects you with experienced dental professionals 
+              who understand the application process and are committed to your success.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {successMetrics.map((item, index) => (
+            {platformFeatures.map((item, index) => (
               <div
                 key={index}
                 className="text-center p-6 card-hover rounded-2xl group"
@@ -157,11 +162,11 @@ const RealMentorshipAction = () => {
               — Dr. Sarah Martinez, Harvard School of Dental Medicine, Class of 2019
             </p>
             <div className="flex items-center justify-center gap-8 text-sm font-medium opacity-90">
-              <div>15+ Partner Dental Schools</div>
+              <div>15+ Verified Mentors</div>
               <div>•</div>
-              <div>50+ Verified Mentors</div>
+              <div>4 Core Services</div>
               <div>•</div>
-              <div>500+ Success Stories</div>
+              <div>Growing Community</div>
             </div>
           </div>
         </div>
