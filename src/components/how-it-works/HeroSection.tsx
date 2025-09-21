@@ -55,8 +55,8 @@ const HeroSection = () => {
 
           {/* Subtitle */}
           <p className={`text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed scroll-animate stagger-4 ${heroVisible ? 'animate-in' : ''}`}>
-            From international dental graduate to successful U.S. practitioner in 4 simple steps.
-            Join thousands who've transformed their careers with expert mentorship.
+            From international dental graduate to successful U.S. applications in 4 simple steps.
+            Get personalized mentorship for CV review, mock interviews, SOP feedback, and application strategy.
           </p>
 
           {/* Progress Indicator */}

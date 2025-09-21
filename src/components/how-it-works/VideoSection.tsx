@@ -20,15 +20,15 @@ const VideoSection = () => {
   const testimonials = [
     {
       name: 'Dr. Ahmed Hassan',
-      role: 'Recent NBDE Graduate',
+      role: 'Dental School Graduate',
       image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=80&h=80&fit=crop&crop=face',
-      quote: 'DentMentor completely transformed my approach to studying.'
+      quote: 'DentMentor completely transformed my application strategy.'
     },
     {
       name: 'Dr. Priya Patel',
       role: 'Orthodontics Resident',
       image: 'https://images.unsplash.com/photo-1594824804732-ca8db7045948?w=80&h=80&fit=crop&crop=face',
-      quote: 'The mentorship was exactly what I needed to succeed.'
+      quote: 'The CV review and mock interviews were exactly what I needed to succeed.'
     },
     {
       name: 'Dr. Maria Rodriguez',
@@ -213,10 +213,10 @@ const VideoSection = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
-              { title: 'NBDE Preparation', count: 15, color: 'primary' },
-              { title: 'Residency Match', count: 12, color: 'secondary' },
-              { title: 'Career Guidance', count: 18, color: 'accent' },
-              { title: 'Practice Setup', count: 8, color: 'primary' }
+              { title: 'CV Review', count: 15, color: 'primary' },
+              { title: 'Mock Interviews', count: 12, color: 'secondary' },
+              { title: 'SOP Review', count: 18, color: 'accent' },
+              { title: 'Application Strategy', count: 8, color: 'primary' }
             ].map((category, index) => (
               <div
                 key={index}

@@ -9,54 +9,54 @@ const BeforeAfter = () => {
   const beforeScenarios = [
     {
       icon: X,
-      title: 'Uncertain Path Forward',
-      description: 'Overwhelmed by complex licensing requirements and unclear next steps',
+      title: 'Overwhelming Application Process',
+      description: 'Confused by complex dental school requirements and application timelines',
       emotion: 'Confused & Stressed'
     },
     {
       icon: AlertCircle,
-      title: 'Isolated Learning',
-      description: 'Studying alone without guidance from experienced professionals',
-      emotion: 'Lonely & Unmotivated'
+      title: 'Generic Application Materials',
+      description: 'Personal statements and resumes that fail to stand out from thousands of applicants',
+      emotion: 'Uncertain & Generic'
     },
     {
       icon: X,
-      title: 'Limited Network',
-      description: 'No connections in the U.S. dental community or understanding of the system',
+      title: 'Limited Dental School Insights',
+      description: 'No connections to dental schools or understanding of what admissions committees want',
       emotion: 'Disconnected'
     },
     {
       icon: AlertCircle,
-      title: 'Exam Anxiety',
-      description: 'Multiple failed attempts at NBDE with decreasing confidence',
-      emotion: 'Defeated & Anxious'
+      title: 'Interview Anxiety',
+      description: 'Unprepared for dental school interviews with no feedback or practice',
+      emotion: 'Nervous & Unprepared'
     }
   ];
 
   const afterScenarios = [
     {
       icon: Check,
-      title: 'Clear Success Roadmap',
-      description: 'Structured path with mentor guidance and milestone tracking',
-      emotion: 'Confident & Focused'
+      title: 'Strategic Application Plan',
+      description: 'Clear roadmap with personalized timeline and school selection strategy',
+      emotion: 'Confident & Organized'
     },
     {
       icon: Target,
-      title: 'Expert Mentorship',
-      description: 'Regular 1-on-1 sessions with verified U.S. dental professionals',
-      emotion: 'Supported & Guided'
+      title: 'Compelling Application Materials',
+      description: 'Standout personal statements and resumes crafted with professional guidance',
+      emotion: 'Distinctive & Polished'
     },
     {
       icon: Check,
-      title: 'Professional Network',
-      description: 'Connected to a community of successful dentists and peers',
-      emotion: 'Connected & Inspired'
+      title: 'Insider Dental School Knowledge',
+      description: 'Direct insights from dental professionals and recent graduates',
+      emotion: 'Informed & Strategic'
     },
     {
       icon: Target,
-      title: 'Exam Confidence',
-      description: 'Prepared with proven strategies and practice materials',
-      emotion: 'Ready & Confident'
+      title: 'Interview Mastery',
+      description: 'Confident interview performance with extensive practice and feedback',
+      emotion: 'Prepared & Confident'
     }
   ];
 
@@ -69,8 +69,8 @@ const BeforeAfter = () => {
             The Transformation Journey
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            See how DentMentor transforms the international dental graduate experience 
-            from uncertainty to success.
+            See how DentMentor transforms your dental school application journey 
+            from overwhelming to organized, generic to compelling.
           </p>
         </div>
 
@@ -197,16 +197,16 @@ const BeforeAfter = () => {
         <div className={`mt-16 scroll-animate ${sectionVisible ? 'animate-in' : ''}`} style={{ transitionDelay: '800ms' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">85%</div>
-              <div className="text-muted-foreground">Pass NBDE on First Attempt</div>
+              <div className="text-4xl font-bold text-primary mb-2">87%</div>
+              <div className="text-muted-foreground">Application Success Rate</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-secondary mb-2">12</div>
-              <div className="text-muted-foreground">Average Weeks to Success</div>
+              <div className="text-4xl font-bold text-secondary mb-2">6</div>
+              <div className="text-muted-foreground">Month Application Cycle</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-accent mb-2">95%</div>
-              <div className="text-muted-foreground">Career Satisfaction Rate</div>
+              <div className="text-4xl font-bold text-accent mb-2">94%</div>
+              <div className="text-muted-foreground">Mentor Satisfaction Rate</div>
             </div>
           </div>
         </div>

@@ -13,32 +13,32 @@ const ProcessSteps = () => {
       number: 1,
       icon: Search,
       title: 'Find Your Perfect Mentor',
-      description: 'Browse verified mentors from top U.S. dental schools. Filter by specialty, experience, and availability.',
-      features: ['500+ verified mentors', 'Detailed profiles', 'Specialty matching'],
+      description: 'Browse verified mentors with dental school application expertise from top U.S. programs.',
+      features: ['15+ verified mentors', 'Application specialists', 'Proven admission success'],
       delay: 100
     },
     {
       number: 2,
       icon: CalendarCheck,
       title: 'Book Your Session',
-      description: 'Schedule flexible 1-on-1 sessions that fit your timezone and learning goals.',
-      features: ['Flexible scheduling', 'Multiple time zones', 'Easy rebooking'],
+      description: 'Schedule flexible 1-on-1 sessions focused on your specific application needs and timeline.',
+      features: ['Flexible scheduling', 'Multiple time zones', 'Application-focused'],
       delay: 200
     },
     {
       number: 3,
       icon: Video,
-      title: 'Learn & Grow',
-      description: 'Connect via high-quality video calls for personalized guidance, NBDE prep, and career advice.',
-      features: ['HD video calls', 'Screen sharing', 'Session recordings'],
+      title: 'Get Expert Guidance',
+      description: 'Receive personalized mentorship across all aspects of your dental school application journey.',
+      features: ['CV/Resume Review', 'Mock Interview Sessions', 'SOP Review & Feedback', 'Application Strategy Consultation'],
       delay: 300
     },
     {
       number: 4,
       icon: Trophy,
       title: 'Achieve Success',
-      description: 'Track your progress, celebrate milestones, and launch your successful U.S. dental career.',
-      features: ['Progress tracking', 'Milestone rewards', 'Career placement'],
+      description: 'Land interviews, get accepted to dental school, and start your successful journey in U.S. dentistry.',
+      features: ['Interview success', 'School acceptance', 'Career guidance'],
       delay: 400
     }
   ];
@@ -46,29 +46,22 @@ const ProcessSteps = () => {
   const supportFeatures = [
     { icon: UserCheck, label: 'Verified Mentors' },
     { icon: CreditCard, label: 'Secure Payment' },
-    { icon: MessageCircle, label: '24/7 Support' },
+    { icon: MessageCircle, label: 'Direct Communication' },
     { icon: Target, label: 'Goal Tracking' }
   ];
 
   return (
     <section ref={sectionRef} className="py-20 bg-muted/30 relative overflow-hidden">
-      {/* Animated Timeline Line */}
-      <div ref={timelineRef} className="absolute left-1/2 transform -translate-x-1/2 w-1 bg-muted-foreground/20 top-0 bottom-0 hidden lg:block">
-        <div 
-          className="w-full bg-gradient-primary transition-all duration-300 ease-out"
-          style={{ height: `${timelineProgress}%` }}
-        />
-      </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-20">
           <h2 className="text-4xl md:text-5xl font-bold text-primary mb-6">
             Your Journey to Success
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            A proven 4-step process that has helped over 1,200 international dental graduates 
-            achieve their dreams of practicing dentistry in the United States.
+            A proven 4-step process that helps international dental graduates 
+            successfully navigate U.S. dental school and residency applications.
           </p>
         </div>
 
