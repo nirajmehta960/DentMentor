@@ -7,22 +7,22 @@ const requirements = [
   {
     id: 1,
     icon: GraduationCap,
-    title: 'U.S. Dental School Graduate',
-    description: 'Must be a graduate from an accredited U.S. dental school',
+    title: 'U.S. Dental School Graduate or Current Student',
+    description: 'Must be a graduate from or currently enrolled in an accredited U.S. dental school',
     category: 'Education'
   },
   {
     id: 2,
     icon: Shield,
-    title: 'Active U.S. Dental License',
-    description: 'Current and valid dental license in the United States',
+    title: 'Active U.S. Dental License (or Current Student)',
+    description: 'Current and valid dental license in the United States (or currently enrolled student)',
     category: 'Licensing'
   },
   {
     id: 3,
     icon: Clock,
-    title: 'Minimum 3 Years Experience',
-    description: 'At least 3 years of professional dental practice experience',
+    title: 'Professional Experience or Academic Standing',
+    description: 'At least 3 years of professional dental practice experience or strong academic standing for current students',
     category: 'Experience'
   },
   {
@@ -110,8 +110,8 @@ export const RequirementsChecklist = () => {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" style={{ gridTemplateRows: 'repeat(2, 1fr)' }}>
             {requirements.map((requirement, index) => {
               const IconComponent = requirement.icon;
               const isChecked = checkedItems.includes(requirement.id);
@@ -119,96 +119,55 @@ export const RequirementsChecklist = () => {
               return (
                 <div
                   key={requirement.id}
-                  className={`requirement-item cursor-pointer group transition-all duration-700 ${
-                    isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-                  }`}
-                  style={{ transitionDelay: `${index * 100}ms` }}
+                  className={`card-hover rounded-3xl p-8 scroll-animate ${isVisible ? 'animate-in' : ''} group relative overflow-hidden cursor-pointer border border-muted/30 hover:border-muted/50 transition-all duration-300 h-full flex flex-col`}
+                  style={{ transitionDelay: `${index * 150}ms` }}
                   onClick={() => handleItemClick(requirement.id)}
                 >
-                  <div className={`relative p-6 rounded-2xl border-2 transition-all duration-300 ${
-                    isChecked 
-                      ? 'bg-green-50 border-green-200 shadow-lg scale-[1.02]' 
-                      : 'bg-white border-border hover:border-primary/30 hover:shadow-md'
-                  }`}>
-                    {/* Check Animation */}
-                    <div className="absolute top-4 right-4">
-                      {isChecked ? (
-                        <CheckCircle className="w-6 h-6 text-green-500 animate-scale-in" />
-                      ) : (
-                        <Circle className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="pr-10">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                          isChecked 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'
-                        }`}>
-                          <IconComponent className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h3 className={`font-semibold text-lg transition-colors ${
-                            isChecked ? 'text-green-700' : 'text-foreground'
-                          }`}>
-                            {requirement.title}
-                          </h3>
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full transition-colors ${
-                            isChecked 
-                              ? 'bg-green-100 text-green-600'
-                              : 'bg-muted text-muted-foreground'
-                          }`}>
-                            {requirement.category}
-                          </span>
-                        </div>
+                  {/* Background Gradient */}
+                  <div className={`absolute inset-0 bg-gradient-${index % 2 === 0 ? 'primary' : index % 3 === 1 ? 'secondary' : 'accent'} opacity-5 group-hover:opacity-10 transition-opacity`}></div>
+                  
+                  {/* Subtle Inner Border */}
+                  <div className="absolute inset-4 rounded-2xl border border-white/20 group-hover:border-white/40 transition-colors duration-300"></div>
+                  
+                  {/* Check Animation */}
+                  <div className="absolute top-6 right-6">
+                    {isChecked ? (
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <CheckCircle className="w-5 h-5 text-white" />
                       </div>
-                      
-                      <p className={`text-sm leading-relaxed transition-colors ${
-                        isChecked ? 'text-green-600' : 'text-muted-foreground'
-                      }`}>
-                        {requirement.description}
-                      </p>
-                    </div>
-
-                    {/* Completion Effect */}
-                    {isChecked && (
-                      <div className="absolute inset-0 rounded-2xl bg-green-500/5 animate-pulse pointer-events-none" />
+                    ) : (
+                      <div className="w-8 h-8 border-2 border-muted-foreground/30 rounded-full flex items-center justify-center group-hover:border-primary group-hover:scale-110 transition-all duration-300">
+                        <Circle className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
                     )}
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className={`flex items-center justify-center w-16 h-16 bg-gradient-${index % 2 === 0 ? 'primary' : index % 3 === 1 ? 'secondary' : 'accent'} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
+                      <IconComponent className="w-8 h-8 text-white" />
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-foreground mb-4 group-hover:scale-105 transition-transform">
+                      {requirement.title}
+                    </h3>
+                    
+                    <p className="text-muted-foreground leading-relaxed mb-4 flex-grow">
+                      {requirement.description}
+                    </p>
+                    
+                    <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                      isChecked 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-primary/10 text-primary'
+                    }`}>
+                      {requirement.category}
+                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Completion Message */}
-          {completedCount === requirements.length && (
-            <div className="text-center mt-12 p-8 bg-green-50 rounded-3xl border-2 border-green-200 animate-fade-in">
-              <div className="text-6xl mb-4">🎉</div>
-              <h3 className="text-2xl font-bold text-green-700 mb-2">
-                Great! You meet all requirements
-              </h3>
-              <p className="text-green-600 mb-6">
-                You're ready to start your mentor application process.
-              </p>
-              <Button size="lg" className="bg-green-600 hover:bg-green-700">
-                Start Application
-              </Button>
-            </div>
-          )}
-
-          {/* Partial Completion Encouragement */}
-          {completedCount > 0 && completedCount < requirements.length && (
-            <div className="text-center mt-12 p-6 bg-primary/5 rounded-2xl border border-primary/20">
-              <h3 className="text-lg font-semibold text-primary mb-2">
-                You're {Math.round(progressPercentage)}% there!
-              </h3>
-              <p className="text-muted-foreground">
-                Keep going to see if you meet all our mentor requirements.
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </section>

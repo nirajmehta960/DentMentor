@@ -5,8 +5,8 @@ const benefits = [
   {
     icon: DollarSign,
     title: 'Earn Meaningful Income',
-    description: 'Average $150+ per hour with flexible scheduling that works around your practice.',
-    value: '$150+/hr',
+    description: 'Average $120+ per hour with flexible scheduling that works around your practice.',
+    value: '$120+/hr',
     color: 'text-green-500'
   },
   {
@@ -20,21 +20,21 @@ const benefits = [
     icon: Heart,
     title: 'Make a Difference',
     description: 'Help international dental graduates navigate their career journey successfully.',
-    value: '98% Success',
+    value: '95% Rating',
     color: 'text-red-500'
   },
   {
     icon: TrendingUp,
     title: 'Growing Demand',
     description: 'Join a rapidly expanding platform with increasing demand for quality mentors.',
-    value: '300% Growth',
+    value: '50+ Students',
     color: 'text-purple-500'
   },
   {
     icon: Users,
     title: 'Build Network',
     description: 'Connect with fellow professionals and expand your dental network globally.',
-    value: '500+ Mentors',
+    value: '15+ Mentors',
     color: 'text-orange-500'
   },
   {
@@ -123,9 +123,9 @@ export const BenefitCards = () => {
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
           <div className="inline-flex items-center gap-4 bg-white rounded-2xl p-6 shadow-medium">
-            <div className="text-4xl font-bold text-primary">500+</div>
+            <div className="text-4xl font-bold text-primary">15+</div>
             <div className="text-left">
-              <div className="font-semibold text-foreground">Active Mentors</div>
+              <div className="font-semibold text-foreground">Verified Mentors</div>
               <div className="text-sm text-muted-foreground">Join our growing community</div>
             </div>
           </div>

@@ -44,7 +44,7 @@ const SuccessMetrics = () => {
       ref: avgWeeks.ref,
       value: avgWeeks.count,
       suffix: '',
-      title: 'Core Services',
+      title: '4+ Core Services',
       description: 'CV, Interview, SOP, Strategy',
       icon: Clock,
       color: 'primary'

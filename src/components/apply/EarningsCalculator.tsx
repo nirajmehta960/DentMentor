@@ -7,10 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const experienceLevels = [
-  { value: '1-3', label: '1-3 years', rate: 120 },
-  { value: '4-7', label: '4-7 years', rate: 150 },
-  { value: '8-12', label: '8-12 years', rate: 180 },
-  { value: '13+', label: '13+ years', rate: 220 }
+  { value: '1-3', label: '1-3 years', rate: 100 },
+  { value: '4-7', label: '4-7 years', rate: 120 },
+  { value: '8-12', label: '8-12 years', rate: 150 },
+  { value: '13+', label: '13+ years', rate: 180 }
 ];
 
 const specialtyRates = [
@@ -34,7 +34,7 @@ export const EarningsCalculator = () => {
   const yearlyEarnings = useCounterAnimation(calculatedEarnings * 52, 1500);
 
   useEffect(() => {
-    const baseRate = experienceLevels.find(level => level.value === experience)?.rate || 150;
+    const baseRate = experienceLevels.find(level => level.value === experience)?.rate || 120;
     const specialtyMultiplier = specialtyRates.find(spec => spec.value === specialty)?.multiplier || 1.0;
     const hourlyRate = baseRate * specialtyMultiplier;
     const weekly = hourlyRate * hoursPerWeek[0];
@@ -43,7 +43,7 @@ export const EarningsCalculator = () => {
   }, [hoursPerWeek, experience, specialty]);
 
   const currentHourlyRate = (() => {
-    const baseRate = experienceLevels.find(level => level.value === experience)?.rate || 150;
+    const baseRate = experienceLevels.find(level => level.value === experience)?.rate || 120;
     const specialtyMultiplier = specialtyRates.find(spec => spec.value === specialty)?.multiplier || 1.0;
     return Math.round(baseRate * specialtyMultiplier);
   })();
@@ -65,12 +65,12 @@ export const EarningsCalculator = () => {
         </div>
 
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
             {/* Calculator Controls */}
             <div className={`space-y-8 transition-all duration-1000 delay-300 ${
               isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
             }`}>
-              <Card className="border-2 border-primary/20">
+              <Card className="border-2 border-primary/20 h-full flex flex-col">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calculator className="w-5 h-5 text-primary" />
@@ -80,9 +80,10 @@ export const EarningsCalculator = () => {
                     Adjust the parameters below to see your potential earnings
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Hours per Week */}
-                  <div>
+                <CardContent className="flex-grow flex flex-col justify-between">
+                  <div className="space-y-6">
+                    {/* Hours per Week */}
+                    <div>
                     <div className="flex items-center justify-between mb-4">
                       <label className="text-sm font-medium text-foreground">
                         Hours per Week
@@ -94,14 +95,14 @@ export const EarningsCalculator = () => {
                     <Slider
                       value={hoursPerWeek}
                       onValueChange={setHoursPerWeek}
-                      max={40}
-                      min={5}
+                      max={10}
+                      min={1}
                       step={1}
                       className="w-full"
                     />
                     <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                      <span>5 hours</span>
-                      <span>40 hours</span>
+                      <span>1 hour</span>
+                      <span>10 hours</span>
                     </div>
                   </div>
 
@@ -141,10 +142,11 @@ export const EarningsCalculator = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    </div>
                   </div>
 
                   {/* Current Rate Display */}
-                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
+                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 mt-6">
                     <div className="flex items-center gap-2 mb-2">
                       <DollarSign className="w-5 h-5 text-primary" />
                       <span className="font-medium text-foreground">Your Hourly Rate</span>
@@ -162,14 +164,14 @@ export const EarningsCalculator = () => {
               isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
             }`}>
               {/* Weekly Earnings */}
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer group">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                       <Clock className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-green-700">Weekly Earnings</h3>
+                      <h3 className="text-lg font-semibold text-green-700 group-hover:scale-105 transition-transform duration-300">Weekly Earnings</h3>
                       <p className="text-green-600">Based on {hoursPerWeek[0]} hours/week</p>
                     </div>
                   </div>
@@ -180,14 +182,14 @@ export const EarningsCalculator = () => {
               </Card>
 
               {/* Monthly Earnings */}
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer group">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                       <TrendingUp className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-blue-700">Monthly Earnings</h3>
+                      <h3 className="text-lg font-semibold text-blue-700 group-hover:scale-105 transition-transform duration-300">Monthly Earnings</h3>
                       <p className="text-blue-600">Consistent monthly income</p>
                     </div>
                   </div>
@@ -198,14 +200,14 @@ export const EarningsCalculator = () => {
               </Card>
 
               {/* Yearly Earnings */}
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer group">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                       <DollarSign className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-purple-700">Annual Potential</h3>
+                      <h3 className="text-lg font-semibold text-purple-700 group-hover:scale-105 transition-transform duration-300">Annual Potential</h3>
                       <p className="text-purple-600">Total yearly earnings</p>
                     </div>
                   </div>
@@ -214,41 +216,9 @@ export const EarningsCalculator = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Additional Benefits */}
-              <div className="p-6 bg-accent/10 rounded-2xl border border-accent/20">
-                <h4 className="font-semibold text-foreground mb-4">Additional Benefits</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-accent rounded-full" />
-                    Flexible schedule - work when you want
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-accent rounded-full" />
-                    Work from anywhere with internet
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-accent rounded-full" />
-                    Build your professional network
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-accent rounded-full" />
-                    Make a meaningful impact
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
 
-          {/* Disclaimer */}
-          <div className={`text-center mt-12 transition-all duration-1000 delay-700 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}>
-            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-              * Earnings estimates are based on current platform averages and may vary depending on demand, 
-              mentor rating, and actual hours worked. All figures shown are gross earnings before taxes.
-            </p>
-          </div>
         </div>
       </div>
     </section>

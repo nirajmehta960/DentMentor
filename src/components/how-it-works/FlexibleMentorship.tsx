@@ -1,4 +1,4 @@
-import { Target, Calendar, Package, Users, CheckCircle, Star, Clock, ArrowRight } from 'lucide-react';
+import { Target, Calendar, Package, Users, CheckCircle, Star, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 import { Link } from 'react-router-dom';
@@ -52,18 +52,6 @@ const FlexibleMentorship = () => {
       price: '$2,500-3,500',
       popular: false
     }
-  ];
-
-  const successStories = [
-    { timeframe: 'Week 1-2', story: '"Got my personal statement reviewed and completely transformed my application narrative"', type: 'Early Stage Success' },
-    { timeframe: '1-2 Months', story: '"Landed 5 dental school interviews after optimizing my applications with my mentor"', type: 'Application Success' },
-    { timeframe: '6 Months', story: '"Accepted to my top choice dental school with scholarship!"', type: 'Final Success' }
-  ];
-
-  const whyItWorks = [
-    { wrong: 'Generic application advice that doesn\'t fit your background', right: 'Personalized guidance tailored to your unique dental journey' },
-    { wrong: 'Expensive consulting firms with rigid 12-month contracts', right: 'Flexible mentorship packages that fit your timeline and budget' },
-    { wrong: 'Outdated application strategies from non-dental professionals', right: 'Current insights from practicing dentists and recent graduates' }
   ];
 
   return (
@@ -179,61 +167,6 @@ const FlexibleMentorship = () => {
           </div>
         </div>
 
-        {/* Success Journey */}
-        <div className="mb-20">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-primary mb-4">🏆 Your Success Journey</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {successStories.map((story, index) => (
-              <div
-                key={index}
-                className={`card-hover rounded-3xl p-8 text-center scroll-animate ${sectionVisible ? 'animate-in' : ''}`}
-                style={{ transitionDelay: `${(index + 6) * 150}ms` }}
-              >
-                <div className="text-lg font-semibold text-primary mb-4">
-                  {story.timeframe}
-                </div>
-                
-                <blockquote className="text-muted-foreground italic text-lg">
-                  {story.story}
-                </blockquote>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Why Our Approach Works */}
-        <div className="mb-16">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-primary mb-4">💡 Why Our Flexible Approach Works Better</h3>
-          </div>
-          
-          <div className="space-y-6 max-w-4xl mx-auto">
-            {whyItWorks.map((item, index) => (
-              <div
-                key={index}
-                className={`flex items-center gap-6 p-6 card-hover rounded-2xl scroll-animate ${sectionVisible ? 'animate-in' : ''}`}
-                style={{ transitionDelay: `${(index + 9) * 150}ms` }}
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-2">
-                    <span className="text-red-500 font-semibold">❌ Not This:</span>
-                    <span className="text-muted-foreground">{item.wrong}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-green-500 font-semibold">✅ But This:</span>
-                    <span className="text-foreground font-medium">{item.right}</span>
-                  </div>
-                </div>
-                
-                <ArrowRight className="w-6 h-6 text-primary" />
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Call to Action */}
         <div className={`text-center bg-gradient-primary rounded-3xl p-8 md:p-12 text-white scroll-animate ${sectionVisible ? 'animate-in' : ''}`} 
              style={{ transitionDelay: '1200ms' }}>
@@ -247,14 +180,14 @@ const FlexibleMentorship = () => {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-3xl mx-auto text-left">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-              <div className="font-semibold mb-2">Choose from 15+ verified mentors</div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <div className="font-semibold mb-2 group-hover:scale-105 transition-transform">Choose from 15+ verified mentors</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-              <div className="font-semibold mb-2">Flexible scheduling that works with your timeline</div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <div className="font-semibold mb-2 group-hover:scale-105 transition-transform">Flexible scheduling that works with your timeline</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-              <div className="font-semibold mb-2">Satisfaction guaranteed or your money back</div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <div className="font-semibold mb-2 group-hover:scale-105 transition-transform">Satisfaction guaranteed or your money back</div>
             </div>
           </div>
 

@@ -194,23 +194,6 @@ const BeforeAfter = () => {
           </Link>
         </div>
 
-        {/* Key Benefits */}
-        <div className={`mt-16 scroll-animate ${sectionVisible ? 'animate-in' : ''}`} style={{ transitionDelay: '800ms' }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2">4</div>
-              <div className="text-muted-foreground">Core Services</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-secondary mb-2">15+</div>
-              <div className="text-muted-foreground">Verified Mentors</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-accent mb-2">1:1</div>
-              <div className="text-muted-foreground">Personalized Guidance</div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
