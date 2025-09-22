@@ -1,15 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  MapPin,
   Loader2,
-  Calendar as CalendarIcon,
-  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -19,7 +15,9 @@ import {
   type TimeSlotData,
 } from "@/lib/api/booking";
 import { type Service } from "@/lib/supabase/booking";
-import { getUserTimezone, formatTimeForDisplay } from "@/lib/utils/booking";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { TimezoneSelector } from "./TimezoneSelector";
 
 interface AvailabilityCalendarProps {
   mentorId: string;
@@ -42,20 +40,6 @@ interface CalendarDay {
 }
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 const TimeSlotButton: React.FC<{
   slot: TimeSlotData;
@@ -88,22 +72,22 @@ const TimeSlotButton: React.FC<{
       : null;
 
   return (
-    <Button
-      variant={isSelected ? "default" : "outline"}
-      size="sm"
-      className={`flex-col h-auto p-3 transition-all duration-200 ${
-        isSelected
-          ? "bg-primary text-white shadow-md"
-          : "hover:bg-primary/5 hover:border-primary/50"
-      } ${!slot.is_available ? "opacity-50 cursor-not-allowed" : ""}`}
+    <button
       onClick={onSelect}
       disabled={!slot.is_available}
+      className={cn(
+        "w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-center",
+        isSelected
+          ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+          : "bg-background border border-border hover:border-primary hover:bg-primary/5 text-foreground",
+        !slot.is_available && "opacity-50 cursor-not-allowed"
+      )}
     >
       <div className="font-medium">{mentorTime}</div>
       {userTime && (
-        <div className="text-xs opacity-75">{userTime} (your time)</div>
+        <div className="text-xs opacity-75 mt-0.5">{userTime} (your time)</div>
       )}
-    </Button>
+    </button>
   );
 };
 
@@ -139,18 +123,10 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userTimezone, setUserTimezone] = useState("UTC");
+  const [userTimezone, setUserTimezone] = useState(() => 
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
   const { toast } = useToast();
-
-  // Detect user timezone
-  useEffect(() => {
-    try {
-      const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      setUserTimezone(detected);
-    } catch {
-      setUserTimezone("UTC");
-    }
-  }, []);
 
   // Load availability when month changes
   useEffect(() => {
@@ -198,7 +174,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     }
   }, [mentorId, currentDate, toast]);
 
-  const generateCalendarDays = (): CalendarDay[] => {
+  const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
@@ -232,7 +208,11 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     }
 
     return days;
-  };
+  }, [currentDate, availability, selectedDate]);
+
+  const firstDayOfMonth = useMemo(() => {
+    return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+  }, [currentDate]);
 
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate((prev) => {
@@ -244,6 +224,20 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       }
       return newDate;
     });
+  };
+
+  const getSlotCount = (dateString: string) => {
+    const dayAvailability = availability[dateString];
+    if (!dayAvailability) return 0;
+    return dayAvailability.slots?.filter((slot) => slot.is_available).length || 0;
+  };
+
+  const isDateInPast = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    return date < today;
   };
 
   const handleDateSelect = (day: CalendarDay) => {
@@ -267,62 +261,6 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     }
   };
 
-  const getDateAvailabilityColor = (day: CalendarDay) => {
-    if (!day.isCurrentMonth) return "text-gray-400";
-    if (day.isSelected) return "text-white font-semibold";
-    if (day.isToday && day.availableSlots > 0)
-      return "text-emerald-800 font-bold";
-    if (day.isToday) return "text-gray-700 font-semibold";
-
-    // Color based on availability level
-    const totalPossibleSlots = 6;
-    const availabilityRatio = day.availableSlots / totalPossibleSlots;
-
-    if (availabilityRatio >= 0.8)
-      return "text-emerald-700 font-semibold hover:text-emerald-800";
-    if (availabilityRatio >= 0.4)
-      return "text-teal-700 font-medium hover:text-teal-800";
-    if (availabilityRatio > 0) return "text-teal-600 hover:text-teal-700";
-
-    return "text-gray-400";
-  };
-
-  const getDateBackgroundColor = (day: CalendarDay) => {
-    if (!day.isCurrentMonth) return "bg-gray-50";
-    if (day.isSelected) return "bg-teal-600 hover:bg-teal-700"; // Selected (dark teal)
-    if (day.availableSlots === 0) return "bg-gray-200 cursor-not-allowed"; // Unavailable (gray)
-
-    // Available dates with different teal shades based on availability
-    const totalPossibleSlots = 6; // Assuming max 6 slots per day
-    const availabilityRatio = day.availableSlots / totalPossibleSlots;
-
-    if (availabilityRatio >= 0.8) {
-      return "bg-emerald-100 hover:bg-emerald-200 border-emerald-300"; // Fully available (light green)
-    } else if (availabilityRatio >= 0.4) {
-      return "bg-teal-100 hover:bg-teal-200 border-teal-300"; // Partially booked (teal)
-    } else if (availabilityRatio > 0) {
-      return "bg-teal-50 hover:bg-teal-100 border-teal-200"; // Few slots left (light teal)
-    }
-
-    return "bg-gray-200"; // No availability
-  };
-
-  const getDateBorderColor = (day: CalendarDay) => {
-    if (!day.isCurrentMonth) return "border-gray-200";
-    if (day.isSelected) return "border-teal-600";
-    if (day.availableSlots === 0) return "border-gray-300";
-
-    const totalPossibleSlots = 6;
-    const availabilityRatio = day.availableSlots / totalPossibleSlots;
-
-    if (availabilityRatio >= 0.8) return "border-emerald-300";
-    if (availabilityRatio >= 0.4) return "border-teal-300";
-    if (availabilityRatio > 0) return "border-teal-200";
-
-    return "border-gray-200";
-  };
-
-  const calendarDays = generateCalendarDays();
   const selectedDayAvailability = selectedDate
     ? availability[selectedDate]
     : null;
@@ -351,7 +289,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -366,252 +304,215 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="text-xl font-semibold mb-2">Select Date & Time</h2>
-        <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <MapPin className="w-4 h-4" />
-            <span>
-              {mentorName}'s timezone: {mentorTimezone}
-            </span>
-          </div>
-          {userTimezone !== mentorTimezone && (
+    <div className="space-y-4">
+      <div className="text-center mb-2">
+        <h3 className="text-xl font-semibold text-foreground">Select a Date & Time</h3>
+      </div>
+
+      {/* Calendly-style layout: Calendar + Time slots side by side */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Calendar Section */}
+        <div className="flex-1 bg-card rounded-xl border border-border/50 p-4">
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-semibold text-foreground">
+              {format(currentDate, 'MMMM yyyy')}
+            </h4>
             <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>Your timezone: {userTimezone}</span>
+              <button
+                onClick={() => navigateMonth("prev")}
+                className="p-2 rounded-lg hover:bg-accent transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => navigateMonth("next")}
+                className="p-2 rounded-lg hover:bg-accent transition-colors"
+              >
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Calendar */}
-      <div className="space-y-4">
-        {/* Calendar Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">
-            {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </h3>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigateMonth("prev")}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigateMonth("next")}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
           </div>
-        </div>
 
-        {/* Days of Week */}
-        <div className="grid grid-cols-7 gap-2">
-          {DAYS_OF_WEEK.map((day) => (
-            <div
-              key={day}
-              className="text-center text-sm font-medium text-muted-foreground p-2"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-2">
-          {calendarDays.map((day, index) => (
-            <button
-              key={index}
-              className={`relative p-3 text-sm rounded-lg border-2 transition-all duration-200 ${getDateBackgroundColor(
-                day
-              )} ${getDateBorderColor(day)} ${
-                day.isCurrentMonth && day.availableSlots > 0
-                  ? "cursor-pointer hover:shadow-md transform hover:scale-105"
-                  : day.availableSlots === 0
-                  ? "cursor-not-allowed"
-                  : "cursor-default"
-              }`}
-              onClick={() => handleDateSelect(day)}
-              disabled={!day.isCurrentMonth || day.availableSlots === 0}
-            >
-              <div className={getDateAvailabilityColor(day)}>{day.day}</div>
-
-              {/* Availability indicators */}
-              {day.isCurrentMonth && (
-                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
-                  {day.availableSlots > 0 ? (
-                    // Show dots indicating availability level
-                    Array.from({
-                      length: Math.min(3, Math.ceil(day.availableSlots / 2)),
-                    }).map((_, i) => {
-                      const totalPossibleSlots = 6;
-                      const availabilityRatio =
-                        day.availableSlots / totalPossibleSlots;
-                      const dotColor =
-                        availabilityRatio >= 0.8
-                          ? "bg-emerald-500"
-                          : availabilityRatio >= 0.4
-                          ? "bg-teal-500"
-                          : "bg-teal-400";
-                      return (
-                        <div
-                          key={i}
-                          className={`w-1 h-1 ${dotColor} rounded-full`}
-                        ></div>
-                      );
-                    })
-                  ) : (
-                    // Show X for unavailable dates
-                    <div className="w-2 h-2 text-gray-400 text-xs flex items-center justify-center">
-                      ×
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Availability count badge for low availability dates */}
-              {day.isCurrentMonth &&
-                day.availableSlots > 0 &&
-                day.availableSlots <= 2 && (
-                  <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                    {day.availableSlots}
-                  </div>
-                )}
-
-              {/* Selection indicator */}
-              {day.isSelected && (
-                <div className="absolute -top-1 -right-1 bg-teal-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  ✓
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Enhanced Legend */}
-        <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 bg-emerald-100 border-2 border-emerald-300 rounded"></div>
-            <span className="text-emerald-700 font-medium">Available</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 bg-teal-100 border-2 border-teal-300 rounded"></div>
-            <span className="text-teal-600">Partially booked</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 bg-teal-600 border-2 border-teal-600 rounded relative">
-              <div className="absolute inset-0 flex items-center justify-center text-white text-xs">
-                ✓
+          {/* Day Headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {DAYS_OF_WEEK.map((day) => (
+              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+                {day}
               </div>
-            </div>
-            <span className="text-teal-700 font-medium">Selected</span>
+            ))}
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 bg-gray-200 border-2 border-gray-300 rounded relative">
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs">
-                ×
-              </div>
-            </div>
-            <span className="text-gray-500">Unavailable</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Time Slots */}
-      {selectedDate && selectedDayAvailability && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Available Times</h3>
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((day) => {
+              const slotCount = day.availableSlots;
+              const isPast = isDateInPast(day.date);
+              const isSelected = selectedDate === day.date;
+              const hasAvailability = slotCount > 0;
+              const isCurrentDay = day.isToday;
 
-          {selectedDayAvailability.slots &&
-          selectedDayAvailability.slots.length > 0 ? (
-            (() => {
-              const { morning, afternoon, evening } = groupTimeSlotsByPeriod(
-                selectedDayAvailability.slots
-              );
+              if (!day.isCurrentMonth) {
+                return <div key={day.date} className="aspect-square" />;
+              }
 
               return (
-                <div className="space-y-4">
-                  {morning.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                        Morning (6AM - 12PM)
-                      </h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                        {morning.map((slot, index) => (
-                          <TimeSlotButton
-                            key={index}
-                            slot={slot}
-                            isSelected={selectedTime === slot.start_time}
-                            onSelect={() => handleTimeSelect(slot.start_time)}
-                            mentorTimezone={mentorTimezone}
-                            userTimezone={userTimezone}
-                          />
-                        ))}
-                      </div>
+                <button
+                  key={day.date}
+                  onClick={() => handleDateSelect(day)}
+                  disabled={isPast || !hasAvailability}
+                  className={cn(
+                    "aspect-square rounded-lg flex flex-col items-center justify-center text-sm transition-all relative",
+                    isPast && "opacity-40 cursor-not-allowed",
+                    !isPast && !hasAvailability && "opacity-40 cursor-not-allowed",
+                    !isPast && hasAvailability && "cursor-pointer hover:bg-primary/10",
+                    isSelected && "bg-primary text-primary-foreground hover:bg-primary",
+                    isCurrentDay && !isSelected && "ring-2 ring-primary/50",
+                  )}
+                >
+                  <span className={cn(
+                    "font-medium",
+                    isSelected ? "text-primary-foreground" : "text-foreground"
+                  )}>
+                    {day.day}
+                  </span>
+                  {hasAvailability && !isPast && (
+                    <div className={cn(
+                      "absolute bottom-1 flex gap-0.5",
+                      slotCount > 3 && "gap-0"
+                    )}>
+                      {Array.from({ length: Math.min(slotCount, 3) }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "w-1 h-1 rounded-full",
+                            isSelected ? "bg-primary-foreground/70" : "bg-primary"
+                          )}
+                        />
+                      ))}
                     </div>
                   )}
-
-                  {afternoon.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                        Afternoon (12PM - 6PM)
-                      </h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                        {afternoon.map((slot, index) => (
-                          <TimeSlotButton
-                            key={index}
-                            slot={slot}
-                            isSelected={selectedTime === slot.start_time}
-                            onSelect={() => handleTimeSelect(slot.start_time)}
-                            mentorTimezone={mentorTimezone}
-                            userTimezone={userTimezone}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {evening.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                        Evening (6PM - 10PM)
-                      </h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                        {evening.map((slot, index) => (
-                          <TimeSlotButton
-                            key={index}
-                            slot={slot}
-                            isSelected={selectedTime === slot.start_time}
-                            onSelect={() => handleTimeSelect(slot.start_time)}
-                            mentorTimezone={mentorTimezone}
-                            userTimezone={userTimezone}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                </button>
               );
-            })()
+            })}
+          </div>
+
+          {/* Timezone Selector */}
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <TimezoneSelector
+              selectedTimezone={userTimezone}
+              onTimezoneChange={setUserTimezone}
+            />
+          </div>
+        </div>
+
+        {/* Time Slots Section - Side panel */}
+        <div className="lg:w-64 xl:w-72 bg-card rounded-xl border border-border/50 p-4">
+          {selectedDate && selectedDayAvailability ? (
+            <div className="space-y-4 h-full">
+              <div className="text-center pb-3 border-b border-border/50">
+                <p className="text-sm text-muted-foreground">
+                  {format(new Date(selectedDate), 'EEEE')}
+                </p>
+                <p className="text-lg font-semibold text-foreground">
+                  {format(new Date(selectedDate), 'MMMM d, yyyy')}
+                </p>
+              </div>
+
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                {selectedDayAvailability.slots &&
+                selectedDayAvailability.slots.length > 0 ? (
+                  (() => {
+                    const { morning, afternoon, evening } = groupTimeSlotsByPeriod(
+                      selectedDayAvailability.slots
+                    );
+
+                    return (
+                      <>
+                        {morning.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              Morning
+                            </p>
+                            <div className="space-y-2">
+                              {morning.map((slot, index) => (
+                                <TimeSlotButton
+                                  key={index}
+                                  slot={slot}
+                                  isSelected={selectedTime === slot.start_time}
+                                  onSelect={() => handleTimeSelect(slot.start_time)}
+                                  mentorTimezone={mentorTimezone}
+                                  userTimezone={userTimezone}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {afternoon.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              Afternoon
+                            </p>
+                            <div className="space-y-2">
+                              {afternoon.map((slot, index) => (
+                                <TimeSlotButton
+                                  key={index}
+                                  slot={slot}
+                                  isSelected={selectedTime === slot.start_time}
+                                  onSelect={() => handleTimeSelect(slot.start_time)}
+                                  mentorTimezone={mentorTimezone}
+                                  userTimezone={userTimezone}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {evening.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              Evening
+                            </p>
+                            <div className="space-y-2">
+                              {evening.map((slot, index) => (
+                                <TimeSlotButton
+                                  key={index}
+                                  slot={slot}
+                                  isSelected={selectedTime === slot.start_time}
+                                  onSelect={() => handleTimeSelect(slot.start_time)}
+                                  mentorTimezone={mentorTimezone}
+                                  userTimezone={userTimezone}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No available time slots
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : selectedDate && !selectedDayAvailability ? (
+            <div className="h-full flex flex-col items-center justify-center text-center py-8 text-muted-foreground">
+              <Clock className="w-10 h-10 mb-3 opacity-50" />
+              <p className="text-sm">No available times</p>
+              <p className="text-xs mt-1">Select another date</p>
+            </div>
           ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              No available time slots for this date
+            <div className="h-full flex flex-col items-center justify-center text-center py-8 text-muted-foreground">
+              <Clock className="w-10 h-10 mb-3 opacity-50" />
+              <p className="text-sm">Select a date</p>
+              <p className="text-xs mt-1">to view available times</p>
             </div>
           )}
         </div>
-      )}
-
-      {selectedDate && !selectedDayAvailability && (
-        <div className="text-center py-4 text-muted-foreground">
-          No availability for the selected date
-        </div>
-      )}
+      </div>
     </div>
   );
 };
