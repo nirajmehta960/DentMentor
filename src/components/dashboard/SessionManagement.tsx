@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,8 @@ import { useUpcomingSessions } from "@/hooks/useUpcomingSessions";
 import { useSessionRequests } from "@/hooks/useSessionRequests";
 import { formatDate, formatTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { SessionDetailsDialog } from "./SessionDetailsDialog";
+import type { Session } from "@/hooks/useUpcomingSessions";
 
 export function SessionManagement() {
   const { upcomingSessions, isLoading: sessionsLoading } =
@@ -26,6 +28,8 @@ export function SessionManagement() {
     declineRequest,
     isLoading: requestsLoading,
   } = useSessionRequests();
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
   if (sessionsLoading || requestsLoading) {
     return (
@@ -150,12 +154,17 @@ export function SessionManagement() {
                           </Badge>
                         </div>
                         <p className="font-semibold text-sm sm:text-base text-foreground">
-                          {session.session_type}
+                          {session.service?.title || session.mentee?.name || session.session_type}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
                           <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           {session.duration_minutes} minutes session
                         </p>
+                        {session.service?.title && session.mentee?.name && (
+                          <p className="text-xs text-muted-foreground">
+                            with {session.mentee.name}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -171,6 +180,10 @@ export function SessionManagement() {
                       <Button
                         size="sm"
                         className="shadow-sm text-xs sm:text-sm flex-1 sm:flex-initial"
+                        onClick={() => {
+                          setSelectedSession(session);
+                          setIsDetailsDialogOpen(true);
+                        }}
                       >
                         View Details
                       </Button>
@@ -271,6 +284,16 @@ export function SessionManagement() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Session Details Dialog */}
+      <SessionDetailsDialog
+        session={selectedSession}
+        isOpen={isDetailsDialogOpen}
+        onClose={() => {
+          setIsDetailsDialogOpen(false);
+          setSelectedSession(null);
+        }}
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAvailability } from "@/hooks/useAvailability";
 import { useBookedSessions } from "@/hooks/useBookedSessions";
+import { useAuth } from "@/hooks/useAuth";
 import { formatTime, cn } from "@/lib/utils";
 
 interface MonthlyAvailabilityPanelProps {
@@ -28,6 +29,10 @@ export function MonthlyAvailabilityPanel({
   const { availability, isLoading, refetch } = useAvailability();
   const { bookedSessions, isLoading: isLoadingSessions } =
     useBookedSessions(currentMonth);
+  const { mentorProfile } = useAuth();
+  
+  // Get mentor timezone (default to user's browser timezone or UTC)
+  const mentorTimezone = mentorProfile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
   const handleRefresh = async () => {
     await refetch();
@@ -74,10 +79,18 @@ export function MonthlyAvailabilityPanel({
   const currentMonthStart = startOfMonth(currentMonth);
   const currentMonthEnd = endOfMonth(currentMonth);
 
+  // Helper function to parse date string correctly (avoid timezone shift)
+  // Parse "YYYY-MM-DD" as local date components (not UTC)
+  const parseDateString = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    // Create date in local timezone (not UTC) to avoid day shifts
+    return new Date(year, month - 1, day);
+  };
+
   // Filter availability for current month
   const monthlyAvailability =
     availability?.filter((item) => {
-      const itemDate = new Date(item.date);
+      const itemDate = parseDateString(item.date);
       return itemDate >= currentMonthStart && itemDate <= currentMonthEnd;
     }) || [];
 
@@ -137,8 +150,17 @@ export function MonthlyAvailabilityPanel({
   };
 
   // Group booked sessions by date
+  // Parse session_date (UTC timestamptz) and convert to mentor's timezone date
   const bookedSessionsByDate = bookedSessions.reduce((acc, session) => {
-    const dateKey = format(new Date(session.session_date), "yyyy-MM-dd");
+    // Parse UTC timestamp and convert to mentor's timezone for date grouping
+    const sessionDate = new Date(session.session_date);
+    // Format date in mentor's timezone
+    const dateKey = sessionDate.toLocaleDateString('en-CA', { 
+      timeZone: mentorTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
     if (!acc[dateKey]) {
       acc[dateKey] = [];
     }
@@ -158,7 +180,14 @@ export function MonthlyAvailabilityPanel({
     allDates.add(item.date);
   });
   bookedSessions.forEach((session) => {
-    const dateKey = format(new Date(session.session_date), "yyyy-MM-dd");
+    const sessionDate = new Date(session.session_date);
+    // Convert to mentor's timezone for date grouping
+    const dateKey = sessionDate.toLocaleDateString('en-CA', { 
+      timeZone: mentorTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
     allDates.add(dateKey);
   });
 
@@ -203,17 +232,8 @@ export function MonthlyAvailabilityPanel({
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {/* Inner Panel Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-2">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-          </div>
-          <h3 className="text-base sm:text-lg font-semibold text-foreground">
-            Your Availability
-          </h3>
-        </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end">
+      {/* Month Navigation Header */}
+      <div className="flex items-center justify-end gap-1.5 sm:gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -234,7 +254,6 @@ export function MonthlyAvailabilityPanel({
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
         </div>
-      </div>
 
       {/* Filter Buttons */}
       <div className="flex gap-1.5 sm:gap-2 flex-wrap">
@@ -287,7 +306,7 @@ export function MonthlyAvailabilityPanel({
                 {Object.entries(bookedSessionsByDate)
                   .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
                   .map(([dateKey, sessions]) => {
-                    const itemDate = new Date(dateKey);
+                    const itemDate = parseDateString(dateKey);
                     return (
                       <div
                         key={dateKey}
@@ -311,7 +330,17 @@ export function MonthlyAvailabilityPanel({
                         </div>
 
                         <div className="space-y-1.5 sm:space-y-2">
-                          {sessions.map((session) => (
+                          {sessions.map((session) => {
+                            // Format session time in mentor's timezone
+                            const sessionDate = new Date(session.session_date);
+                            const sessionTimeStr = sessionDate.toLocaleTimeString('en-US', {
+                              timeZone: mentorTimezone,
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
+                            });
+                            
+                            return (
                             <div
                               key={session.id}
                               className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5 sm:gap-2 p-2 bg-muted/30 rounded-md sm:rounded-lg"
@@ -320,7 +349,7 @@ export function MonthlyAvailabilityPanel({
                                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                                   <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground flex-shrink-0" />
                                   <span className="text-xs sm:text-sm font-medium text-foreground">
-                                    {formatTime(session.session_date)}
+                                    {sessionTimeStr}
                                   </span>
                                   <span className="text-[10px] sm:text-xs text-muted-foreground">
                                     ({session.duration_minutes} min)
@@ -344,7 +373,8 @@ export function MonthlyAvailabilityPanel({
                                 {getStatusBadge(session.status)}
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -372,7 +402,7 @@ export function MonthlyAvailabilityPanel({
             <div className="space-y-2 sm:space-y-3 max-h-96 overflow-y-auto">
               {filteredAvailability.map((item) => {
                 const timeSlots = formatTimeSlots(item.time_slots);
-                const itemDate = new Date(item.date);
+                const itemDate = parseDateString(item.date);
 
                 return (
                   <div

@@ -24,6 +24,13 @@ export function RecentActivity() {
 
   const getActivityConfig = (type: string) => {
     switch (type) {
+      case "session_booked":
+        return {
+          icon: Calendar,
+          color: "text-blue-600",
+          bg: "bg-blue-500/10",
+          label: "Session",
+        };
       case "session_completed":
         return {
           icon: Calendar,
@@ -97,7 +104,14 @@ export function RecentActivity() {
   }
 
   const filteredActivities = activities?.filter(
-    (activity) => filter === "all" || activity.type === filter
+    (activity) => {
+      if (filter === "all") return true;
+      if (filter === "session_completed") {
+        // When filtering by "Sessions", show both booked and completed
+        return activity.type === "session_completed" || activity.type === "session_booked";
+      }
+      return activity.type === filter;
+    }
   );
 
   const getQuickAction = (activity: any) => {
@@ -105,6 +119,7 @@ export function RecentActivity() {
       case "new_message":
         return { label: "Reply", icon: Reply };
       case "session_completed":
+      case "session_booked":
         return { label: "View Details", icon: Eye };
       case "new_feedback":
         return { label: "Respond", icon: Reply };
@@ -161,7 +176,7 @@ export function RecentActivity() {
       </div>
 
       <div className="p-4 sm:p-5 md:p-6">
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4 max-h-[600px] overflow-y-auto">
           {filteredActivities?.length === 0 ? (
             <div className="text-center py-8 sm:py-12 bg-muted/30 rounded-lg sm:rounded-xl">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-muted flex items-center justify-center">
