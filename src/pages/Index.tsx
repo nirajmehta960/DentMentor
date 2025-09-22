@@ -3,7 +3,6 @@ import Hero from '@/components/Hero';
 import Statistics from '@/components/Statistics';
 import Features from '@/components/Features';
 import Mentors from '@/components/Mentors';
-import Testimonials from '@/components/Testimonials';
 import CallToAction from '@/components/CallToAction';
 import FloatingActionButton from '@/components/FloatingActionButton';
 
@@ -27,8 +26,6 @@ const Index = () => {
         <Mentors />
       </div>
 
-      {/* Testimonials Section */}
-      <Testimonials />
 
       {/* Call to Action Section */}
       <CallToAction />

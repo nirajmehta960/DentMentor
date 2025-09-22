@@ -8,7 +8,7 @@ const CallToAction = () => {
   
   const benefits = [
     'Connect with verified mentors within 24 hours',
-    'Personalized study plan for NBDE success',
+    'Personalized application strategy consultation',
     'Interview preparation and mock sessions',
     'Ongoing support throughout your journey'
   ];
@@ -28,9 +28,9 @@ const CallToAction = () => {
         <div className="max-w-4xl mx-auto text-center">
           {/* Main CTA Content */}
           <div className={`scroll-animate ${ctaVisible ? 'animate-in' : ''}`}>
-            <div className="inline-flex items-center gap-3 mb-8 bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3">
-              <GraduationCap className="w-6 h-6 text-white" />
-              <span className="text-white font-medium">Ready to Transform Your Career?</span>
+            <div className="inline-flex items-center gap-3 mb-8 bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer group">
+              <GraduationCap className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+              <span className="text-white font-medium group-hover:scale-105 transition-transform">Ready to Transform Your Career?</span>
             </div>
 
             <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
@@ -85,20 +85,20 @@ const CallToAction = () => {
           <div className={`mt-16 scroll-animate stagger-6 ${ctaVisible ? 'animate-in' : ''}`}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-80">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">500+</div>
-                <div className="text-white/70 text-sm">Active Mentors</div>
+                <div className="text-3xl font-bold text-white mb-1">15+</div>
+                <div className="text-white/70 text-sm">Verified Mentors</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">85%</div>
-                <div className="text-white/70 text-sm">Success Rate</div>
+                <div className="text-3xl font-bold text-white mb-1">95%</div>
+                <div className="text-white/70 text-sm">Platform Rating</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">24/7</div>
-                <div className="text-white/70 text-sm">Support</div>
+                <div className="text-3xl font-bold text-white mb-1">10+</div>
+                <div className="text-white/70 text-sm">Students Helped</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">50+</div>
-                <div className="text-white/70 text-sm">Partner Schools</div>
+                <div className="text-3xl font-bold text-white mb-1">8+</div>
+                <div className="text-white/70 text-sm">Countries</div>
               </div>
             </div>
           </div>

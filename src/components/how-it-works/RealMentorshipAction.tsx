@@ -57,7 +57,7 @@ const RealMentorshipAction = () => {
 
   const platformFeatures = [
     { metric: '15+', label: 'Verified dental professionals ready to mentor you' },
-    { metric: '4', label: 'Core services covering your entire application journey' },
+    { metric: '4+', label: 'Core services covering your entire application journey' },
     { metric: '1:1', label: 'Personalized mentorship sessions tailored to your needs' },
     { metric: '24/7', label: 'Access to platform resources and mentor communication' }
   ];
@@ -158,16 +158,9 @@ const RealMentorshipAction = () => {
             <h3 className="text-2xl md:text-3xl font-bold mb-6">
               "The difference between a good application and a great one is guidance from someone who's been there."
             </h3>
-            <p className="text-xl text-white/90 mb-6">
+            <p className="text-xl text-white/90">
               — Dr. Sarah Martinez, Harvard School of Dental Medicine, Class of 2019
             </p>
-            <div className="flex items-center justify-center gap-8 text-sm font-medium opacity-90">
-              <div>15+ Verified Mentors</div>
-              <div>•</div>
-              <div>4 Core Services</div>
-              <div>•</div>
-              <div>Growing Community</div>
-            </div>
           </div>
         </div>
       </div>

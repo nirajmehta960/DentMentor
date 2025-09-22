@@ -6,12 +6,12 @@ const successStories = [
     name: 'Dr. Sarah Chen',
     specialty: 'Orthodontics',
     avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
-    quote: "Mentoring has been incredibly rewarding. I've helped 50+ students pass their boards while earning over $30,000 in supplemental income. The flexibility allows me to maintain my practice schedule.",
+    quote: "Mentoring has been incredibly rewarding. I've helped 15+ students with their applications while earning meaningful supplemental income. The flexibility allows me to maintain my practice schedule.",
     metrics: {
-      students: 52,
-      earnings: '$32,400',
+      students: 15,
+      earnings: '$8,400',
       rating: 4.9,
-      duration: '18 months'
+      duration: '12 months'
     },
     highlight: 'Top Performer'
   },
@@ -19,12 +19,12 @@ const successStories = [
     name: 'Dr. Michael Rodriguez',
     specialty: 'Oral Surgery',
     avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face',
-    quote: "The platform connected me with motivated international graduates. It's fulfilling to guide them through the licensing process. The earning potential exceeded my expectations.",
+    quote: "The platform connected me with motivated international graduates. It's fulfilling to guide them through the application process. The earning potential has been great for my schedule.",
     metrics: {
-      students: 38,
-      earnings: '$28,500',
+      students: 12,
+      earnings: '$6,720',
       rating: 5.0,
-      duration: '14 months'
+      duration: '10 months'
     },
     highlight: 'Perfect Rating'
   },
@@ -32,12 +32,12 @@ const successStories = [
     name: 'Dr. Emily Johnson',
     specialty: 'General Dentistry',
     avatar: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=300&fit=crop&crop=face',
-    quote: "What started as wanting to help others became a significant income stream. I love the one-on-one interactions and seeing my mentees succeed in their careers.",
+    quote: "What started as wanting to help others became a nice income stream. I love the one-on-one interactions and seeing my mentees succeed in their applications.",
     metrics: {
-      students: 64,
-      earnings: '$41,200',
+      students: 18,
+      earnings: '$10,080',
       rating: 4.8,
-      duration: '22 months'
+      duration: '14 months'
     },
     highlight: 'Most Students'
   }
@@ -46,20 +46,20 @@ const successStories = [
 const platformStats = [
   {
     icon: DollarSign,
-    value: '$2.1M+',
+    value: '$85K+',
     label: 'Total Mentor Earnings',
     color: 'text-green-500'
   },
   {
     icon: Users,
-    value: '1,200+',
+    value: '50+',
     label: 'Students Helped',
     color: 'text-blue-500'
   },
   {
     icon: TrendingUp,
-    value: '94%',
-    label: 'Pass Rate',
+    value: '95%',
+    label: 'Platform Rating',
     color: 'text-purple-500'
   },
   {
@@ -198,7 +198,7 @@ export const SuccessStories = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">Average</div>
-                <div className="text-lg font-semibold text-foreground">$150/hour</div>
+                <div className="text-lg font-semibold text-foreground">$120/hour</div>
                 <div className="text-sm text-muted-foreground">Starting rate</div>
               </div>
               <div className="hidden sm:block w-px bg-border" />

@@ -1,4 +1,4 @@
-import { ArrowRight, GraduationCap, Play } from 'lucide-react';
+import { ArrowRight, GraduationCap, Play, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 import { Link } from 'react-router-dom';
@@ -50,7 +50,7 @@ const Hero = () => {
 
           {/* Subtitle */}
           <p className={`text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed scroll-animate stagger-4 ${heroVisible ? 'animate-in' : ''}`}>
-            Join 500+ international dental graduates who've successfully navigated 
+            Join 50+ international dental graduates who've successfully navigated 
             the U.S. dental licensing process with personalized mentorship from verified experts.
           </p>
 
@@ -64,12 +64,15 @@ const Hero = () => {
             </Button>
             
             <Button 
+              asChild
               variant="outline" 
               size="xl" 
               className="text-white border-white/30 hover:bg-white/10 group backdrop-blur-sm"
             >
-              <Play className="mr-2 w-5 h-5" />
-              Watch Success Stories
+              <Link to="/mentors">
+                <Users className="mr-2 w-5 h-5" />
+                Browse Mentors
+              </Link>
             </Button>
           </div>
 
@@ -77,7 +80,7 @@ const Hero = () => {
           <div className={`mt-16 scroll-animate stagger-6 ${heroVisible ? 'animate-in' : ''}`}>
             <p className="text-white/70 mb-6">Trusted by graduates from</p>
             <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-              {['Harvard', 'NYU', 'UCLA', 'Columbia', 'UCSF'].map((school, index) => (
+              {['Harvard', 'NYU', 'UCLA', 'Columbia', 'UCSF', 'BU', 'Tufts', 'Penn', 'Michigan'].map((school, index) => (
                 <div key={school} className="text-white font-semibold text-lg">
                   {school}
                 </div>

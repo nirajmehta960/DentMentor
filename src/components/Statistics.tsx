@@ -2,10 +2,10 @@ import { Users, TrendingUp, Award, CheckCircle } from 'lucide-react';
 import { useCounterAnimation } from '@/hooks/use-scroll-animation';
 
 const Statistics = () => {
-  const mentorsData = useCounterAnimation(500, 2000);
-  const successData = useCounterAnimation(85, 1500);
-  const graduatesData = useCounterAnimation(1200, 2500);
-  const programsData = useCounterAnimation(50, 1000);
+  const mentorsData = useCounterAnimation(15, 2000);
+  const successData = useCounterAnimation(95, 1500);
+  const graduatesData = useCounterAnimation(10, 2500);
+  const programsData = useCounterAnimation(8, 1000);
 
   const stats = [
     {
@@ -14,31 +14,31 @@ const Statistics = () => {
       value: mentorsData.count,
       suffix: '+',
       label: 'Verified Mentors',
-      description: 'From top U.S. dental programs'
+      description: 'Application experts ready to help'
     },
     {
       ref: successData.ref,
       icon: TrendingUp,
       value: successData.count,
       suffix: '%',
-      label: 'Success Rate',
-      description: 'Students passing on first attempt'
+      label: 'Platform Rating',
+      description: 'User satisfaction score'
     },
     {
       ref: graduatesData.ref,
       icon: Award,
       value: graduatesData.count,
       suffix: '+',
-      label: 'Success Stories',
-      description: 'International graduates helped'
+      label: 'Students Helped',
+      description: 'Total mentored successfully'
     },
     {
       ref: programsData.ref,
       icon: CheckCircle,
       value: programsData.count,
       suffix: '+',
-      label: 'Partner Programs',
-      description: 'Dental schools & residencies'
+      label: 'Countries',
+      description: 'Students from worldwide'
     }
   ];
 
@@ -47,11 +47,11 @@ const Statistics = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-            Proven Track Record
+            Start Your Success Story Today
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Our mentorship program has helped thousands of international dental graduates 
-            achieve their dreams of practicing dentistry in the United States.
+            Join our growing community of international dental graduates who are 
+            successfully navigating their path to practicing dentistry in the United States.
           </p>
         </div>
 

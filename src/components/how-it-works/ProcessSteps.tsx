@@ -84,11 +84,11 @@ const ProcessSteps = () => {
                   ${sectionVisible ? 'animate-in' : ''}`}
                   style={{ transitionDelay: `${step.delay}ms` }}
                 >
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="flex items-center justify-center w-16 h-16 bg-gradient-primary text-white rounded-2xl font-bold text-2xl">
+                  <div className="flex items-center gap-4 mb-6 group">
+                    <div className="flex items-center justify-center w-16 h-16 bg-gradient-primary text-white rounded-2xl font-bold text-2xl group-hover:scale-110 transition-transform">
                       {step.number}
                     </div>
-                    <div className={`flex items-center justify-center w-16 h-16 bg-gradient-${index % 2 === 0 ? 'secondary' : 'accent'} rounded-2xl`}>
+                    <div className={`flex items-center justify-center w-16 h-16 bg-gradient-${index % 2 === 0 ? 'secondary' : 'accent'} rounded-2xl group-hover:scale-110 transition-transform`}>
                       <Icon className="w-8 h-8 text-white" />
                     </div>
                   </div>
@@ -103,9 +103,9 @@ const ProcessSteps = () => {
 
                   <ul className="space-y-2">
                     {step.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-3 text-muted-foreground">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        {feature}
+                      <li key={featureIndex} className="flex items-center gap-3 text-muted-foreground hover:text-primary hover:scale-105 transition-all duration-300 cursor-pointer group">
+                        <div className="w-2 h-2 bg-primary rounded-full group-hover:scale-110 transition-transform"></div>
+                        <span className="group-hover:scale-105 transition-transform">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -119,7 +119,7 @@ const ProcessSteps = () => {
                 >
                   <div className="relative">
                     <div className={`w-full h-80 bg-gradient-${index % 2 === 0 ? 'primary' : index % 3 === 1 ? 'secondary' : 'accent'} rounded-3xl flex items-center justify-center relative overflow-hidden group hover:scale-105 hover:shadow-2xl transition-all duration-300`}>
-                      <Icon className="w-32 h-32 text-white/20 absolute" />
+                      <Icon className="w-32 h-32 text-white/20 absolute group-hover:scale-110 transition-transform" />
                       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
                       
                       {/* Step Number Overlay */}

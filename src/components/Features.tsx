@@ -54,11 +54,11 @@ const Features = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-            Why Choose DentMentor?
+            How We Support Your Journey
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Our comprehensive mentorship platform provides everything you need to successfully 
-            transition from international dental graduate to practicing dentist in the U.S.
+            From application strategy to interview preparation, we provide comprehensive 
+            support for every step of your dental career journey in the United States.
           </p>
         </div>
 
@@ -77,10 +77,10 @@ const Features = () => {
                 {/* Content */}
                 <div className={`${isLeft ? '' : 'lg:col-start-2'} 
                   scroll-animate-${isLeft ? 'left' : 'right'} 
-                  ${featuresVisible ? 'animate-in' : ''}`}
+                  ${featuresVisible ? 'animate-in' : ''} group`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  <div className={`inline-flex items-center justify-center w-16 h-16 ${feature.gradient} rounded-2xl mb-6`}>
+                  <div className={`inline-flex items-center justify-center w-16 h-16 ${feature.gradient} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
                     <Icon className="w-8 h-8 text-white" />
                   </div>
                   
@@ -96,12 +96,12 @@ const Features = () => {
                 {/* Visual Element */}
                 <div className={`${isLeft ? 'lg:order-2' : 'lg:col-start-1'} 
                   scroll-animate-${isLeft ? 'right' : 'left'} 
-                  ${featuresVisible ? 'animate-in' : ''}`}
+                  ${featuresVisible ? 'animate-in' : ''} group`}
                   style={{ transitionDelay: `${index * 100 + 200}ms` }}
                 >
                   <div className="relative">
-                    <div className={`w-full h-64 ${feature.gradient} rounded-3xl flex items-center justify-center relative overflow-hidden`}>
-                      <Icon className="w-24 h-24 text-white/20 absolute" />
+                    <div className={`w-full h-64 ${feature.gradient} rounded-3xl flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform`}>
+                      <Icon className="w-24 h-24 text-white/20 absolute group-hover:scale-110 transition-transform" />
                       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                       
                       {/* Floating Elements */}
