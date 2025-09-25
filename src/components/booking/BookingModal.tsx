@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { X, Calendar, Clock, DollarSign, CheckCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { ProgressIndicator, type BookingStep } from './ProgressIndicator';
 import { ServiceSelection } from './ServiceSelection';
 import { AvailabilityCalendar } from './AvailabilityCalendar';
 import { BookingConfirmation } from './BookingConfirmation';
-import { createBooking, type BookingRequest } from '@/lib/api/booking';
+import { bookSession } from '@/lib/api/bookSession';
 import { type Service } from '@/lib/supabase/booking';
+import { getMentorInfo } from '@/lib/supabase/booking';
 import { 
   generateIdempotencyKey, 
   convertToUTC, 
@@ -54,10 +56,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [retryCount, setRetryCount] = useState(0);
   const [idempotencyKey, setIdempotencyKey] = useState<string>('');
+  const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set()); // Track booked slots to remove from UI
+  const [mentorTimezone, setMentorTimezone] = useState<string>("UTC"); // Track mentor's timezone
   
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Fetch mentor timezone when modal opens
+  useEffect(() => {
+    const fetchMentorTimezone = async () => {
+      try {
+        const mentorInfo = await getMentorInfo(mentorId);
+        const timezone = mentorInfo.mentorProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+        setMentorTimezone(timezone);
+      } catch (error) {
+        // Use default if fetch fails
+        setMentorTimezone("UTC");
+      }
+    };
+
+    if (isOpen && mentorId) {
+      fetchMentorTimezone();
+    }
+  }, [isOpen, mentorId]);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -182,55 +205,66 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setIsLoading(true);
 
     try {
-      // Convert to UTC for the API
+      // Validate date and time
       const dateStr = selectedDate.includes('T') ? selectedDate.split('T')[0] : selectedDate;
       
-      // Validate date and time before conversion
       if (!dateStr || !selectedTime) {
         throw new Error('Date and time are required for booking');
       }
-      
-      const sessionStartUTC = convertToUTC(dateStr, selectedTime);
 
-      const bookingRequest: BookingRequest = {
+      // Get user timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // Call the new bookSession helper which uses Edge Function
+      const response = await bookSession({
         mentorId,
-        menteeId: user.id,
         serviceId: selectedService.id,
-        date: selectedDate,
-        time: selectedTime
-      };
+        date: dateStr,
+        startTime: selectedTime,
+        timezone: userTimezone,
+      });
 
-      // Use retry logic for network resilience
-      const response = await retryBookingRequest(
-        () => createBooking(bookingRequest),
-        key
-      );
-
-      if (response.success && response.session) {
-        setBookingResult(response.session);
+      // Handle new response format: Edge Function returns { ok: true/false } not { success: true/false }
+      const isSuccess = (response as any).ok === true || response.success === true;
+      
+      if (isSuccess && ((response as any).session || response.session)) {
+        const session = (response as any).session || response.session;
+        setBookingResult(session);
         setIsBookingComplete(true);
         setBookingState('success');
+        
+        // Update UI state: Remove the booked slot from the availability list
+        const slotKey = `${dateStr}-${selectedTime}`;
+        setBookedSlots(prev => new Set([...prev, slotKey]));
         
         // Invalidate caches to refresh data
         await invalidateBookingCaches({
           mentorId,
           menteeId: user.id,
-          date: selectedDate,
+          date: dateStr,
           queryClient
         });
 
+        // Show success toast
         toast({
           title: "Booking Confirmed!",
           description: `Your session with ${mentorName} has been scheduled successfully.`,
         });
+
+        // Close modal after a short delay to show success message
+        setTimeout(() => {
+          onClose();
+          // Navigate to mentee dashboard (sessions page)
+          navigate('/mentee-dashboard');
+        }, 2000);
       } else {
         // Handle booking failure
-        const errorMapping = mapBookingError(response.code || 'BOOKING_FAILED', response.details);
+        const errorMapping = mapBookingError(response.code || 'BOOKING_FAILED', response);
         setBookingError(errorMapping);
         setBookingState('error');
 
         // Generate alternative suggestions if applicable
-        if (errorMapping.showAlternatives) {
+        if (response.alternatives && errorMapping.showAlternatives) {
           // Note: Would need availability data here
           // const suggestions = generateAlternativeSuggestions(availability, selectedDate, selectedTime);
           // setAlternativeSuggestions(suggestions);
@@ -238,7 +272,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         toast({
           title: errorMapping.title,
-          description: errorMapping.message,
+          description: errorMapping.message || response.error || 'Booking failed',
           variant: "destructive"
         });
       }
@@ -307,7 +341,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         id: mentorId,
         name: mentorName,
         avatar: mentorAvatar,
-        timezone: 'UTC' // This would come from mentor profile
+        timezone: mentorTimezone
       },
       service: selectedService,
       date: selectedDate,
@@ -472,6 +506,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
                 mentorName={mentorName}
+                mentorTimezone={mentorTimezone}
+                bookedSlots={bookedSlots}
               />
             )}
 

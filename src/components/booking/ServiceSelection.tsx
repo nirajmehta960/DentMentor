@@ -181,37 +181,8 @@ export const ServiceSelection: React.FC<ServiceSelectionProps> = ({
         const response: ServicesResponse = await fetchMentorServices(mentorId);
         
         if (response.success) {
-          let servicesToUse = response.services;
-          
-          // If no services found, create mock services for testing
-          if (servicesToUse.length === 0) {
-            servicesToUse = [
-              {
-                id: `mock-1-${mentorId}`,
-                mentor_id: mentorId,
-                service_title: 'Mock Interview',
-                service_description: 'I will help the students to prepare for the mock interview',
-                price: 150,
-                duration_minutes: 60,
-                service_type: 'standard',
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              },
-              {
-                id: `mock-2-${mentorId}`,
-                mentor_id: mentorId,
-                service_title: 'Career Guidance',
-                service_description: 'Comprehensive career guidance and planning session',
-                price: 120,
-                duration_minutes: 45,
-                service_type: 'premium',
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            ];
-          }
+          // Filter to only show active services (already filtered by getMentorServices, but double-check)
+          const servicesToUse = response.services.filter(service => service.is_active === true);
           
           setServices(servicesToUse);
           
