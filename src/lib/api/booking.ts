@@ -93,7 +93,7 @@ export async function fetchMentorServices(
     try {
       const mentorInfo = await getMentorInfo(mentorId);
       mentorName = mentorInfo.name;
-      mentorTimezone = mentorInfo.mentorProfile.country_of_origin || "UTC";
+      mentorTimezone = mentorInfo.mentorProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
       mentorAvatar = mentorInfo.avatar || undefined;
     } catch (error) {
       // Use defaults already set above
@@ -304,13 +304,23 @@ export async function fetchMentorAvailability(
       return generateMockAvailabilityResponse(startISO, endISO);
     }
 
+    // Get mentor timezone from profile
+    let mentorTimezone = "UTC";
+    try {
+      const mentorInfo = await getMentorInfo(mentorId);
+      mentorTimezone = mentorInfo.mentorProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch (error) {
+      // Use default if mentor info fetch fails
+      mentorTimezone = "UTC";
+    }
+
     // Get user timezone
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     return {
       success: true,
       availability,
-      mentor_timezone: "UTC", // Default, could be fetched from mentor profile
+      mentor_timezone: mentorTimezone,
       user_timezone: userTimezone,
     };
   } catch (error) {
@@ -596,24 +606,27 @@ export async function createBooking(
       };
     }
 
-    // Create session date in UTC
-    const sessionDateUtc = convertToUTC(date, time);
-
     // Generate idempotency key for this booking
     const idempotencyKey = `${mentorId}-${serviceId}-${date}-${time}-${menteeId}`;
 
-    // Call the Supabase RPC function
-    const { data: rpcResponse, error } = await supabase.rpc(
-      "instant_book_simple",
-      {
-        p_mentee_user_id: menteeId,
-        p_mentor_id: mentorId,
-        p_service_id: serviceId,
-        p_session_start_utc: sessionDateUtc,
-        p_duration_minutes: service.duration_minutes || 60,
-        p_idempotency_key: idempotencyKey,
-      }
-    );
+    // Get user timezone
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Normalize date format (remove time component if present)
+    const dateStr = date.includes('T') ? date.split('T')[0] : date;
+
+    // Call the Supabase Edge Function (replacing old RPC call)
+    const { data, error } = await supabase.functions.invoke("instant-book", {
+      body: {
+        mentor_id: mentorId,
+        service_id: serviceId,
+        date: dateStr,
+        start_time_local: time,
+        timezone: userTimezone,
+        duration_minutes: service.duration_minutes || 60,
+        idempotency_key: idempotencyKey,
+      },
+    });
 
     if (error) {
       return {
@@ -623,33 +636,23 @@ export async function createBooking(
       };
     }
 
-    // Check if rpcResponse is null, undefined, or empty object
-    if (
-      !rpcResponse ||
-      (typeof rpcResponse === "object" && Object.keys(rpcResponse).length === 0)
-    ) {
+    // Parse Edge Function response
+    const response = data as BookingResponse;
+
+    if (!response.success) {
       return {
         success: false,
-        error: "No response from booking service",
-        code: "NO_RESPONSE",
+        error: response.error || "Booking failed",
+        code: response.code || "BOOKING_FAILED",
+        alternatives: response.alternatives,
       };
     }
 
-    // Check RPC response status
-    if (rpcResponse.status === "error") {
-      return {
-        success: false,
-        error: rpcResponse.message,
-        code: rpcResponse.code,
-        alternatives: rpcResponse.details?.alternatives,
-      };
-    }
-
-    // Convert RPC response to expected format
-    if (rpcResponse.status === "ok" && rpcResponse.session) {
+    // Return successful response
+    if (response.session) {
       return {
         success: true,
-        session: rpcResponse.session,
+        session: response.session,
       };
     }
 
