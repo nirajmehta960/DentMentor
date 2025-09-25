@@ -27,6 +27,7 @@ interface AvailabilityCalendarProps {
   selectedTime: string | null;
   mentorName: string;
   mentorTimezone?: string;
+  bookedSlots?: Set<string>; // Set of "date-time" strings to mark as booked
 }
 
 interface CalendarDay {
@@ -47,7 +48,9 @@ const TimeSlotButton: React.FC<{
   onSelect: () => void;
   mentorTimezone: string;
   userTimezone: string;
-}> = ({ slot, isSelected, onSelect, mentorTimezone, userTimezone }) => {
+  date: string;
+  isPast: boolean;
+}> = ({ slot, isSelected, onSelect, mentorTimezone, userTimezone, date, isPast }) => {
   const formatTime = (time: string, timezone: string) => {
     try {
       const [hours, minutes] = time.split(":");
@@ -71,17 +74,32 @@ const TimeSlotButton: React.FC<{
       ? formatTime(slot.start_time, userTimezone)
       : null;
 
+  // Check if this specific slot time is in the past
+  const isSlotPast = isPast || (() => {
+    try {
+      const [hours, minutes] = slot.start_time.split(":");
+      const slotDateTime = new Date(`${date}T${hours}:${minutes}:00`);
+      const now = new Date();
+      return slotDateTime <= now;
+    } catch {
+      return false;
+    }
+  })();
+
+  const isDisabled = !slot.is_available || isSlotPast;
+
   return (
     <button
       onClick={onSelect}
-      disabled={!slot.is_available}
+      disabled={isDisabled}
       className={cn(
         "w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-center",
         isSelected
           ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
           : "bg-background border border-border hover:border-primary hover:bg-primary/5 text-foreground",
-        !slot.is_available && "opacity-50 cursor-not-allowed"
+        isDisabled && "opacity-50 cursor-not-allowed"
       )}
+      title={isSlotPast ? "This time slot is in the past" : !slot.is_available ? "Slot not available" : undefined}
     >
       <div className="font-medium">{mentorTime}</div>
       {userTime && (
@@ -116,6 +134,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   selectedTime,
   mentorName,
   mentorTimezone = "UTC",
+  bookedSlots = new Set(),
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [availability, setAvailability] = useState<{
@@ -435,16 +454,31 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                               Morning
                             </p>
                             <div className="space-y-2">
-                              {morning.map((slot, index) => (
-                                <TimeSlotButton
-                                  key={index}
-                                  slot={slot}
-                                  isSelected={selectedTime === slot.start_time}
-                                  onSelect={() => handleTimeSelect(slot.start_time)}
-                                  mentorTimezone={mentorTimezone}
-                                  userTimezone={userTimezone}
-                                />
-                              ))}
+                              {morning
+                                .filter(slot => slot.is_available) // Only show available slots
+                                .map((slot, index) => {
+                                  const isPast = (() => {
+                                    try {
+                                      const [hours, minutes] = slot.start_time.split(":");
+                                      const slotDateTime = new Date(`${selectedDate}T${hours}:${minutes}:00`);
+                                      return slotDateTime <= new Date();
+                                    } catch {
+                                      return false;
+                                    }
+                                  })();
+                                  return (
+                                    <TimeSlotButton
+                                      key={index}
+                                      slot={slot}
+                                      isSelected={selectedTime === slot.start_time}
+                                      onSelect={() => handleTimeSelect(slot.start_time)}
+                                      mentorTimezone={mentorTimezone}
+                                      userTimezone={userTimezone}
+                                      date={selectedDate}
+                                      isPast={isPast}
+                                    />
+                                  );
+                                })}
                             </div>
                           </div>
                         )}
@@ -455,16 +489,31 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                               Afternoon
                             </p>
                             <div className="space-y-2">
-                              {afternoon.map((slot, index) => (
-                                <TimeSlotButton
-                                  key={index}
-                                  slot={slot}
-                                  isSelected={selectedTime === slot.start_time}
-                                  onSelect={() => handleTimeSelect(slot.start_time)}
-                                  mentorTimezone={mentorTimezone}
-                                  userTimezone={userTimezone}
-                                />
-                              ))}
+                              {afternoon
+                                .filter(slot => slot.is_available) // Only show available slots
+                                .map((slot, index) => {
+                                  const isPast = (() => {
+                                    try {
+                                      const [hours, minutes] = slot.start_time.split(":");
+                                      const slotDateTime = new Date(`${selectedDate}T${hours}:${minutes}:00`);
+                                      return slotDateTime <= new Date();
+                                    } catch {
+                                      return false;
+                                    }
+                                  })();
+                                  return (
+                                    <TimeSlotButton
+                                      key={index}
+                                      slot={slot}
+                                      isSelected={selectedTime === slot.start_time}
+                                      onSelect={() => handleTimeSelect(slot.start_time)}
+                                      mentorTimezone={mentorTimezone}
+                                      userTimezone={userTimezone}
+                                      date={selectedDate}
+                                      isPast={isPast}
+                                    />
+                                  );
+                                })}
                             </div>
                           </div>
                         )}
@@ -475,16 +524,31 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                               Evening
                             </p>
                             <div className="space-y-2">
-                              {evening.map((slot, index) => (
-                                <TimeSlotButton
-                                  key={index}
-                                  slot={slot}
-                                  isSelected={selectedTime === slot.start_time}
-                                  onSelect={() => handleTimeSelect(slot.start_time)}
-                                  mentorTimezone={mentorTimezone}
-                                  userTimezone={userTimezone}
-                                />
-                              ))}
+                              {evening
+                                .filter(slot => slot.is_available) // Only show available slots
+                                .map((slot, index) => {
+                                  const isPast = (() => {
+                                    try {
+                                      const [hours, minutes] = slot.start_time.split(":");
+                                      const slotDateTime = new Date(`${selectedDate}T${hours}:${minutes}:00`);
+                                      return slotDateTime <= new Date();
+                                    } catch {
+                                      return false;
+                                    }
+                                  })();
+                                  return (
+                                    <TimeSlotButton
+                                      key={index}
+                                      slot={slot}
+                                      isSelected={selectedTime === slot.start_time}
+                                      onSelect={() => handleTimeSelect(slot.start_time)}
+                                      mentorTimezone={mentorTimezone}
+                                      userTimezone={userTimezone}
+                                      date={selectedDate}
+                                      isPast={isPast}
+                                    />
+                                  );
+                                })}
                             </div>
                           </div>
                         )}
@@ -492,8 +556,10 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                     );
                   })()
                 ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    No available time slots
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm font-medium">No slots available</p>
+                    <p className="text-xs mt-1">Please select another date</p>
                   </div>
                 )}
               </div>

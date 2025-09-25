@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface TimezoneSelectorProps {
   selectedTimezone: string;
   onTimezoneChange: (timezone: string) => void;
+  showLabel?: boolean;
 }
 
 // Common timezones grouped by region
@@ -75,6 +76,7 @@ const getCurrentTimeInTimezone = (timezone: string): string => {
 export const TimezoneSelector: React.FC<TimezoneSelectorProps> = ({
   selectedTimezone,
   onTimezoneChange,
+  showLabel = true,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,8 +116,8 @@ export const TimezoneSelector: React.FC<TimezoneSelectorProps> = ({
   const currentTime = getCurrentTimeInTimezone(selectedTimezone);
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-foreground">Time zone</label>
+    <div className={showLabel ? "space-y-2" : ""}>
+      {showLabel && <label className="text-sm font-medium text-foreground">Time zone</label>}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <button
