@@ -199,6 +199,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           if (!mentorError && mentor) {
             mentorProfile = mentor;
+            
+            // Auto-detect and save timezone if missing
+            if (!mentor.timezone) {
+              const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+              
+              // Update mentor profile with detected timezone (non-blocking)
+              supabase
+                .from("mentor_profiles")
+                .update({ timezone: detectedTimezone, updated_at: new Date().toISOString() })
+                .eq("user_id", userId)
+                .then(({ data: updatedMentor }) => {
+                  if (updatedMentor) {
+                    // Update local state with timezone
+                    setState((prev) => ({
+                      ...prev,
+                      mentorProfile: updatedMentor[0] || { ...prev.mentorProfile, timezone: detectedTimezone },
+                    }));
+                  }
+                })
+                .catch((error) => {
+                  // Silently handle timezone update errors
+                  console.warn("Failed to update mentor timezone:", error);
+                });
+              
+              // Update mentorProfile object immediately for this session
+              mentorProfile = { ...mentorProfile, timezone: detectedTimezone };
+            }
           }
         } catch (mentorError) {
           // Silently handle mentor profile fetch errors - new users won't have profiles yet
@@ -823,6 +850,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Create user type specific profile
         if (signUpData.userType === "mentor") {
+          // Auto-detect timezone for mentor
+          const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+          
           const { error: mentorError } = await supabase
             .from("mentor_profiles")
             .insert({
@@ -832,6 +862,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               verification_status: "pending",
               is_verified: false,
               is_active: false,
+              timezone: detectedTimezone,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             });
@@ -1231,6 +1262,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             profileData.verification_status || "pending";
           profileToUpsert.is_verified = profileData.is_verified || false;
           profileToUpsert.is_active = profileData.is_active || true;
+          
+          // Auto-detect timezone if not provided
+          if (!profileToUpsert.timezone) {
+            profileToUpsert.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+          }
+        } else if (!profileData.timezone && !profileToUpsert.timezone) {
+          // Auto-detect timezone if existing profile doesn't have one
+          profileToUpsert.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
         }
 
         const { data, error } = await supabase

@@ -31,6 +31,7 @@ export interface MentorProfile {
   us_dental_school_graduation_year: number | null;
   current_status: string | null;
   country_of_origin: string | null;
+  timezone: string | null;
   specializations: string[] | null;
   speciality: string | null;
   languages_spoken: string[] | null;

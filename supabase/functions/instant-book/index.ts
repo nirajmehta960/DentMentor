@@ -4,41 +4,41 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 }
 
 interface BookingRequest {
   mentor_id: string;
   service_id: string;
-  session_start_utc: string;
-  duration_minutes: number;
+  date: string; // YYYY-MM-DD
+  start_time_local: string; // HH:mm
+  timezone: string; // IANA timezone string (e.g., "America/New_York")
   idempotency_key?: string;
-  metadata?: Record<string, any>;
 }
 
 interface BookingResponse {
-  success: boolean;
+  ok: boolean;
   session?: {
     id: string;
+    mentor_id: string;
+    mentee_id: string;
     session_date: string;
+    duration_minutes: number;
     status: string;
     payment_status: string;
-    mentor_name: string;
-    service_title: string;
-    price: number;
-    duration_minutes: number;
+    price_paid: number | null;
   };
   error?: string;
   code?: string;
-  alternatives?: {
-    dates: string[];
-    times: string[];
-  };
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { 
+      status: 200,
+      headers: corsHeaders 
+    })
   }
 
   try {
@@ -47,12 +47,12 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get the authorization header
+    // Enforce auth: require user from supabase auth
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
         JSON.stringify({
-          success: false,
+          ok: false,
           error: 'Authorization header required',
           code: 'UNAUTHORIZED'
         } as BookingResponse),
@@ -70,7 +70,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({
-          success: false,
+          ok: false,
           error: 'Invalid authentication token',
           code: 'UNAUTHORIZED'
         } as BookingResponse),
@@ -86,18 +86,18 @@ serve(async (req) => {
     const { 
       mentor_id, 
       service_id, 
-      session_start_utc, 
-      duration_minutes, 
-      idempotency_key,
-      metadata = {} 
+      date,
+      start_time_local,
+      timezone,
+      idempotency_key
     } = requestBody
 
-    // Validate required fields
-    if (!mentor_id || !service_id || !session_start_utc || !duration_minutes) {
+    // Validate input types/required fields
+    if (!mentor_id || !service_id || !date || !start_time_local || !timezone) {
       return new Response(
         JSON.stringify({
-          success: false,
-          error: 'Missing required fields: mentor_id, service_id, session_start_utc, duration_minutes',
+          ok: false,
+          error: 'Missing required fields: mentor_id, service_id, date, start_time_local, timezone',
           code: 'INVALID_REQUEST'
         } as BookingResponse),
         { 
@@ -112,7 +112,7 @@ serve(async (req) => {
     if (!uuidRegex.test(mentor_id) || !uuidRegex.test(service_id)) {
       return new Response(
         JSON.stringify({
-          success: false,
+          ok: false,
           error: 'Invalid UUID format for mentor_id or service_id',
           code: 'INVALID_REQUEST'
         } as BookingResponse),
@@ -123,13 +123,13 @@ serve(async (req) => {
       )
     }
 
-    // Validate and normalize session_start_utc
-    const sessionStartDate = new Date(session_start_utc)
-    if (isNaN(sessionStartDate.getTime())) {
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+    if (!dateRegex.test(date)) {
       return new Response(
         JSON.stringify({
-          success: false,
-          error: 'Invalid session_start_utc format. Expected ISO 8601 timestamptz',
+          ok: false,
+          error: 'Invalid date format. Expected YYYY-MM-DD',
           code: 'INVALID_REQUEST'
         } as BookingResponse),
         { 
@@ -139,12 +139,13 @@ serve(async (req) => {
       )
     }
 
-    // Check if booking is in the past
-    if (sessionStartDate <= new Date()) {
+    // Validate time format (HH:mm)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/
+    if (!timeRegex.test(start_time_local)) {
       return new Response(
         JSON.stringify({
-          success: false,
-          error: 'Cannot book sessions in the past',
+          ok: false,
+          error: 'Invalid time format. Expected HH:mm',
           code: 'INVALID_REQUEST'
         } as BookingResponse),
         { 
@@ -154,93 +155,51 @@ serve(async (req) => {
       )
     }
 
-    // Handle idempotency
-    let reservationId: string | null = null
-    if (idempotency_key) {
-      // Check for existing reservation
-      const { data: existingReservation, error: reservationError } = await supabase
-        .from('booking_reservations')
-        .select('*')
-        .eq('idempotency_key', idempotency_key)
-        .eq('mentee_user_id', user.id)
-        .single()
-
-      if (existingReservation && !reservationError) {
-        if (existingReservation.status === 'confirmed' && existingReservation.session_id) {
-          // Return existing confirmed booking
-          const { data: session, error: sessionError } = await supabase
-            .from('sessions')
-            .select(`
-              id, session_date, status, payment_status,
-              mentor_profiles!inner(professional_headline),
-              mentor_services!inner(service_title, price, duration_minutes)
-            `)
-            .eq('id', existingReservation.session_id)
-            .single()
-
-          if (session && !sessionError) {
-            return new Response(
-              JSON.stringify({
-                success: true,
-                session: {
-                  id: session.id,
-                  session_date: session.session_date,
-                  status: session.status,
-                  payment_status: session.payment_status || 'pending',
-                  mentor_name: session.mentor_profiles?.professional_headline || 'Mentor',
-                  service_title: session.mentor_services?.service_title || 'Service',
-                  price: session.mentor_services?.price || 0,
-                  duration_minutes: session.mentor_services?.duration_minutes || 60
-                }
-              } as BookingResponse),
-              { 
-                status: 200, 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-              }
-            )
-          }
-        } else if (existingReservation.status === 'pending') {
-          reservationId = existingReservation.id
-        }
-      } else {
-        // Create new reservation for idempotency
-        const { data: newReservation, error: createError } = await supabase
-          .from('booking_reservations')
-          .insert({
-            mentee_user_id: user.id,
-            mentor_id,
-            service_id,
-            session_start_utc: sessionStartDate.toISOString(),
-            duration_minutes,
-            idempotency_key,
-            metadata,
-            status: 'pending'
-          })
-          .select('id')
-          .single()
-
-        if (newReservation && !createError) {
-          reservationId = newReservation.id
-        }
-      }
-    }
-
-    // Call the atomic booking RPC
+    // Call RPC: instant_book_atomic
+    // The RPC handles idempotency, timezone conversion, slot validation, and atomic booking
+    console.log('Calling instant_book_atomic RPC with:', {
+      mentor_id,
+      service_id,
+      mentee_user_id: user.id,
+      date,
+      start_time_local,
+      timezone,
+      idempotency_key: idempotency_key || null
+    });
+    
     const { data: rpcResult, error: rpcError } = await supabase.rpc('instant_book_atomic', {
-      p_mentee_user_id: user.id,
       p_mentor_id: mentor_id,
       p_service_id: service_id,
-      p_session_start_utc: sessionStartDate.toISOString(),
-      p_duration_minutes: duration_minutes,
-      p_reservation_id: reservationId,
-      p_metadata: metadata
-    })
+      p_mentee_user_id: user.id,
+      p_date: date,
+      p_start_time_local: start_time_local,
+      p_timezone: timezone,
+      p_idempotency_key: idempotency_key || null
+    });
+    
+    console.log('RPC Response:', { rpcResult, rpcError });
 
-    if (rpcError || !rpcResult || rpcResult.length === 0) {
+    // Handle RPC errors
+    if (rpcError) {
       return new Response(
         JSON.stringify({
-          success: false,
-          error: 'Failed to process booking',
+          ok: false,
+          error: rpcError.message || 'Failed to process booking',
+          code: 'BOOKING_FAILED'
+        } as BookingResponse),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // RPC returns array format: [{status: 'ok', session_id: uuid}] or [{status: 'error', error_code: string, error_message: string}]
+    if (!rpcResult || !Array.isArray(rpcResult) || rpcResult.length === 0) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: 'No response from booking service',
           code: 'BOOKING_FAILED'
         } as BookingResponse),
         { 
@@ -252,50 +211,36 @@ serve(async (req) => {
 
     const result = rpcResult[0]
 
-    if (result.error_code) {
-      // Handle specific error cases
-      let statusCode = 400
-      let alternatives: { dates: string[]; times: string[] } | undefined
-
+    // Handle RPC errors with proper HTTP status codes
+    if (result.status === 'error' && result.error_code) {
+      let statusCode = 500
+      let errorMessage = result.error_message || 'Booking failed'
 
       switch (result.error_code) {
-        case 'TIME_CONFLICT':
         case 'SLOT_UNAVAILABLE':
           statusCode = 409
-          // Generate alternatives for time conflicts
-          alternatives = await generateAlternatives(supabase, mentor_id, sessionStartDate.toISOString().split('T')[0])
-          break
-        case 'MENTEE_NOT_FOUND':
-          statusCode = 404
-          break
-        case 'MENTOR_NOT_FOUND':
-        case 'MENTOR_INACTIVE':
-        case 'MENTOR_UNVERIFIED':
-          statusCode = 404
-          break
-        case 'SERVICE_NOT_FOUND':
-          statusCode = 404
+          errorMessage = 'Slot already booked'
           break
         case 'NO_AVAILABILITY':
           statusCode = 404
-          alternatives = await generateAlternatives(supabase, mentor_id, sessionStartDate.toISOString().split('T')[0])
+          errorMessage = result.error_message || 'No availability found'
           break
-        case 'VALIDATION_ERROR':
+        case 'SERVICE_NOT_FOUND':
+        case 'MENTEE_PROFILE_NOT_FOUND':
           statusCode = 400
           break
-        case 'INTERNAL_ERROR':
-          statusCode = 500
+        case 'INVALID_TIMESTAMP':
+          statusCode = 400
           break
         default:
-          statusCode = 400
+          statusCode = 500
       }
 
       return new Response(
         JSON.stringify({
-          success: false,
-          error: result.error_message,
-          code: result.error_code,
-          alternatives
+          ok: false,
+          error: errorMessage,
+          code: result.error_code
         } as BookingResponse),
         { 
           status: statusCode, 
@@ -304,72 +249,72 @@ serve(async (req) => {
       )
     }
 
-    // Success - get session details for response
-    const { data: sessionDetails, error: sessionError } = await supabase
-      .from('sessions')
-      .select(`
-        id, session_date, status, payment_status,
-        mentor_profiles!inner(professional_headline),
-        mentor_services!inner(service_title, price, duration_minutes)
-      `)
-      .eq('id', result.session_id)
-      .single()
+    // On success: fetch the session row from sessions table by returned session_id
+    if (result.status === 'ok' && result.session_id) {
+      console.log('Booking successful, fetching session:', result.session_id);
+      
+      const { data: session, error: sessionError } = await supabase
+        .from('sessions')
+        .select('id, mentor_id, mentee_id, session_date, duration_minutes, status, payment_status, price_paid')
+        .eq('id', result.session_id)
+        .single()
 
-    if (sessionError || !sessionDetails) {
+      console.log('Fetched session:', { session, sessionError });
+
+      if (sessionError || !session) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            error: 'Booking created but failed to retrieve session details',
+            code: 'BOOKING_PARTIAL_SUCCESS'
+          } as BookingResponse),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
+      // Return success response
       return new Response(
         JSON.stringify({
-          success: false,
-          error: 'Booking created but failed to retrieve session details',
-          code: 'BOOKING_PARTIAL_SUCCESS'
+          ok: true,
+          session: {
+            id: session.id,
+            mentor_id: session.mentor_id,
+            mentee_id: session.mentee_id,
+            session_date: session.session_date,
+            duration_minutes: session.duration_minutes,
+            status: session.status,
+            payment_status: session.payment_status || 'pending',
+            price_paid: session.price_paid
+          }
         } as BookingResponse),
         { 
-          status: 500, 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
 
-    // Log activity for mentor
-    await supabase
-      .from('activity_log')
-      .insert({
-        mentor_id,
-        activity_type: 'session_booked',
-        title: 'New Session Booked',
-        description: `A new session has been booked for ${sessionDetails.session_date}`,
-        metadata: {
-          session_id: result.session_id,
-          mentee_user_id: user.id,
-          service_id,
-          duration_minutes
-        }
-      })
-
+    // Unexpected response format
     return new Response(
       JSON.stringify({
-        success: true,
-        session: {
-          id: sessionDetails.id,
-          session_date: sessionDetails.session_date,
-          status: sessionDetails.status,
-          payment_status: sessionDetails.payment_status || 'pending',
-          mentor_name: sessionDetails.mentor_profiles?.professional_headline || 'Mentor',
-          service_title: sessionDetails.mentor_services?.service_title || 'Service',
-          price: sessionDetails.mentor_services?.price || 0,
-          duration_minutes: sessionDetails.mentor_services?.duration_minutes || 60
-        }
+        ok: false,
+        error: 'Unexpected response format from booking service',
+        code: 'UNKNOWN_ERROR'
       } as BookingResponse),
       { 
-        status: 200, 
+        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     return new Response(
       JSON.stringify({
-        success: false,
-        error: 'Internal server error',
+        ok: false,
+        error: error.message || 'Internal server error',
         code: 'INTERNAL_ERROR'
       } as BookingResponse),
       { 
@@ -379,51 +324,3 @@ serve(async (req) => {
     )
   }
 })
-
-// Helper function to generate alternative booking times
-async function generateAlternatives(supabase: any, mentorId: string, requestedDate: string): Promise<{ dates: string[]; times: string[] }> {
-  try {
-    // Get availability for the next 7 days
-    const startDate = new Date(requestedDate)
-    const endDate = new Date(startDate)
-    endDate.setDate(startDate.getDate() + 7)
-
-    const { data: availability, error } = await supabase
-      .from('mentor_availability')
-      .select('date, time_slots')
-      .eq('mentor_id', mentorId)
-      .eq('is_available', true)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date')
-
-    if (error || !availability) {
-      return { dates: [], times: [] }
-    }
-
-    const alternativeDates: string[] = []
-    const alternativeTimes: string[] = []
-
-    availability.forEach((avail: any) => {
-      if (avail.time_slots && Array.isArray(avail.time_slots)) {
-        alternativeDates.push(avail.date)
-        
-        // Collect available times for the requested date
-        if (avail.date === requestedDate) {
-          avail.time_slots.forEach((slot: any) => {
-            if (slot.is_available && slot.start_time) {
-              alternativeTimes.push(slot.start_time)
-            }
-          })
-        }
-      }
-    })
-
-    return {
-      dates: [...new Set(alternativeDates)].slice(0, 5),
-      times: [...new Set(alternativeTimes)].slice(0, 8)
-    }
-  } catch (error) {
-    return { dates: [], times: [] }
-  }
-}
