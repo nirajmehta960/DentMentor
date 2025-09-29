@@ -1,0 +1,137 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // Only allow GET requests
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // Return a simple HTML status page
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>DentMentor API Server</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #0D9488 0%, #0EA5E9 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 24px rgba(13, 148, 136, 0.15);
+      text-align: center;
+    }
+    h1 {
+      color: #0D9488;
+      font-size: 32px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .status {
+      display: inline-block;
+      background: #10B981;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .info {
+      color: #475569;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .endpoints {
+      background: #F0FDFA;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+      text-align: left;
+      border: 1px solid #CCFBF1;
+    }
+    .endpoints h2 {
+      color: #0D9488;
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    .endpoint {
+      color: #475569;
+      font-size: 14px;
+      margin: 8px 0;
+      font-family: 'Courier New', monospace;
+    }
+    .method {
+      display: inline-block;
+      background: #0D9488;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🦷 DentMentor API Server</h1>
+    <div class="status">✓ Running</div>
+    <div class="info">
+      Backend server is running successfully!<br>
+      This is the API server for the DentMentor application.
+    </div>
+    <div class="endpoints">
+      <h2>Available API Endpoints</h2>
+      <div class="endpoint">
+        <span class="method">POST</span>
+        <code>/api/send-welcome-email</code>
+      </div>
+      <div class="endpoint">
+        <span class="method">POST</span>
+        <code>/api/send-booking-confirmation-email</code>
+      </div>
+    </div>
+    <div class="info" style="margin-top: 24px; font-size: 14px; color: #64748B;">
+      Frontend application runs on <strong>localhost:8080</strong><br>
+      API server runs on <strong>localhost:3000</strong>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  res.setHeader("Content-Type", "text/html");
+  return res.status(200).send(html);
+}
