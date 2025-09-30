@@ -24,6 +24,7 @@ import {
   type AlternativeSuggestion
 } from '@/lib/utils/booking';
 import { useQueryClient } from '@tanstack/react-query';
+import { sendBookingConfirmationEmails } from '@/services/emailService';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -232,6 +233,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         setBookingResult(session);
         setIsBookingComplete(true);
         setBookingState('success');
+        
+        // Send booking confirmation emails (non-blocking)
+        sendBookingConfirmationEmails({ sessionId: session.id }).catch(() => {});
         
         // Update UI state: Remove the booked slot from the availability list
         const slotKey = `${dateStr}-${selectedTime}`;

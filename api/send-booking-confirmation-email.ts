@@ -257,14 +257,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Check for required environment variables
   if (!process.env.RESEND_API_KEY) {
+    console.error(`[Booking Confirmation] ERROR: RESEND_API_KEY not configured`);
     return res.status(500).json({ error: "Email service not configured" });
   }
 
   if (!EMAIL_FROM) {
+    console.error(`[Booking Confirmation] ERROR: EMAIL_FROM not configured`);
     return res.status(500).json({ error: "Email FROM address not configured" });
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error(`[Booking Confirmation] ERROR: Supabase configuration not found`);
     return res.status(500).json({
       error: "Supabase configuration not found",
     });
@@ -295,8 +298,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    console.log(`[Booking Confirmation] Fetching session data for sessionId: ${sessionId.substring(0, 8)}...`);
-
     // 1) Fetch session by id
     const { data: session, error: sessionError } = await supabase
       .from("sessions")
@@ -311,8 +312,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         details: sessionError?.message,
       });
     }
-
-    console.log(`[Booking Confirmation] Session found - mentor: ${session.mentor_id.substring(0, 8)}..., mentee: ${session.mentee_id.substring(0, 8)}...`);
 
     // 2) Fetch mentor profile info
     const { data: mentorProfile, error: mentorError } = await supabase
@@ -352,41 +351,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (menteeProfileError) {
-      console.error(`[Booking Confirmation] Mentee profile details not found:`, menteeProfileError?.message);
+      console.warn(`[Booking Confirmation] Mentee profile details not found (using fallback):`, menteeProfileError?.message);
     }
 
     // 4) Fetch booking_reservations by session_id to get service_id (latest record)
-    const { data: reservations, error: reservationsError } = await supabase
-      .from("booking_reservations")
-      .select("service_id")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    if (reservationsError) {
-      console.error(`[Booking Confirmation] Failed to fetch reservations:`, reservationsError?.message);
-      return res.status(500).json({
-        error: "Failed to fetch booking reservations",
-        details: reservationsError?.message,
-      });
-    }
-
+    // This is optional - if it fails, we'll use fallback values from the session
     let serviceData = null;
-    if (reservations && reservations.length > 0 && reservations[0].service_id) {
-      const serviceId = reservations[0].service_id;
+    try {
+      const { data: reservations, error: reservationsError } = await supabase
+        .from("booking_reservations")
+        .select("service_id")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-      // 5) Fetch mentor_services by service_id
-      const { data: mentorService, error: serviceError } = await supabase
-        .from("mentor_services")
-        .select("service_title, price, duration_minutes")
-        .eq("id", serviceId)
-        .single();
+      if (reservationsError) {
+        console.warn(`[Booking Confirmation] Failed to fetch reservations (continuing without service data):`, reservationsError?.message);
+      } else if (reservations && reservations.length > 0 && reservations[0].service_id) {
+        const serviceId = reservations[0].service_id;
 
-      if (serviceError) {
-        console.error(`[Booking Confirmation] Service not found:`, serviceError?.message);
-      } else {
-        serviceData = mentorService;
+        // 5) Fetch mentor_services by service_id
+        const { data: mentorService, error: serviceError } = await supabase
+          .from("mentor_services")
+          .select("service_title, price, duration_minutes")
+          .eq("id", serviceId)
+          .single();
+
+        if (serviceError) {
+          console.warn(`[Booking Confirmation] Service not found (continuing without service data):`, serviceError?.message);
+        } else {
+          serviceData = mentorService;
+        }
       }
+    } catch (error: any) {
+      // Non-critical error - log but continue
+      console.warn(`[Booking Confirmation] Error fetching service data (continuing without it):`, error?.message);
     }
 
     // 6) Fetch emails from Supabase Auth (admin)
@@ -419,7 +418,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const mentorEmail = mentorUser.user.email;
     const menteeEmail = menteeUser.user.email;
 
-    console.log(`[Booking Confirmation] Successfully resolved all session data`);
+    // Validate emails are not null/undefined
+    if (!mentorEmail) {
+      console.error(`[Booking Confirmation] Mentor email is null/undefined`);
+      return res.status(500).json({
+        error: "Mentor email not found",
+        details: "Mentor user email is not set in Supabase Auth",
+      });
+    }
+
+    if (!menteeEmail) {
+      console.error(`[Booking Confirmation] Mentee email is null/undefined`);
+      return res.status(500).json({
+        error: "Mentee email not found",
+        details: "Mentee user email is not set in Supabase Auth",
+      });
+    }
 
     // Prepare email data
     const menteeName =
@@ -428,11 +442,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : menteeProfileDetails?.first_name || menteeUser.user.email?.split("@")[0] || "Student";
 
     // Get mentor name from mentor profile or user email
-    const { data: mentorProfileDetails, error: mentorProfileDetailsError } = await supabase
-      .from("profiles")
-      .select("first_name, last_name")
-      .eq("user_id", mentorProfile.user_id)
-      .single();
+    let mentorProfileDetails = null;
+    try {
+      const { data, error: mentorProfileDetailsError } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("user_id", mentorProfile.user_id)
+        .single();
+      
+      if (mentorProfileDetailsError) {
+        console.warn(`[Booking Confirmation] Mentor profile details not found (using fallback):`, mentorProfileDetailsError?.message);
+      } else {
+        mentorProfileDetails = data;
+      }
+    } catch (error: any) {
+      console.warn(`[Booking Confirmation] Error fetching mentor profile details (using fallback):`, error?.message);
+    }
 
     const mentorName =
       mentorProfileDetails?.first_name && mentorProfileDetails?.last_name
@@ -464,15 +489,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Send email to mentee
     try {
-      const menteeResult = await resend.emails.send({
-        from: EMAIL_FROM!,
+      if (!EMAIL_FROM) {
+        throw new Error("EMAIL_FROM is not configured");
+      }
+      await resend.emails.send({
+        from: EMAIL_FROM,
         to: menteeEmail,
         subject: `Booking confirmed: ${serviceTitle}`,
         html: createMenteeBookingConfirmedEmailHTML(emailParams),
       });
 
       menteeEmailSent = true;
-      console.log(`[Booking Confirmation] Mentee email sent successfully`);
     } catch (error: any) {
       menteeEmailError = error.message || "Unknown error";
       console.error(`[Booking Confirmation] Failed to send mentee email:`, menteeEmailError);
@@ -480,15 +507,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Send email to mentor
     try {
-      const mentorResult = await resend.emails.send({
-        from: EMAIL_FROM!,
+      if (!EMAIL_FROM) {
+        throw new Error("EMAIL_FROM is not configured");
+      }
+      await resend.emails.send({
+        from: EMAIL_FROM,
         to: mentorEmail,
         subject: `New booking confirmed: ${serviceTitle}`,
         html: createMentorBookingConfirmedEmailHTML(emailParams),
       });
 
       mentorEmailSent = true;
-      console.log(`[Booking Confirmation] Mentor email sent successfully`);
     } catch (error: any) {
       mentorEmailError = error.message || "Unknown error";
       console.error(`[Booking Confirmation] Failed to send mentor email:`, mentorEmailError);
@@ -530,8 +559,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(overallSuccess ? 200 : 500).json(response);
   } catch (error: any) {
-    console.error(`[Booking Confirmation] Unexpected error:`, error);
-    console.error(`[Booking Confirmation] Error stack:`, error?.stack);
+    console.error(`[Booking Confirmation] Unexpected error:`, error?.message);
+    if (error?.stack) {
+      console.error(`[Booking Confirmation] Error stack:`, error.stack);
+    }
     
     // Return detailed error information for debugging
     return res.status(500).json({

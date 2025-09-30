@@ -31,8 +31,8 @@ const getApiUrl = () => {
     if (devApiUrl) {
       return devApiUrl;
     }
-    // Fallback: use Vercel dev URL from environment or same origin
-    const vercelDevUrl = import.meta.env.VITE_VERCEL_DEV_URL || origin;
+    // Fallback: use Vercel dev URL from environment or default to localhost:3000
+    const vercelDevUrl = import.meta.env.VITE_VERCEL_DEV_URL || "http://localhost:3000";
     return vercelDevUrl;
   }
 
@@ -48,6 +48,10 @@ export interface SendWelcomeEmailParams {
   userName: string;
   dashboardUrl?: string;
   userType: "mentor" | "mentee";
+}
+
+export interface SendBookingConfirmationParams {
+  sessionId: string;
 }
 
 export async function sendWelcomeEmail({
@@ -85,6 +89,51 @@ export async function sendWelcomeEmail({
     return {};
   } catch (error: any) {
     // Don't throw error - we don't want to block signup if email fails
+    // Handle connection refused errors gracefully (dev server not running)
+    if (
+      error?.message?.includes("ERR_CONNECTION_REFUSED") ||
+      error?.message?.includes("Failed to fetch") ||
+      error?.name === "TypeError"
+    ) {
+      return {
+        error: new Error(
+          "Email service unavailable in development. Please ensure 'vercel dev' is running."
+        ),
+      };
+    }
+
+    return { error: error as Error };
+  }
+}
+
+export async function sendBookingConfirmationEmails({
+  sessionId,
+}: SendBookingConfirmationParams): Promise<{ error?: Error }> {
+  const apiUrl = getApiUrl();
+  const endpoint = `${apiUrl}/api/send-booking-confirmation-email`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sessionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage =
+        errorData.error || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    await response.json();
+    return {};
+  } catch (error: any) {
+    // Don't throw error - we don't want to block booking if email fails
     // Handle connection refused errors gracefully (dev server not running)
     if (
       error?.message?.includes("ERR_CONNECTION_REFUSED") ||
