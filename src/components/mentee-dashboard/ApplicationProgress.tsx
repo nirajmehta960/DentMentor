@@ -102,9 +102,9 @@ export function ApplicationProgress() {
   };
 
   return (
-    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden">
+    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden flex flex-col h-full">
       {/* Header with progress */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 p-4 sm:p-6">
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 p-4 sm:p-6 flex-shrink-0">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-xl bg-primary/20">
             <Target className="h-5 w-5 text-primary" />
@@ -135,7 +135,7 @@ export function ApplicationProgress() {
         </div>
       </div>
 
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
         <div className="space-y-4">
           {milestones.map((milestone, index) => (
             <div

@@ -69,28 +69,64 @@ export function useMenteeRecentActivity() {
             const userIds = mentorProfiles.map((mp) => mp.user_id);
             const { data: profiles, error: profilesError } = await supabase
               .from("profiles")
-              .select("id, first_name, last_name")
-              .in("id", userIds);
+              .select("user_id, first_name, last_name")
+              .in("user_id", userIds);
 
             if (!profilesError && profiles) {
-              const profileMap = new Map(profiles.map((p) => [p.id, p]));
+              const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
               mentorProfiles.forEach((mp) => {
                 const profile = profileMap.get(mp.user_id);
                 if (profile) {
-                  mentorMap.set(
-                    mp.id,
-                    `${profile.first_name || ""} ${
-                      profile.last_name || ""
-                    }`.trim() || "Mentor"
-                  );
+                  const fullName = `${profile.first_name || ""} ${
+                    profile.last_name || ""
+                  }`.trim() || "Mentor";
+                  mentorMap.set(mp.id, fullName);
                 }
               });
             }
           }
         }
 
-        // Fetch feedback/reviews
+        // Fetch service titles via booking_reservations -> mentor_services
         const sessionIds = recentSessions?.map((s) => s.id) || [];
+        
+        // Fetch booking_reservations to get service_id
+        const { data: reservations, error: reservationsError } = await supabase
+          .from("booking_reservations")
+          .select("session_id, service_id")
+          .in("session_id", sessionIds);
+
+        // Get service IDs
+        const serviceIds = [
+          ...new Set(
+            reservations?.map((r) => r.service_id).filter(Boolean) || []
+          ),
+        ];
+
+        // Fetch mentor_services to get service titles
+        let serviceMap = new Map<string, string>();
+        if (serviceIds.length > 0) {
+          const { data: services, error: servicesError } = await supabase
+            .from("mentor_services")
+            .select("id, service_title")
+            .in("id", serviceIds);
+
+          if (!servicesError && services) {
+            // Map service_id -> service_title
+            const serviceTitleMap = new Map(
+              services.map((s) => [s.id, s.service_title])
+            );
+
+            // Map session_id -> service_title via reservations
+            serviceMap = new Map(
+              reservations
+                ?.filter((r) => r.service_id && serviceTitleMap.has(r.service_id))
+                .map((r) => [r.session_id, serviceTitleMap.get(r.service_id)!]) || []
+            );
+          }
+        }
+
+        // Fetch feedback/reviews
         let feedbackMap = new Map();
         if (sessionIds.length > 0) {
           const { data: feedback, error: feedbackError } = await supabase
@@ -108,8 +144,10 @@ export function useMenteeRecentActivity() {
         // Transform sessions into activities
         const transformedActivities: MenteeActivity[] = (recentSessions || [])
           .map((session) => {
-            const mentorName = mentorMap.get(session.mentor_id) || "Mentor";
+            const mentorNameRaw = mentorMap.get(session.mentor_id) || "Mentor";
+            const mentorName = mentorNameRaw.startsWith("Dr. ") ? mentorNameRaw : `Dr. ${mentorNameRaw}`;
             const rating = feedbackMap.get(session.id);
+            const serviceTitle = serviceMap.get(session.id) || session.session_type || "Mentorship session";
             const timeAgo = formatDistanceToNow(new Date(session.created_at), {
               addSuffix: true,
             });
@@ -119,9 +157,7 @@ export function useMenteeRecentActivity() {
                 id: `session_completed_${session.id}`,
                 type: "session_completed",
                 title: "Session Completed",
-                description: `${
-                  session.session_type || "Mentorship session"
-                } with ${mentorName}`,
+                description: `${serviceTitle} with ${mentorName}`,
                 time: timeAgo,
                 created_at: session.created_at,
                 metadata: {
@@ -138,9 +174,7 @@ export function useMenteeRecentActivity() {
                 id: `session_booked_${session.id}`,
                 type: "session_booked",
                 title: "Session Booked",
-                description: `${
-                  session.session_type || "Mentorship session"
-                } scheduled with ${mentorName}`,
+                description: `${serviceTitle} scheduled with ${mentorName}`,
                 time: timeAgo,
                 created_at: session.created_at,
                 metadata: {

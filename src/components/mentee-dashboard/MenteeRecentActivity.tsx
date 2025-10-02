@@ -30,16 +30,16 @@ export function MenteeRecentActivity() {
       case "message":
         return {
           icon: MessageSquare,
-          color: "text-blue-500",
-          bg: "bg-blue-500/10",
+          color: "text-accent",
+          bg: "bg-accent/10",
         };
       case "review":
         return { icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" };
       case "document":
         return {
           icon: FileText,
-          color: "text-purple-500",
-          bg: "bg-purple-500/10",
+          color: "text-primary",
+          bg: "bg-primary/10",
         };
       default:
         return {
@@ -82,8 +82,8 @@ export function MenteeRecentActivity() {
   }
 
   return (
-    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-border/50">
+    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden flex flex-col h-full">
+      <div className="p-4 sm:p-6 border-b border-border/50 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
@@ -112,7 +112,7 @@ export function MenteeRecentActivity() {
           ))}
         </div>
       </div>
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
         <div className="space-y-4">
           {filteredActivities.length === 0 ? (
             <div className="text-center py-8">

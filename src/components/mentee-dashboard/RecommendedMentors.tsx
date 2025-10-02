@@ -39,12 +39,12 @@ export function RecommendedMentors() {
   }
 
   return (
-    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-border/50">
+    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden flex flex-col h-full">
+      <div className="p-4 sm:p-6 border-b border-border/50 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-500/10">
-              <Sparkles className="h-5 w-5 text-purple-500" />
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
               <h3 className="text-lg font-semibold">Recommended Mentors</h3>
@@ -65,7 +65,7 @@ export function RecommendedMentors() {
           </Link>
         </div>
       </div>
-      <div className="p-4 sm:p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto">
         {recommendedMentors.length === 0 ? (
           <div className="text-center py-8">
             <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
@@ -91,7 +91,7 @@ export function RecommendedMentors() {
                   <Avatar className="h-14 w-14 ring-2 ring-primary/20">
                     <AvatarImage src={mentor.avatar || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
-                      {mentor.name
+                      {(mentor.name.startsWith("Dr. ") ? mentor.name : `Dr. ${mentor.name}`)
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
@@ -107,7 +107,7 @@ export function RecommendedMentors() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h4 className="font-semibold text-foreground">
-                        {mentor.name}
+                        {mentor.name.startsWith("Dr. ") ? mentor.name : `Dr. ${mentor.name}`}
                       </h4>
                       <p className="text-sm text-muted-foreground truncate">
                         {mentor.school}

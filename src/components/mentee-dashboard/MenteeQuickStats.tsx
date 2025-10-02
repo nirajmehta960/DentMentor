@@ -31,8 +31,8 @@ export function MenteeQuickStats() {
       change: "Scheduled",
       trend: "neutral",
       icon: Clock,
-      gradient: "from-blue-500/20 to-blue-500/5",
-      iconColor: "text-blue-500",
+      gradient: "from-accent/20 to-accent/5",
+      iconColor: "text-accent",
     },
     {
       label: "Mentors Connected",
@@ -40,8 +40,8 @@ export function MenteeQuickStats() {
       change: "Active connections",
       trend: stats && stats.mentorsConnected > 0 ? "up" : "neutral",
       icon: Users,
-      gradient: "from-purple-500/20 to-purple-500/5",
-      iconColor: "text-purple-500",
+      gradient: "from-primary/20 to-primary/5",
+      iconColor: "text-primary",
     },
     {
       label: "Hours of Mentorship",

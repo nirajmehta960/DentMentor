@@ -44,8 +44,8 @@ export function UpcomingSessions() {
   }
 
   return (
-    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-border/50">
+    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden flex flex-col h-full">
+      <div className="p-4 sm:p-6 border-b border-border/50 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
@@ -68,7 +68,7 @@ export function UpcomingSessions() {
           </Button>
         </div>
       </div>
-      <div className="p-4 sm:p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto">
         {upcomingSessions.length === 0 ? (
           <div className="text-center py-8">
             <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
@@ -101,7 +101,9 @@ export function UpcomingSessions() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold text-foreground truncate">
-                        {session.mentor?.name || "Mentor"}
+                        {session.service?.title ||
+                          session.session_type ||
+                          "Mentorship Session"}
                       </h4>
                       {session.mentor?.rating && (
                         <div className="flex items-center gap-1 text-amber-500">
@@ -112,11 +114,14 @@ export function UpcomingSessions() {
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {session.service?.title ||
-                        session.session_type ||
-                        "Mentorship Session"}
+                    <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
+                      {session.duration_minutes} minutes session
                     </p>
+                    {session.service?.title && session.mentor?.name && (
+                      <p className="text-xs text-muted-foreground">
+                        with {session.mentor.name}
+                      </p>
+                    )}
                   </div>
                 </div>
 

@@ -66,31 +66,59 @@ export function useMenteeUpcomingSessions() {
 
           if (mentorError) throw mentorError;
 
-          // Get user profiles
+          // Get user profiles (match by user_id, not id)
           const userIds = mentorProfiles?.map((mp) => mp.user_id) || [];
           const { data: profiles, error: profilesError } = await supabase
             .from("profiles")
-            .select("id, first_name, last_name, avatar_url")
-            .in("id", userIds);
+            .select("user_id, first_name, last_name, avatar_url")
+            .in("user_id", userIds);
 
           if (profilesError) throw profilesError;
 
-          // Get services for sessions
+          // Get services for sessions via booking_reservations -> mentor_services
           const sessionIds = sessions?.map((s) => s.id) || [];
-          const { data: sessionServices, error: servicesError } = await supabase
-            .from("session_requests")
-            .select("session_id, service_title")
+          
+          // Fetch booking_reservations to get service_id
+          const { data: reservations, error: reservationsError } = await supabase
+            .from("booking_reservations")
+            .select("session_id, service_id")
             .in("session_id", sessionIds);
+
+          // Get service IDs
+          const serviceIds = [
+            ...new Set(
+              reservations?.map((r) => r.service_id).filter(Boolean) || []
+            ),
+          ];
+
+          // Fetch mentor_services to get service titles
+          let serviceMap = new Map<string, string>();
+          if (serviceIds.length > 0) {
+            const { data: services, error: servicesError } = await supabase
+              .from("mentor_services")
+              .select("id, service_title")
+              .in("id", serviceIds);
+
+            if (!servicesError && services) {
+              // Map service_id -> service_title
+              const serviceTitleMap = new Map(
+                services.map((s) => [s.id, s.service_title])
+              );
+
+              // Map session_id -> service_title via reservations
+              serviceMap = new Map(
+                reservations
+                  ?.filter((r) => r.service_id && serviceTitleMap.has(r.service_id))
+                  .map((r) => [r.session_id, serviceTitleMap.get(r.service_id)!]) || []
+              );
+            }
+          }
 
           // Create maps for quick lookup
           const mentorProfileMap = new Map(
             mentorProfiles?.map((mp) => [mp.id, mp]) || []
           );
-          const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
-          const serviceMap = new Map(
-            sessionServices?.map((sr) => [sr.session_id, sr.service_title]) ||
-              []
-          );
+          const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
 
           // Transform sessions with mentor info
           const transformedSessions = (sessions || []).map((session) => {
@@ -100,14 +128,23 @@ export function useMenteeUpcomingSessions() {
               : null;
             const serviceTitle = serviceMap.get(session.id);
 
+            // Get mentor name from profile - prioritize actual name, never use bio/headline
+            let mentorName: string = 'Dr. Mentor';
+            if (profile) {
+              const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+              if (fullName) {
+                mentorName = `Dr. ${fullName}`;
+              } else if (profile.first_name) {
+                mentorName = `Dr. ${profile.first_name}`;
+              } else if (profile.last_name) {
+                mentorName = `Dr. ${profile.last_name}`;
+              }
+            }
+
             return {
               ...session,
               mentor: {
-                name: profile
-                  ? `${profile.first_name || ""} ${
-                      profile.last_name || ""
-                    }`.trim() || "Mentor"
-                  : mentorProfile?.professional_headline || "Mentor",
+                name: mentorName,
                 avatar: profile?.avatar_url || null,
                 specialty: mentorProfile?.professional_headline || undefined,
                 rating: undefined, // Would need to fetch from feedback table

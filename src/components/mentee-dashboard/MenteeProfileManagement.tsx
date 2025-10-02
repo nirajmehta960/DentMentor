@@ -23,11 +23,11 @@ export function MenteeProfileManagement() {
     : "U";
 
   return (
-    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden">
+    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden flex flex-col h-full">
       {/* Header with gradient */}
-      <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/10 to-accent/20" />
+      <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/10 to-accent/20 flex-shrink-0" />
 
-      <div className="p-4 sm:p-6 -mt-10">
+      <div className="p-4 sm:p-6 -mt-10 flex-1 overflow-y-auto">
         <div className="flex items-end justify-between mb-6">
           <div className="flex items-end gap-4">
             <Avatar className="h-16 w-16 sm:h-20 sm:w-20 ring-4 ring-background shadow-xl">
