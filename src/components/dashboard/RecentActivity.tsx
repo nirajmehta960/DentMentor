@@ -27,8 +27,8 @@ export function RecentActivity() {
       case "session_booked":
         return {
           icon: Calendar,
-          color: "text-blue-600",
-          bg: "bg-blue-500/10",
+          color: "text-accent",
+          bg: "bg-accent/10",
           label: "Session",
         };
       case "session_completed":
@@ -41,8 +41,8 @@ export function RecentActivity() {
       case "new_message":
         return {
           icon: MessageCircle,
-          color: "text-blue-600",
-          bg: "bg-blue-500/10",
+          color: "text-accent",
+          bg: "bg-accent/10",
           label: "Message",
         };
       case "new_feedback":
