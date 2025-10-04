@@ -26,6 +26,7 @@ interface EducationBackgroundStepProps {
   data: any;
   onNext: (data: any) => void;
   onPrevious: () => void;
+  isEditModeFromUrl?: boolean;
 }
 
 const mdsSpecializations = [
@@ -104,6 +105,7 @@ export const EducationBackgroundStep = ({
   data,
   onNext,
   onPrevious,
+  isEditModeFromUrl = false,
 }: EducationBackgroundStepProps) => {
   const [formData, setFormData] = useState({
     bds_university: data?.bds_university || "",
@@ -235,6 +237,7 @@ export const EducationBackgroundStep = ({
                     bds_university: e.target.value,
                   }))
                 }
+                disabled={isEditModeFromUrl}
                 className="h-12 border-border/50 focus:border-primary"
               />
             </div>
@@ -249,6 +252,7 @@ export const EducationBackgroundStep = ({
                     bds_graduation_year: parseInt(value),
                   }))
                 }
+                disabled={isEditModeFromUrl}
               >
                 <SelectTrigger className="h-12 border-border/50">
                   <SelectValue placeholder="Select graduation year" />
@@ -287,6 +291,7 @@ export const EducationBackgroundStep = ({
                     mds_university: e.target.value,
                   }))
                 }
+                disabled={isEditModeFromUrl}
                 className="h-12 border-border/50 focus:border-primary"
               />
             </div>
@@ -301,6 +306,7 @@ export const EducationBackgroundStep = ({
                     mds_graduation_year: parseInt(value),
                   }))
                 }
+                disabled={isEditModeFromUrl}
               >
                 <SelectTrigger className="h-12 border-border/50">
                   <SelectValue placeholder="Select graduation year" />
@@ -326,6 +332,7 @@ export const EducationBackgroundStep = ({
                   mds_specialization: value,
                 }))
               }
+              disabled={isEditModeFromUrl}
             >
               <SelectTrigger className="h-12 border-border/50">
                 <SelectValue placeholder="Select your specialization" />
@@ -359,6 +366,7 @@ export const EducationBackgroundStep = ({
                     us_dental_school: value,
                   }))
                 }
+                disabled={isEditModeFromUrl}
               >
                 <SelectTrigger className="h-12 border-border/50">
                   <SelectValue placeholder="Select your US dental school" />
@@ -385,6 +393,7 @@ export const EducationBackgroundStep = ({
                     us_dental_school_graduation_year: parseInt(value),
                   }))
                 }
+                disabled={isEditModeFromUrl}
               >
                 <SelectTrigger className="h-12 border-border/50">
                   <SelectValue placeholder="Select graduation year" />

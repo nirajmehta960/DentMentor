@@ -30,6 +30,7 @@ interface ProfessionalProfileStepProps {
   data: any;
   onNext: (data: any) => void;
   onPrevious: () => void;
+  isEditModeFromUrl?: boolean;
 }
 
 const countries = [
@@ -85,6 +86,7 @@ export const ProfessionalProfileStep = ({
   data,
   onNext,
   onPrevious,
+  isEditModeFromUrl = false,
 }: ProfessionalProfileStepProps) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
@@ -257,6 +259,7 @@ export const ProfessionalProfileStep = ({
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, email: e.target.value }))
             }
+            disabled={isEditModeFromUrl}
             className="bg-muted/50 border-border/50 focus:border-primary h-12"
             placeholder="your.email@example.com"
           />

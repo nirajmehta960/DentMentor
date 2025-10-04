@@ -239,6 +239,7 @@ const Onboarding = () => {
             data={combinedData}
             onNext={handleNext}
             onPrevious={handlePrevious}
+            isEditModeFromUrl={isEditModeFromUrl}
           />
         );
       case 2:
@@ -247,6 +248,7 @@ const Onboarding = () => {
             data={combinedData}
             onNext={handleNext}
             onPrevious={handlePrevious}
+            isEditModeFromUrl={isEditModeFromUrl}
           />
         );
       case 3:

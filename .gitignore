@@ -35,3 +35,7 @@ test-*.sql
 debug-*.sql
 standardize-*.sql
 .vercel
+extract_code.js
+full_codebase_output.txt
+.cursor/
+supabase/.temp/
