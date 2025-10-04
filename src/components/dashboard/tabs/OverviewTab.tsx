@@ -1,7 +1,6 @@
 import React from 'react';
 import { WelcomeBar } from '@/components/dashboard/WelcomeBar';
 import { QuickStats } from '@/components/dashboard/QuickStats';
-import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -29,8 +28,8 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
       {/* Quick Access Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Sessions Preview */}
-        <Card className="border-border/50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="border-border/50 flex flex-col h-[500px]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 flex-shrink-0">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
               Upcoming Sessions
@@ -40,7 +39,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -53,7 +52,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
                 <p>No upcoming sessions</p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3">
                 {upcomingSessions.map((session) => (
                   <div 
                     key={session.id} 
@@ -90,8 +89,8 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
         </Card>
         
         {/* Availability Quick Access */}
-        <Card className="border-border/50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="border-border/50 flex flex-col h-[500px]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 flex-shrink-0">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Clock className="w-5 h-5 text-primary" />
               Your Availability
@@ -101,7 +100,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
             {isLoadingAvailability ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -117,7 +116,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3">
                 {availability
                   .filter((item) => {
                     const itemDate = new Date(item.date + 'T00:00:00');
@@ -183,9 +182,6 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
           </CardContent>
         </Card>
       </div>
-      
-      {/* Recent Activity */}
-      <RecentActivity />
     </div>
   );
 }

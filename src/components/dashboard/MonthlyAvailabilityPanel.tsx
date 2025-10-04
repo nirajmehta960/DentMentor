@@ -302,7 +302,7 @@ export function MonthlyAvailabilityPanel({
               );
             }
             return (
-              <div className="space-y-2 sm:space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-2 sm:space-y-3">
                 {Object.entries(bookedSessionsByDate)
                   .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
                   .map(([dateKey, sessions]) => {
@@ -399,7 +399,7 @@ export function MonthlyAvailabilityPanel({
           }
 
           return (
-            <div className="space-y-2 sm:space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-2 sm:space-y-3">
               {filteredAvailability.map((item) => {
                 const timeSlots = formatTimeSlots(item.time_slots);
                 const itemDate = parseDateString(item.date);

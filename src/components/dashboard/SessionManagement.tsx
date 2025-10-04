@@ -56,9 +56,9 @@ export function SessionManagement() {
   }
 
   return (
-    <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm">
+    <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm flex flex-col h-[calc(100vh-30rem)] min-h-[600px]">
       {/* Header */}
-      <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+      <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -74,7 +74,7 @@ export function SessionManagement() {
         </div>
       </div>
 
-      <div className="p-4 sm:p-5 md:p-6">
+      <div className="p-4 sm:p-5 md:p-6 flex-1 overflow-y-auto">
         <Tabs defaultValue="upcoming" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-lg sm:rounded-xl">
             <TabsTrigger

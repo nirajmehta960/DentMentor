@@ -178,18 +178,18 @@ export function AvailabilityCalendar() {
     const cells = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     return (
-      <div className="space-y-3 sm:space-y-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="space-y-2 sm:space-y-3">
+        <div className="flex items-center justify-between gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => changeMonth(-1)}
             disabled={currentMonth <= fromMonth}
-            className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
           >
-            <ChevronLeft className="h-4 w-4 sm:h-4 sm:w-4" />
+            <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
-          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-center flex-1">
+          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-center flex-1">
             {format(currentMonth, "MMMM yyyy")}
           </h3>
           <Button
@@ -197,26 +197,26 @@ export function AvailabilityCalendar() {
             size="sm"
             onClick={() => changeMonth(1)}
             disabled={currentMonth >= toMonth}
-            className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
           >
-            <ChevronRight className="h-4 w-4 sm:h-4 sm:w-4" />
+            <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
         </div>
 
-        <div className="grid grid-cols-7 gap-y-1 sm:gap-y-2">
+        <div className="grid grid-cols-7 gap-y-0.5 sm:gap-y-1">
           {daysShort.map((day) => (
             <div
               key={day}
-              className="text-center text-xs sm:text-sm font-semibold text-muted-foreground py-1.5"
+              className="text-center text-xs font-semibold text-muted-foreground py-1"
             >
               {day}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
           {cells.map((date, idx) => {
-            if (!date) return <div key={`e-${idx}`} className="h-10 sm:h-12 md:h-14" />;
+            if (!date) return <div key={`e-${idx}`} className="h-8 sm:h-9 md:h-10" />;
 
             const isDisabled = isPast(date) || isAfter(date, twoMonthsFromNow);
             const isSelected = selectedDate && isSameDay(date, selectedDate);
@@ -229,7 +229,7 @@ export function AvailabilityCalendar() {
                 onClick={() => handleDateSelect(date)}
                 disabled={isDisabled}
                 className={
-                  `relative mx-auto h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full transition-all text-xs sm:text-sm md:text-base font-medium ` +
+                  `relative mx-auto h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex items-center justify-center rounded-full transition-all text-xs sm:text-sm font-medium ` +
                   `${isSelected ? "bg-primary text-primary-foreground scale-105 shadow-md" : ""} ` +
                   `${
                     isMarked && !isSelected
@@ -307,9 +307,9 @@ export function AvailabilityCalendar() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       {/* Main Calendar Card */}
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm">
+      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm flex flex-col h-[calc(100vh-25rem)] min-h-[600px]">
         {/* Header */}
         <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
           <div className="flex flex-col gap-3">
@@ -336,44 +336,30 @@ export function AvailabilityCalendar() {
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 md:p-6">
+        <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5 pb-3 sm:pb-4 md:pb-5 flex-1 flex flex-col justify-between">
           {/* Calendar */}
-          <div className="flex justify-center mb-4 sm:mb-5 overflow-x-auto">
-            <div className="w-full max-w-3xl rounded-lg sm:rounded-xl border border-border/50 p-3 sm:p-4 md:p-5 pointer-events-auto min-w-0">
+          <div className="flex justify-center mb-2 sm:mb-3 overflow-x-auto flex-shrink-0">
+            <div className="w-full max-w-2xl rounded-lg sm:rounded-xl border border-border/50 p-2 sm:p-3 md:p-4 pointer-events-auto min-w-0">
               {renderGrid()}
             </div>
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-5 py-3 sm:py-4 border-t border-border/50">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-5 pt-2 sm:pt-3 border-t border-border/50 flex-shrink-0 mt-auto">
             <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/10 border border-primary/20"></div>
               <span>Available</span>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-amber-500/20 border border-amber-500/30"></div>
-              <span className="hidden sm:inline">Partially booked</span>
-              <span className="sm:hidden">Partial</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
               <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary"></div>
               <span>Selected</span>
             </div>
           </div>
-
-          {/* Quick tip */}
-          <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/30 border border-border/50">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Tip:</span> Click on
-              any date to add or edit your available time slots. You can set
-              availability up to 2 months in advance.
-            </p>
-          </div>
         </div>
       </div>
 
       {/* Your Availability Panel */}
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm">
+      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm flex flex-col h-[calc(100vh-25rem)] min-h-[600px]">
         <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -403,7 +389,7 @@ export function AvailabilityCalendar() {
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 md:p-6">
+        <div className="p-4 sm:p-5 md:p-6 flex-1 overflow-y-auto">
           <MonthlyAvailabilityPanel
             currentMonth={currentMonth}
             onMonthChange={setCurrentMonth}

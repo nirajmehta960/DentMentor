@@ -83,8 +83,8 @@ export default function Dashboard() {
         {/* Sidebar - Desktop only */}
         <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
-        {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl">
+        {/* Main Content - Fixed height with overflow */}
+        <main className="flex-1 p-6 lg:p-8 max-w-7xl min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-y-auto">
           {renderActiveTab()}
         </main>
       </div>

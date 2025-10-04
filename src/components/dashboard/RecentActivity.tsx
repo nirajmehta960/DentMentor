@@ -62,8 +62,8 @@ export function RecentActivity() {
       default:
         return {
           icon: Activity,
-          color: "text-gray-600",
-          bg: "bg-gray-500/10",
+          color: "text-muted-foreground",
+          bg: "bg-muted/50",
           label: "Activity",
         };
     }
@@ -129,9 +129,9 @@ export function RecentActivity() {
   };
 
   return (
-    <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm">
+    <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm flex flex-col max-h-[700px] min-h-[500px]">
       {/* Header */}
-      <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+      <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent flex-shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -175,8 +175,8 @@ export function RecentActivity() {
         </div>
       </div>
 
-      <div className="p-4 sm:p-5 md:p-6">
-        <div className="space-y-3 sm:space-y-4 max-h-[600px] overflow-y-auto">
+      <div className="p-4 sm:p-5 md:p-6 flex-1 overflow-y-auto">
+        <div className="space-y-3 sm:space-y-4">
           {filteredActivities?.length === 0 ? (
             <div className="text-center py-8 sm:py-12 bg-muted/30 rounded-lg sm:rounded-xl">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-muted flex items-center justify-center">

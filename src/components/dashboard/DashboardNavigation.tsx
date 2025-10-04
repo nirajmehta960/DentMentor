@@ -95,7 +95,7 @@ export function DashboardNavigation() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-3 sm:px-4 md:px-6">
-        <div className="flex h-14 sm:h-16 items-center justify-between">
+        <div className="flex h-14 sm:h-16 items-center justify-between pt-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 sm:gap-3">
             <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-r from-primary to-primary/80">

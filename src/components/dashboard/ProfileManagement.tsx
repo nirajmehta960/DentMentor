@@ -34,7 +34,7 @@ export function ProfileManagement() {
   const { toast } = useToast();
 
   const handleEditProfile = () => {
-    navigate("/onboarding");
+    navigate("/onboarding?edit=1");
   };
 
   const handleImageSaved = async (croppedImage: string) => {
