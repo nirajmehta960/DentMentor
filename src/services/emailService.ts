@@ -52,6 +52,8 @@ export interface SendWelcomeEmailParams {
 
 export interface SendBookingConfirmationParams {
   sessionId: string;
+  mentorTimezone: string;
+  menteeTimezone: string;
 }
 
 export async function sendWelcomeEmail({
@@ -108,6 +110,8 @@ export async function sendWelcomeEmail({
 
 export async function sendBookingConfirmationEmails({
   sessionId,
+  mentorTimezone,
+  menteeTimezone,
 }: SendBookingConfirmationParams): Promise<{ error?: Error }> {
   const apiUrl = getApiUrl();
   const endpoint = `${apiUrl}/api/send-booking-confirmation-email`;
@@ -120,6 +124,8 @@ export async function sendBookingConfirmationEmails({
       },
       body: JSON.stringify({
         sessionId,
+        mentorTimezone,
+        menteeTimezone,
       }),
     });
 

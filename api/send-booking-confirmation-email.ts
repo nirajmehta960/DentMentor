@@ -29,7 +29,23 @@ interface BookingEmailParams {
   durationMinutes: number;
   price: number;
   dashboardUrl: string;
+  timezone: string;
 }
+
+// Helper function to get timezone abbreviation
+const getTimezoneAbbr = (timezone: string): string => {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      timeZoneName: "short",
+    });
+    const parts = formatter.formatToParts(new Date());
+    const tzName = parts.find((part) => part.type === "timeZoneName");
+    return tzName?.value || timezone;
+  } catch (error) {
+    return timezone;
+  }
+};
 
 // Mentee Booking Confirmation Email
 const createMenteeBookingConfirmedEmailHTML = ({
@@ -40,16 +56,19 @@ const createMenteeBookingConfirmedEmailHTML = ({
   durationMinutes,
   price,
   dashboardUrl,
+  timezone,
 }: BookingEmailParams) => {
-  const formattedDate = new Date(sessionDate).toLocaleString("en-US", {
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZoneName: "short",
-  });
+    timeZone: timezone,
+  }).format(new Date(sessionDate));
+  
+  const timezoneAbbr = getTimezoneAbbr(timezone);
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -84,7 +103,7 @@ const createMenteeBookingConfirmedEmailHTML = ({
         <h3 style="color: #0D9488; font-size: 18px; font-weight: 600; margin: 0 0 16px 0;">Session Details</h3>
         <div style="color: #475569; font-size: 14px; margin: 0; line-height: 1.8;">
           <p style="margin: 0 0 12px 0;"><strong>Service:</strong> ${serviceTitle}</p>
-          <p style="margin: 0 0 12px 0;"><strong>Date & Time:</strong> ${formattedDate}</p>
+          <p style="margin: 0 0 12px 0;"><strong>Date & Time:</strong> ${formattedDate} (${timezoneAbbr})</p>
           <p style="margin: 0 0 12px 0;"><strong>Duration:</strong> ${durationMinutes} minutes</p>
           <p style="margin: 0;"><strong>Total:</strong> ${formattedPrice}</p>
         </div>
@@ -124,16 +143,19 @@ const createMentorBookingConfirmedEmailHTML = ({
   durationMinutes,
   price,
   dashboardUrl,
+  timezone,
 }: BookingEmailParams) => {
-  const formattedDate = new Date(sessionDate).toLocaleString("en-US", {
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZoneName: "short",
-  });
+    timeZone: timezone,
+  }).format(new Date(sessionDate));
+  
+  const timezoneAbbr = getTimezoneAbbr(timezone);
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -169,7 +191,7 @@ const createMentorBookingConfirmedEmailHTML = ({
         <div style="color: #475569; font-size: 14px; margin: 0; line-height: 1.8;">
           <p style="margin: 0 0 12px 0;"><strong>Service:</strong> ${serviceTitle}</p>
           <p style="margin: 0 0 12px 0;"><strong>Student:</strong> ${menteeName}</p>
-          <p style="margin: 0 0 12px 0;"><strong>Date & Time:</strong> ${formattedDate}</p>
+          <p style="margin: 0 0 12px 0;"><strong>Date & Time:</strong> ${formattedDate} (${timezoneAbbr})</p>
           <p style="margin: 0 0 12px 0;"><strong>Duration:</strong> ${durationMinutes} minutes</p>
           <p style="margin: 0;"><strong>Amount:</strong> ${formattedPrice}</p>
         </div>
@@ -282,7 +304,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   try {
-    const { sessionId } = req.body;
+    const { sessionId, mentorTimezone, menteeTimezone } = req.body;
 
     // Validate required fields
     if (!sessionId) {
@@ -290,6 +312,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         error: "sessionId is required",
       });
     }
+
+    // Validate timezones - use defaults if not provided
+    const validatedMentorTimezone = mentorTimezone || "UTC";
+    const validatedMenteeTimezone = menteeTimezone || "UTC";
 
     // Validate sessionId is a valid UUID string
     if (typeof sessionId !== "string" || !UUID_REGEX.test(sessionId)) {
@@ -467,18 +493,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const serviceTitle = serviceData?.service_title || "Mentorship Session";
     const durationMinutes = serviceData?.duration_minutes || session.duration_minutes;
     const price = serviceData?.price || session.price_paid || 0;
-    const dashboardUrl =
-      process.env.VITE_APP_URL ? `${process.env.VITE_APP_URL}/dashboard` : "#";
+    
+    // Set correct dashboard URLs for mentee and mentor
+    const baseUrl = process.env.VITE_APP_URL || "#";
+    const menteeDashboardUrl = baseUrl !== "#" ? `${baseUrl}/mentee-dashboard?tab=sessions` : "#";
+    const mentorDashboardUrl = baseUrl !== "#" ? `${baseUrl}/dashboard?tab=sessions` : "#";
 
-    // Prepare email parameters
-    const emailParams = {
+    // Prepare email parameters for mentee (using mentee timezone)
+    const menteeEmailParams = {
       menteeName,
       mentorName,
       serviceTitle,
       sessionDate: session.session_date,
       durationMinutes,
       price,
-      dashboardUrl,
+      dashboardUrl: menteeDashboardUrl,
+      timezone: validatedMenteeTimezone,
+    };
+
+    // Prepare email parameters for mentor (using mentor timezone)
+    const mentorEmailParams = {
+      menteeName,
+      mentorName,
+      serviceTitle,
+      sessionDate: session.session_date,
+      durationMinutes,
+      price,
+      dashboardUrl: mentorDashboardUrl,
+      timezone: validatedMentorTimezone,
     };
 
     // Send emails - handle partial failures gracefully
@@ -496,7 +538,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         from: EMAIL_FROM,
         to: menteeEmail,
         subject: `Booking confirmed: ${serviceTitle}`,
-        html: createMenteeBookingConfirmedEmailHTML(emailParams),
+        html: createMenteeBookingConfirmedEmailHTML(menteeEmailParams),
       });
 
       menteeEmailSent = true;
@@ -514,7 +556,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         from: EMAIL_FROM,
         to: mentorEmail,
         subject: `New booking confirmed: ${serviceTitle}`,
-        html: createMentorBookingConfirmedEmailHTML(emailParams),
+        html: createMentorBookingConfirmedEmailHTML(mentorEmailParams),
       });
 
       mentorEmailSent = true;

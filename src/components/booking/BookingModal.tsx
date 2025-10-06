@@ -235,7 +235,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         setBookingState('success');
         
         // Send booking confirmation emails (non-blocking)
-        sendBookingConfirmationEmails({ sessionId: session.id }).catch(() => {});
+        const menteeTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        sendBookingConfirmationEmails({ 
+          sessionId: session.id,
+          mentorTimezone: mentorTimezone,
+          menteeTimezone: menteeTimezone,
+        }).catch(() => {});
         
         // Update UI state: Remove the booked slot from the availability list
         const slotKey = `${dateStr}-${selectedTime}`;
