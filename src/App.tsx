@@ -20,6 +20,8 @@ import Onboarding from "./pages/Onboarding";
 import MenteeOnboarding from "./pages/MenteeOnboarding";
 import Dashboard from "./pages/Dashboard";
 import MenteeDashboard from "./pages/MenteeDashboard";
+import BookingSuccess from "./pages/booking/Success";
+import BookingCancel from "./pages/booking/Cancel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -90,6 +92,24 @@ const App = () => (
               element={
                 <CompletedOnboardingRoute allowedUserTypes={["mentee"]}>
                   <MenteeDashboard />
+                </CompletedOnboardingRoute>
+              }
+            />
+
+            {/* Booking Payment Routes */}
+            <Route
+              path="/booking/success"
+              element={
+                <CompletedOnboardingRoute allowedUserTypes={["mentee"]}>
+                  <BookingSuccess />
+                </CompletedOnboardingRoute>
+              }
+            />
+            <Route
+              path="/booking/cancel"
+              element={
+                <CompletedOnboardingRoute allowedUserTypes={["mentee"]}>
+                  <BookingCancel />
                 </CompletedOnboardingRoute>
               }
             />
