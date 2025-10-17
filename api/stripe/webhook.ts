@@ -197,6 +197,7 @@ const createMentorBookingConfirmedEmailHTML = ({
 
 async function sendBookingConfirmationEmails(
     sessionId: string,
+    reservationId: string,
     mentorTimezoneParam?: string,
     menteeTimezoneParam?: string
 ) {
@@ -225,10 +226,16 @@ async function sendBookingConfirmationEmails(
         },
     });
 
-    // Validate required fields
-    if (!sessionId) {
-        throw new Error("sessionId is required");
-    }
+    if (!sessionId || !reservationId) throw new Error("sessionId and reservationId are required");
+
+    // 0) Check deduplication status
+    const { data: reservation, error: resError } = await supabase
+        .from("booking_reservations")
+        .select("mentee_email_sent_at, mentor_email_sent_at, service_id")
+        .eq("id", reservationId)
+        .single();
+
+    if (resError || !reservation) throw new Error(`Reservation lookup failed: ${resError?.message}`);
 
     const validatedMentorTimezone = mentorTimezoneParam || "UTC";
     const validatedMenteeTimezone = menteeTimezoneParam || "UTC";
@@ -334,27 +341,43 @@ async function sendBookingConfirmationEmails(
     let menteeEmailError = null;
     let mentorEmailError = null;
 
-    try {
-        const resend = getResend();
-        await resend.emails.send({
-            from: EMAIL_FROM,
-            to: menteeEmail,
-            subject: `Booking confirmed: ${serviceTitle}`,
-            html: createMenteeBookingConfirmedEmailHTML(menteeEmailParams),
-        });
+    // Send Mentee Email if not sent
+    if (!reservation.mentee_email_sent_at) {
+        try {
+            const resend = getResend();
+            await resend.emails.send({
+                from: EMAIL_FROM,
+                to: menteeEmail,
+                subject: `Booking confirmed: ${serviceTitle}`,
+                html: createMenteeBookingConfirmedEmailHTML(menteeEmailParams),
+            });
+            menteeEmailSent = true;
+            // Update DB immediately
+            await supabase.from("booking_reservations").update({ mentee_email_sent_at: new Date().toISOString() }).eq("id", reservationId);
+        } catch (e: any) { menteeEmailError = e.message; console.error("Mentee email failed", e); }
+    } else {
+        console.log("Mentee email already sent. Skipping.");
         menteeEmailSent = true;
-    } catch (e: any) { menteeEmailError = e.message; console.error("Mentee email failed", e); }
+    }
 
-    try {
-        const resend = getResend();
-        await resend.emails.send({
-            from: EMAIL_FROM,
-            to: mentorEmail,
-            subject: `New booking confirmed: ${serviceTitle}`,
-            html: createMentorBookingConfirmedEmailHTML(mentorEmailParams),
-        });
+    // Send Mentor Email if not sent
+    if (!reservation.mentor_email_sent_at) {
+        try {
+            const resend = getResend();
+            await resend.emails.send({
+                from: EMAIL_FROM,
+                to: mentorEmail,
+                subject: `New booking confirmed: ${serviceTitle}`,
+                html: createMentorBookingConfirmedEmailHTML(mentorEmailParams),
+            });
+            mentorEmailSent = true;
+            // Update DB immediately
+            await supabase.from("booking_reservations").update({ mentor_email_sent_at: new Date().toISOString() }).eq("id", reservationId);
+        } catch (e: any) { mentorEmailError = e.message; console.error("Mentor email failed", e); }
+    } else {
+        console.log("Mentor email already sent. Skipping.");
         mentorEmailSent = true;
-    } catch (e: any) { mentorEmailError = e.message; console.error("Mentor email failed", e); }
+    }
 
     return { success: menteeEmailSent || mentorEmailSent, menteeEmailSent, mentorEmailSent, menteeEmailError, mentorEmailError };
 }
@@ -365,8 +388,9 @@ const getStripe = () => {
     if (!process.env.STRIPE_SECRET_KEY) {
         throw new Error("Missing STRIPE_SECRET_KEY");
     }
+    // Using 'as any' to avoid strict TypeScript errors with specific Stripe library versions
     return new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: "2024-09-30.acacia" as any,
+        apiVersion: "2024-06-20" as any,
     });
 };
 
@@ -424,6 +448,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
     });
 
+    // Structured logging helper
+    const log = (message: string, context: any = {}, level: 'info' | 'warn' | 'error' = 'info') => {
+        console.log(JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level,
+            eventId: event?.id,
+            eventType: event?.type,
+            message,
+            ...context
+        }));
+    };
+
     try {
         switch (event.type) {
             case "checkout.session.completed": {
@@ -432,10 +468,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 const sessionId = session.id;
                 const paymentIntentId = session.payment_intent as string;
 
-                console.log(`Processing checkout.session.completed for reservation ${reservationId}`);
+                log(`Processing checkout.session.completed`, { reservationId, sessionId, paymentIntentId });
 
                 if (!reservationId) {
-                    console.error("Missing reservation_id in metadata");
+                    log("Missing reservation_id in metadata", {}, 'error');
                     return res.status(400).json({ error: "Missing metadata" });
                 }
 
@@ -450,25 +486,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 );
 
                 if (confirmError) {
-                    console.error("Error confirming booking:", confirmError);
+                    log("Error confirming booking", { error: confirmError }, 'error');
                     return res.status(500).json({ error: confirmError.message });
                 }
 
+                const resultStatus = (confirmData as any)?.status;
                 const confirmedSessionId = (confirmData as any)?.session_id;
 
+                if (resultStatus === 'already_processed') {
+                    log(`Booking already processed. Continuing to verify emails...`, { reservationId });
+                }
+
                 try {
-                    console.log(`Attempting to send emails for session ${confirmedSessionId}`);
-                    // Use INLINED function
-                    const result = await sendBookingConfirmationEmails(confirmedSessionId);
+                    log(`Attempting to send emails`, { confirmedSessionId });
+                    // Use INLINED function with reservationId for deduplication
+                    const result = await sendBookingConfirmationEmails(confirmedSessionId, reservationId);
 
                     if (result.success) {
-                        console.log("Emails sent successfully via internal service");
+                        log("Emails sent/verified successfully");
                     } else {
-                        console.error("Email sending failed partially or fully", JSON.stringify(result));
+                        log("Email sending failed partially or fully", { result }, 'error');
                     }
 
                 } catch (emailErr: any) {
-                    console.error("Failed to execute email service:", emailErr?.message || emailErr);
+                    log("Failed to execute email service", { error: emailErr?.message || emailErr }, 'error');
                 }
 
                 break;
@@ -478,7 +519,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 const session = event.data.object as Stripe.Checkout.Session;
                 const reservationId = session.metadata?.reservation_id;
 
-                console.log(`Processing checkout.session.expired for reservation ${reservationId}`);
+                log(`Processing checkout.session.expired`, { reservationId });
 
                 if (reservationId) {
                     const { error: cancelError } = await supabase.rpc('cancel_booking_hold', {
@@ -486,26 +527,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     });
 
                     if (cancelError) {
-                        console.error("Error releasing expired hold:", cancelError);
+                        log("Error releasing expired hold", { error: cancelError }, 'error');
                     } else {
-                        console.log(`Successfully released hold for reservation ${reservationId}`);
+                        log("Successfully released hold", { reservationId });
                     }
                 }
                 break;
             }
 
             case "payment_intent.payment_failed": {
-                console.log("Payment failed:", (event.data.object as any).id);
+                log("Payment failed", { paymentIntentId: (event.data.object as any).id }, 'warn');
                 break;
             }
 
             default:
-                console.log(`Unhandled event type ${event.type}`);
+                log(`Unhandled event type`, { type: event.type });
         }
 
         return res.status(200).json({ received: true });
     } catch (err: any) {
-        console.error(`Webhook processing failed: ${err.message}`);
+        console.error(JSON.stringify({
+            level: 'error',
+            message: `Webhook processing failed: ${err.message}`,
+            stack: err.stack,
+            eventId: event?.id
+        }));
         return res.status(500).json({ error: "Webhook handler failed" });
     }
 }

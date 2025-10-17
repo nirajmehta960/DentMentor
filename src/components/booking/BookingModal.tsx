@@ -228,7 +228,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           reservationId: reservationData.reservation_id,
           menteeId: user.id,
           serviceId: selectedService.id,
-          origin: window.location.origin,
         }),
       });
 

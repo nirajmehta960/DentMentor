@@ -15,6 +15,8 @@ export default function BookingSuccess() {
     const reservationId = searchParams.get("reservation_id");
 
     useEffect(() => {
+        console.log("BookingSuccess Mounted. Params:", { sessionId, reservationId });
+
         if (!reservationId) {
             // Fallback to session_id (stripe) if strictly needed, but reservation_id is safer
             if (!sessionId) {
@@ -38,7 +40,7 @@ export default function BookingSuccess() {
                     query = query.eq("stripe_checkout_session_id", sessionId);
                 }
 
-                const { data: reservation, error } = await query.maybeSingle();
+                const { data: reservation, error } = await query.maybeSingle() as any;
 
                 if (error) {
                     console.error("Polling fetch error:", error);
@@ -50,9 +52,10 @@ export default function BookingSuccess() {
                     return false;
                 }
 
-                console.log("Polling Status:", reservation.status);
+                console.log("Polling Status:", reservation.status, "SessionID linked:", reservation.session_id);
 
-                if (reservation.status === "confirmed" && reservation.session_id) {
+                // If confirmed, we are good. RPC ensures session_id is set, but we can be lenient if status is confirmed.
+                if (reservation.status === "confirmed") {
                     setStatus("confirmed");
 
                     // Fetch additional details
@@ -60,13 +63,13 @@ export default function BookingSuccess() {
                         .from("mentor_services")
                         .select("service_title")
                         .eq("id", reservation.service_id)
-                        .single();
+                        .single() as any;
 
                     const { data: mentorProfile } = await supabase
                         .from("mentor_profiles")
                         .select("user_id")
                         .eq("id", reservation.mentor_id)
-                        .single();
+                        .single() as any;
 
                     let mentorName = "Mentor";
                     if (mentorProfile) {
@@ -74,7 +77,7 @@ export default function BookingSuccess() {
                             .from("profiles")
                             .select("first_name, last_name")
                             .eq("user_id", mentorProfile.user_id)
-                            .single();
+                            .single() as any;
 
                         if (profile) {
                             mentorName = `${profile.first_name} ${profile.last_name}`;
@@ -140,6 +143,7 @@ export default function BookingSuccess() {
                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900">Confirming your payment...</h2>
                 <p className="text-gray-500 mt-2">Please wait while we secure your booking.</p>
+                <p className="text-xs text-gray-400 mt-4">Transaction ID: {sessionId ? sessionId.slice(-8) : 'Pending'}</p>
             </div>
         );
     }
