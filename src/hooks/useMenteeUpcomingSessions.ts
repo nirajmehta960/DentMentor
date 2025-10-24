@@ -12,6 +12,7 @@ export interface MenteeUpcomingSession {
   mentor_id: string;
   notes?: string;
   meeting_link?: string;
+  payment_status?: string;
   mentor?: {
     name: string;
     avatar?: string;
@@ -77,7 +78,7 @@ export function useMenteeUpcomingSessions() {
 
           // Get services for sessions via booking_reservations -> mentor_services
           const sessionIds = sessions?.map((s) => s.id) || [];
-          
+
           // Fetch booking_reservations to get service_id
           const { data: reservations, error: reservationsError } = await supabase
             .from("booking_reservations")

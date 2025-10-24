@@ -29,6 +29,7 @@ export function useRecentActivity() {
     }
 
     const fetchRecentActivity = async () => {
+
       try {
         const allActivities: Activity[] = [];
 
@@ -86,7 +87,7 @@ export function useRecentActivity() {
           const session = allSessions?.find(s => s.id === f.session_id);
           return session?.mentee_id;
         }).filter(Boolean) || [];
-        
+
         // For messages, we need to get mentee_id from sender_id
         // First get all sessions that have messages
         const messageSessionIds = messages?.map(m => m.session_id).filter(Boolean) || [];
@@ -96,11 +97,11 @@ export function useRecentActivity() {
             .from('sessions')
             .select('id, mentee_id')
             .in('id', messageSessionIds);
-          
+
           if (messageSessionsError) throw messageSessionsError;
           messageSessions = msgSessions || [];
         }
-        
+
         const messageMenteeIds = messageSessions?.map(s => s.mentee_id) || [];
         const menteeIds = [...new Set([...sessionMenteeIds, ...feedbackMenteeIds, ...messageMenteeIds])];
 
@@ -205,12 +206,12 @@ export function useRecentActivity() {
           const session = allSessions?.find(s => s.id === transaction.session_id);
           const menteeName = session
             ? (() => {
-                const menteeProfile = menteeProfileMap.get(session.mentee_id);
-                const profile = menteeProfile ? profileMap.get(menteeProfile.user_id) : null;
-                return profile
-                  ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Mentee'
-                  : 'Mentee';
-              })()
+              const menteeProfile = menteeProfileMap.get(session.mentee_id);
+              const profile = menteeProfile ? profileMap.get(menteeProfile.user_id) : null;
+              return profile
+                ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Mentee'
+                : 'Mentee';
+            })()
             : undefined;
 
           allActivities.push({
@@ -255,7 +256,7 @@ export function useRecentActivity() {
         });
 
         // Sort all activities by created_at descending and limit to 20 most recent
-        allActivities.sort((a, b) => 
+        allActivities.sort((a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 
@@ -269,7 +270,31 @@ export function useRecentActivity() {
     };
 
     fetchRecentActivity();
-  }, [mentorProfile?.id]);
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('public:messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `recipient_id=eq.${mentorProfile.user_id || mentorProfile.id}`
+        },
+        (payload) => {
+          console.log('New activity received!', payload);
+          // Refresh data on new message
+          fetchRecentActivity();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [mentorProfile?.id, mentorProfile?.user_id]);
+
 
   return { activities, isLoading };
 }
