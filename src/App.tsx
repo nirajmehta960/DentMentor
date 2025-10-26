@@ -22,7 +22,11 @@ import Dashboard from "./pages/Dashboard";
 import MenteeDashboard from "./pages/MenteeDashboard";
 import BookingSuccess from "./pages/booking/Success";
 import BookingCancel from "./pages/booking/Cancel";
+import Messages from "./pages/Messages";
+import ChatSession from "./pages/ChatSession";
 import NotFound from "./pages/NotFound";
+
+
 
 const queryClient = new QueryClient();
 
@@ -96,7 +100,27 @@ const App = () => (
               }
             />
 
+            {/* Messages Route */}
+            <Route
+              path="/messages"
+              element={
+                <CompletedOnboardingRoute allowedUserTypes={["mentor", "mentee"]}>
+                  <Messages />
+                </CompletedOnboardingRoute>
+              }
+            />
+            <Route
+              path="/messages/session/:sessionId"
+              element={
+                <CompletedOnboardingRoute allowedUserTypes={["mentor", "mentee"]}>
+                  <ChatSession />
+                </CompletedOnboardingRoute>
+              }
+            />
+
             {/* Booking Payment Routes */}
+
+
             <Route
               path="/booking/success"
               element={

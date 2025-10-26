@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { MenteeDashboardNavigation } from "@/components/mentee-dashboard/MenteeDashboardNavigation";
 import { MenteeDashboardSidebar } from "@/components/mentee-dashboard/MenteeDashboardSidebar";
 import { MenteeDashboardMobileNav } from "@/components/mentee-dashboard/MenteeDashboardMobileNav";
@@ -9,6 +9,8 @@ import { SessionsTab } from "@/components/mentee-dashboard/tabs/SessionsTab";
 import { MentorsTab } from "@/components/mentee-dashboard/tabs/MentorsTab";
 import { ProfileTab } from "@/components/mentee-dashboard/tabs/ProfileTab";
 import { ActivityTab } from "@/components/mentee-dashboard/tabs/ActivityTab";
+import { MessagesTab } from "@/components/dashboard/tabs/MessagesTab";
+
 
 export default function MenteeDashboard() {
   const {
@@ -19,7 +21,21 @@ export default function MenteeDashboard() {
     isAuthLoading,
     isProfileLoading,
   } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTabState] = useState(tabParam || 'overview');
+
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    setSearchParams({ tab });
+  };
+
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTabState(tabParam);
+    }
+  }, [tabParam]);
+
 
   // Show loading while authentication or profiles are loading
   if (isLoading || isAuthLoading || (user && isProfileLoading)) {
@@ -66,7 +82,10 @@ export default function MenteeDashboard() {
         return <ProfileTab />;
       case 'activity':
         return <ActivityTab />;
+      case 'messages':
+        return <MessagesTab />;
       default:
+
         return <OverviewTab onNavigate={setActiveTab} />;
     }
   };
@@ -75,16 +94,16 @@ export default function MenteeDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Subtle pattern overlay */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
-      
+
       <MenteeDashboardNavigation />
-      
+
       {/* Mobile Navigation */}
       <MenteeDashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
-      
+
       <div className="relative z-10 flex">
         {/* Sidebar - Desktop only */}
         <MenteeDashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-        
+
         {/* Main Content - Fixed height with overflow */}
         <main className="flex-1 p-6 lg:p-8 max-w-7xl min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-y-auto">
           {renderActiveTab()}
