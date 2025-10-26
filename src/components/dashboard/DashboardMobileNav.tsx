@@ -1,11 +1,14 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Clock, 
-  User, 
-  Activity
+import {
+  LayoutDashboard,
+  Calendar,
+  Clock,
+  User,
+  Activity,
+  MessageSquare,
+  Settings,
+  HelpCircle
 } from 'lucide-react';
 
 interface DashboardMobileNavProps {
@@ -16,7 +19,9 @@ interface DashboardMobileNavProps {
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'sessions', label: 'Sessions', icon: Calendar },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'availability', label: 'Availability', icon: Clock },
+
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'activity', label: 'Activity', icon: Activity },
 ];
@@ -28,15 +33,15 @@ export function DashboardMobileNav({ activeTab, onTabChange }: DashboardMobileNa
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          
+
           return (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-md" 
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >

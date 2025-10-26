@@ -1,11 +1,12 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Clock, 
-  User, 
+import {
+  LayoutDashboard,
+  Calendar,
+  Clock,
+  User,
   Activity,
+  MessageSquare,
   Settings,
   HelpCircle
 } from 'lucide-react';
@@ -18,7 +19,9 @@ interface DashboardSidebarProps {
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'sessions', label: 'Sessions', icon: Calendar },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'availability', label: 'Availability', icon: Clock },
+
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'activity', label: 'Activity', icon: Activity },
 ];
@@ -35,15 +38,15 @@ export function DashboardSidebar({ activeTab, onTabChange }: DashboardSidebarPro
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          
+
           return (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
@@ -53,11 +56,11 @@ export function DashboardSidebar({ activeTab, onTabChange }: DashboardSidebarPro
           );
         })}
       </nav>
-      
+
       <div className="p-4 border-t space-y-1">
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
-          
+
           return (
             <button
               key={item.id}
