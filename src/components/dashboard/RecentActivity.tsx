@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +22,15 @@ import { cn } from "@/lib/utils";
 export function RecentActivity() {
   const { activities, isLoading } = useRecentActivity();
   const [filter, setFilter] = useState<string>("all");
+  const navigate = useNavigate();
+
+  const handleActivityClick = (activity: any) => {
+    if (activity.type === "new_message" && activity.metadata?.session_id) {
+      navigate(`/messages/session/${activity.metadata.session_id}`);
+    } else if (activity.type === "session_completed" || activity.type === "session_booked") {
+      navigate("/dashboard?tab=sessions");
+    }
+  };
 
   const getActivityConfig = (type: string) => {
     switch (type) {
@@ -201,8 +211,10 @@ export function RecentActivity() {
                   className={cn(
                     "group relative flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl",
                     "border border-transparent hover:border-border/50 hover:bg-muted/30",
-                    "transition-all duration-200"
+                    "transition-all duration-200",
+                    "cursor-pointer"
                   )}
+                  onClick={() => handleActivityClick(activity)}
                 >
                   {/* Icon */}
                   <div

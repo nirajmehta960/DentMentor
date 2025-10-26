@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Loader2, Calendar, Clock } from "lucide-react";
+import { CheckCircle, Loader2, Calendar, Clock, MessageSquare } from "lucide-react";
+
 
 export default function BookingSuccess() {
     const [searchParams] = useSearchParams();
@@ -35,9 +36,9 @@ export default function BookingSuccess() {
                 let query = supabase.from("booking_reservations").select("*");
 
                 if (reservationId) {
-                    query = query.eq("id", reservationId);
+                    query = query.eq("id", reservationId as any);
                 } else {
-                    query = query.eq("stripe_checkout_session_id", sessionId);
+                    query = query.eq("stripe_checkout_session_id", sessionId as any);
                 }
 
                 const { data: reservation, error } = await query.maybeSingle() as any;
@@ -88,7 +89,8 @@ export default function BookingSuccess() {
                         mentorName,
                         serviceTitle: serviceData?.service_title || "Mentorship Session",
                         date: reservation.session_start_utc,
-                        duration: reservation.duration_minutes
+                        duration: reservation.duration_minutes,
+                        sessionId: reservation.session_id
                     });
                     setIsLoading(false);
                     return true;
@@ -214,9 +216,20 @@ export default function BookingSuccess() {
                 <Button variant="outline" onClick={() => navigate("/mentors")}>
                     Book Another
                 </Button>
+                {sessionDetails?.sessionId && (
+                    <Button
+                        variant="secondary"
+                        onClick={() => navigate(`/messages/session/${sessionDetails.sessionId}`)}
+                        className="bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                    >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Message Mentor
+                    </Button>
+                )}
                 <Button onClick={goToDashboard}>
                     Go to Dashboard
                 </Button>
+
             </div>
         </div>
     );

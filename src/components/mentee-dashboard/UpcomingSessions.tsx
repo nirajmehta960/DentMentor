@@ -13,9 +13,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 export function UpcomingSessions() {
   const { upcomingSessions, isLoading } = useMenteeUpcomingSessions();
+  const navigate = useNavigate();
+
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -149,6 +152,8 @@ export function UpcomingSessions() {
                     size="sm"
                     variant="outline"
                     className="border-border/50 hover:border-primary/30"
+                    onClick={() => navigate('?tab=messages')}
+                    disabled={session.payment_status !== 'paid'}
                   >
                     <MessageSquare className="h-4 w-4 mr-1.5" />
                     Message
