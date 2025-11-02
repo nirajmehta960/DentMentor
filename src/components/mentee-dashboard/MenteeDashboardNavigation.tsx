@@ -21,11 +21,11 @@ import {
   Menu,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { NotificationsPopover } from "@/components/dashboard/NotificationsPopover";
 
 export function MenteeDashboardNavigation() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -38,14 +38,13 @@ export function MenteeDashboardNavigation() {
   };
 
   const initials = profile
-    ? `${profile.first_name?.[0] || ""}${
-        profile.last_name?.[0] || ""
+    ? `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""
       }`.toUpperCase()
     : "U";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8 pt-4">
+      <div className="w-full flex h-16 items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
           <div className="relative">
@@ -71,16 +70,7 @@ export function MenteeDashboardNavigation() {
         {/* Right side actions */}
         <div className="flex items-center gap-3">
           {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative hidden md:flex"
-          >
-            <Bell className="h-5 w-5 text-muted-foreground" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-[10px] font-bold text-primary-foreground rounded-full flex items-center justify-center">
-              3
-            </span>
-          </Button>
+          <NotificationsPopover />
 
           {/* User Menu */}
           <DropdownMenu>

@@ -33,6 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileImageCropper } from "@/components/dashboard/ProfileImageCropper";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationsPopover } from "./NotificationsPopover";
 import { useToast } from "@/hooks/use-toast";
 
 export function DashboardNavigation() {
@@ -94,8 +95,8 @@ export function DashboardNavigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-3 sm:px-4 md:px-6">
-        <div className="flex h-14 sm:h-16 items-center justify-between pt-4">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 sm:gap-3">
             <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-r from-primary to-primary/80">
@@ -121,16 +122,7 @@ export function DashboardNavigation() {
             </nav>
 
             {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 p-0"
-            >
-              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
-              <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full text-[8px] sm:text-xs flex items-center justify-center text-white">
-                3
-              </span>
-            </Button>
+            <NotificationsPopover />
 
             {/* User Menu */}
             <DropdownMenu>
