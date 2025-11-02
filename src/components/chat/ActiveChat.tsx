@@ -28,9 +28,10 @@ interface ActiveChatProps {
     sessionId: string;
     // Optional: Pass pre-fetched participant info if available to avoid extra fetch
     initialOtherUser?: Participant | null;
+    onRead?: () => void;
 }
 
-export function ActiveChat({ sessionId, initialOtherUser }: ActiveChatProps) {
+export function ActiveChat({ sessionId, initialOtherUser, onRead }: ActiveChatProps) {
     const { user, session: authSession } = useAuth();
     const { toast } = useToast();
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -195,6 +196,8 @@ export function ActiveChat({ sessionId, initialOtherUser }: ActiveChatProps) {
             });
         } catch (err) {
             console.error("Failed to mark read", err);
+        } finally {
+            if (onRead) onRead();
         }
     };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,52 +40,53 @@ export function MessagesTab() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
+    const fetchConversations = useCallback(async () => {
+        if (!user) return;
+        try {
+            setLoading(true);
+            // Fetch conversations
+            const { data: convs, error: convError } = await supabase
+                .from("chat_conversations_v")
+                .select("*")
+                .order("last_message_at", { ascending: false });
+
+            if (convError) throw convError;
+            const typedConvs = convs as unknown as Conversation[];
+            setConversations(typedConvs);
+
+            // Collect other user IDs
+            const otherUserIds = new Set<string>();
+            typedConvs.forEach((conv) => {
+                const otherId =
+                    user.id === conv.mentor_user_id
+                        ? conv.mentee_user_id
+                        : conv.mentor_user_id;
+                otherUserIds.add(otherId);
+            });
+
+            if (otherUserIds.size > 0) {
+                const { data: profs, error: profError } = await supabase
+                    .from("profiles")
+                    .select("user_id, first_name, last_name, avatar_url")
+                    .in("user_id", Array.from(otherUserIds) as any);
+
+                if (profError) throw profError;
+
+                const profMap: Record<string, Profile> = {};
+                (profs as unknown as Profile[]).forEach((p) => {
+                    profMap[p.user_id] = p;
+                });
+                setProfiles(profMap);
+            }
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
     useEffect(() => {
         if (!user) return;
-
-        const fetchConversations = async () => {
-            try {
-                setLoading(true);
-                // Fetch conversations
-                const { data: convs, error: convError } = await supabase
-                    .from("chat_conversations_v")
-                    .select("*")
-                    .order("last_message_at", { ascending: false });
-
-                if (convError) throw convError;
-                const typedConvs = convs as unknown as Conversation[];
-                setConversations(typedConvs);
-
-                // Collect other user IDs
-                const otherUserIds = new Set<string>();
-                typedConvs.forEach((conv) => {
-                    const otherId =
-                        user.id === conv.mentor_user_id
-                            ? conv.mentee_user_id
-                            : conv.mentor_user_id;
-                    otherUserIds.add(otherId);
-                });
-
-                if (otherUserIds.size > 0) {
-                    const { data: profs, error: profError } = await supabase
-                        .from("profiles")
-                        .select("user_id, first_name, last_name, avatar_url")
-                        .in("user_id", Array.from(otherUserIds) as any);
-
-                    if (profError) throw profError;
-
-                    const profMap: Record<string, Profile> = {};
-                    (profs as unknown as Profile[]).forEach((p) => {
-                        profMap[p.user_id] = p;
-                    });
-                    setProfiles(profMap);
-                }
-            } catch (error) {
-                console.error("Error fetching messages:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
 
         fetchConversations();
 
@@ -109,7 +110,7 @@ export function MessagesTab() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user]);
+    }, [user, fetchConversations]);
 
     const getOtherUser = (conv: Conversation) => {
         if (!user) return null;
@@ -256,6 +257,7 @@ export function MessagesTab() {
                                 ? getOtherUser(conversations.find(c => c.session_id === sessionIdParam)!)
                                 : null
                         }
+                        onRead={fetchConversations}
                     />
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8">
