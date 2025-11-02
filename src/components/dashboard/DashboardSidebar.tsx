@@ -10,6 +10,7 @@ import {
   Settings,
   HelpCircle
 } from 'lucide-react';
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface DashboardSidebarProps {
   activeTab: string;
@@ -32,6 +33,7 @@ const bottomNavItems = [
 ];
 
 export function DashboardSidebar({ activeTab, onTabChange }: DashboardSidebarProps) {
+  const { unreadMessageCount: unreadCount } = useNotifications();
   return (
     <aside className="hidden lg:flex flex-col w-64 min-h-[calc(100vh-4rem)] border-r bg-card/50 backdrop-blur-sm">
       <nav className="flex-1 p-4 space-y-1">
@@ -51,7 +53,12 @@ export function DashboardSidebar({ activeTab, onTabChange }: DashboardSidebarPro
               )}
             >
               <Icon className="w-5 h-5" />
-              {item.label}
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.id === 'messages' && unreadCount > 0 && (
+                <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
           );
         })}
