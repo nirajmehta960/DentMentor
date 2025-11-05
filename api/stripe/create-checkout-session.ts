@@ -3,13 +3,12 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
 
+
 // Initialize Stripe Helper
 const getStripe = () => {
     if (!process.env.STRIPE_SECRET_KEY) {
         throw new Error("STRIPE_SECRET_KEY is missing in environment variables.");
     }
-    // Using 'as any' to avoid strict TypeScript errors with specific Stripe library versions (e.g. .clover)
-    // Ensure this version matches your Stripe Dashboard webhook version
     return new Stripe(process.env.STRIPE_SECRET_KEY, {
         apiVersion: "2024-06-20" as any,
     });
@@ -59,17 +58,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .map(o => o.trim())
             .filter(Boolean);
 
-        // Always allow localhost in dev for DX
         const defaultAllowed = ["http://localhost:3000", "http://localhost:8080"];
         const origin = req.headers.origin;
-
         let isAllowed = false;
 
         if (origin) {
             if (allowedOrigins.includes(origin) || defaultAllowed.includes(origin)) {
                 isAllowed = true;
             } else if (origin.endsWith(".vercel.app")) {
-                // Optional: Allow all Vercel preview deployments
                 isAllowed = true;
             }
         }
@@ -77,14 +73,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (isAllowed && origin) {
             res.setHeader("Access-Control-Allow-Origin", origin);
             res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-            res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-            // res.setHeader("Access-Control-Allow-Credentials", "true"); // Only if needed
+            res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         }
 
         if (req.method === "OPTIONS") {
-            if (isAllowed) {
-                return res.status(200).end();
-            }
+            if (isAllowed) return res.status(200).end();
             return res.status(403).end();
         }
 
@@ -98,118 +91,116 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(405).json({ error: "Method not allowed", requestId });
         }
 
-        const { reservationId, menteeId, serviceId } = req.body;
-        log("Request body parsed", { reservationId, menteeId, serviceId });
-
-        if (!reservationId) {
-            return res.status(400).json({ error: "Booking reservation ID is required. Please select a slot first.", requestId });
+        // 1. Auth Enforcement
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: "Missing Authorization header", requestId });
         }
 
-        // --- Secure URL Derivation Start ---
-        let appUrl = process.env.VITE_APP_URL || process.env.APP_URL;
-
-        if (!appUrl) {
-            const host = req.headers.host;
-            if (host && (host.includes('localhost') || host.includes('127.0.0.1'))) {
-                appUrl = `http://${host}`;
-            } else if (host && host.endsWith('.vercel.app')) {
-                // Trust Vercel preview/production URLs if needed, or strictly require env var
-                appUrl = `https://${host}`;
-            } else {
-                // Fallback or Error? 
-                // For security, strictly requiring env var in production is best, but for DX we allow localhost.
-                log("VITE_APP_URL not set. Falling back to host header.", { host }, 'warn');
-                appUrl = `https://${host}`; // Default to https for unknown hosts
-            }
-        }
-
-        // Ensure no trailing slash for cleaner concatenation
-        appUrl = appUrl?.replace(/\/$/, "");
-
-        if (!appUrl) {
-            return res.status(500).json({ error: "Server configuration error: Missing App URL.", requestId });
-        }
-        // --- Secure URL Derivation End ---
-
-        // Initialize Supabase Client (Lazy)
+        const token = authHeader.replace('Bearer ', '');
         const supabase = getSupabase();
 
-        // 1. Fetch Reservation & Validate Protocol
-        log("Fetching reservation from DB...");
+        // Verify the user via Supabase Auth
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            log("Auth verification failed", { authError }, 'warn');
+            return res.status(401).json({ error: "Invalid or expired token", requestId });
+        }
+
+        // 2. Parse Body (Only accepted field: reservationId)
+        const { reservationId } = req.body;
+
+        if (!reservationId) {
+            return res.status(400).json({ error: "reservationId is required.", requestId });
+        }
+
+        log("Processing checkout for reservation", { reservationId, userId: user.id });
+
+        // --- Secure URL Derivation ---
+        // --- Secure URL Derivation (Inlined to avoid module config issues) ---
+        const getAppBaseUrl = () => {
+            if (process.env.VITE_APP_URL) return process.env.VITE_APP_URL.replace(/\/$/, "");
+            if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+            if (process.env.VERCEL_URL) {
+                const url = process.env.VERCEL_URL;
+                return url.startsWith("http") ? url.replace(/\/$/, "") : `https://${url}`.replace(/\/$/, "");
+            }
+            return "http://localhost:8080";
+        };
+
+        const appUrl = getAppBaseUrl();
+
+
+        // 3. Fetch Reservation & Validate Data Source of Truth
+        // We strictly use DB data, ignoring any client inputs likely injected into body
         const { data: reservation, error: dbError } = await supabase
             .from("booking_reservations")
             .select(`
-        *,
-        mentor_profiles:mentor_id (
-          user_id
-        ),
-        mentor_services:service_id (
-          service_title
-        )
-      `)
+                *,
+                mentor_profiles:mentor_id (user_id),
+                mentor_services:service_id (service_title)
+            `)
             .eq("id", reservationId)
             .single();
 
         if (dbError || !reservation) {
             log("Reservation fetch error", { dbError }, 'error');
-            return res.status(404).json({ error: "Reservation not found or expired.", details: dbError, requestId });
+            return res.status(404).json({ error: "Reservation not found.", requestId });
         }
-        log("Reservation fetched successfully", { reservationId: reservation.id });
 
-        // 2. Validate Status
-        if (reservation.status !== "pending_payment" && reservation.status !== "held") {
-            log("Invalid status", { status: reservation.status }, 'warn');
+        // 4. Validate User Ownership
+        if (reservation.mentee_user_id !== user.id) {
+            log("User mismatch", { expected: reservation.mentee_user_id, actual: user.id }, 'warn');
+            return res.status(403).json({ error: "You are not authorized to pay for this reservation.", requestId });
+        }
+
+        // 5. Validate Status
+        const validStatuses = ['pending_payment', 'held'];
+        if (!validStatuses.includes(reservation.status)) {
             if (reservation.status === 'confirmed' || reservation.status === 'paid') {
                 return res.status(409).json({ error: "This reservation is already paid.", requestId });
             }
-            if (reservation.status === 'expired') {
-                return res.status(410).json({ error: "This reservation has expired. Please book again.", requestId });
+            if (reservation.status === 'expired' || reservation.status === 'cancelled') {
+                return res.status(410).json({ error: "This reservation has expired or was cancelled.", requestId });
             }
-            return res.status(400).json({ error: `Invalid reservation status: ${reservation.status}`, requestId });
+            return res.status(400).json({ error: `Invalid status: ${reservation.status}`, requestId });
+        }
+
+        // Check Expiration
+        if (reservation.expires_at && new Date(reservation.expires_at) < new Date()) {
+            return res.status(410).json({ error: "Reservation hold has expired.", requestId });
         }
 
         const stripe = getStripe();
 
-        // 3. (Idempotency) Check for existing session via DB
+        // 6. Reuse Existing Session if Valid
         if (reservation.stripe_checkout_session_id) {
             try {
-                log("Checking existing session", { stripeCheckoutSessionId: reservation.stripe_checkout_session_id });
                 const existingSession = await stripe.checkout.sessions.retrieve(reservation.stripe_checkout_session_id);
-
                 if (existingSession && existingSession.status === 'open') {
-                    log("Returning existing open session");
+                    log("Returning existing open session", { sessionId: existingSession.id });
                     return res.status(200).json({ checkoutUrl: existingSession.url, requestId });
                 }
-                log("Existing session not open", { status: existingSession.status });
-            } catch (retrieveError: any) {
-                log("Failed to retrieve existing session", { error: retrieveError.message }, 'warn');
-                // Fallthrough to create new one
+            } catch (ignore) {
+                // Session might depend on old key or be purged, proceed to create new
             }
         }
 
-        // 4. Create Stripe Checkout Session
-        log("Creating Stripe session...");
+        // 7. Create Stripe Session (Strictly from DB Data)
+        log("Creating new Stripe session...");
 
         // Ensure amount is valid
-        if (!reservation.amount_total || reservation.amount_total < 50) { // Stripe minimum is 50 cents usually
-            log("Amount invalid", { amount: reservation.amount_total }, 'error');
-            // Fallback or error?
-            // If amount_total is null, something is wrong.
-            if (!reservation.amount_total) {
-                return res.status(500).json({ error: "Reservation invalid: missing amount.", requestId });
+        if (!reservation.price_cents || reservation.price_cents < 50) {
+            log("Invalid price amount", { price_cents: reservation.price_cents }, 'error');
+            // Try fallback to amount_total if price_cents is missing (legacy compat)
+            if (!reservation.amount_total || reservation.amount_total < 50) {
+                return res.status(500).json({ error: "Invalid price configuration for this service.", requestId });
             }
         }
 
-        // Fetch Mentee Email for pre-fill
-        let customerEmail: string | undefined = undefined;
-        try {
-            const { data: menteeUser, error: userError } = await supabase.auth.admin.getUserById(reservation.mentee_user_id);
-            if (!userError && menteeUser?.user?.email) {
-                customerEmail = menteeUser.user.email;
-            }
-        } catch (emailFetchErr) {
-            log("Could not fetch mentee email for pre-fill", { emailFetchErr }, 'warn');
-        }
+        const finalAmount = reservation.amount_total || reservation.price_cents;
+        const serviceTitle = reservation.mentor_services?.service_title || "Mentorship Session";
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
@@ -218,14 +209,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     price_data: {
                         currency: reservation.currency || "usd",
                         product_data: {
-                            name: reservation.mentor_services?.service_title || "Mentorship Session",
+                            name: serviceTitle,
                             description: `Session with Mentor`,
                             metadata: {
-                                service_id: serviceId,
+                                // STRICT: DB values only
+                                service_id: reservation.service_id,
                                 mentor_id: reservation.mentor_id,
                             },
                         },
-                        unit_amount: reservation.amount_total, // Trusted from DB
+                        unit_amount: finalAmount,
                     },
                     quantity: 1,
                 },
@@ -233,39 +225,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             mode: "payment",
             success_url: `${appUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}&reservation_id=${reservationId}`,
             cancel_url: `${appUrl}/booking/cancel?reservation_id=${reservationId}`,
-            client_reference_id: reservationId, // Critical for Webhook correlation
+            client_reference_id: reservationId,
             metadata: {
-                reservation_id: reservationId,
-                mentee_user_id: reservation.mentee_user_id,
+                // STRICT: DB values, no client input
+                reservation_id: reservation.id,
+                mentee_user_id: reservation.mentee_user_id, // Authenticated user ID
                 mentor_id: reservation.mentor_id,
-                service_id: serviceId || reservation.service_id,
+                service_id: reservation.service_id,
                 type: "session_booking"
             },
-            customer_email: customerEmail,
+            customer_email: user.email, // Use authenticated user email
             customer_creation: "if_required",
         }, {
             idempotencyKey: `checkout_session_${reservationId}`
         });
 
-        log("Stripe session created", { sessionId: session.id, idempotencyKey: `checkout_session_${reservationId}` });
+        log("Stripe session created", { sessionId: session.id });
 
-        // 5. Update Reservation
+        // 8. Update Reservation with new Session ID
         await supabase
             .from("booking_reservations")
             .update({ stripe_checkout_session_id: session.id })
             .eq("id", reservationId);
 
-        // 6. Return URL
         return res.status(200).json({ checkoutUrl: session.url, requestId });
 
     } catch (err: any) {
-        log("Critical Stripe Checkout Error", { error: err.message, stack: err.stack }, 'error');
-        // Ensure we always return JSON, even for runtime crashes
+        log("Critical Error", { error: err.message, stack: err.stack }, 'error');
         return res.status(500).json({
             error: "Internal Server Error",
             message: err.message,
-            requestId,
-            stack: process.env.NODE_ENV === "development" ? err.stack : undefined
+            requestId
         });
     }
 }
