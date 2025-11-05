@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
+import { getAppBaseUrl } from "./url";
 
 // Initialize Resend lazily
 const getResend = () => {
@@ -384,7 +385,7 @@ export async function sendBookingConfirmationEmails(
     const price = serviceData?.price || session.price_paid || 0;
 
     // Set correct dashboard URLs
-    const baseUrl = process.env.VITE_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+    const baseUrl = getAppBaseUrl();
     // The frontend might be on a different port in dev (8080), but usually 3000 is fine if strictly backend. 
     // Ideally, use the frontend URL var.
     // Using generic # for now if not set, or relative path relative to the domain email was sent from? No, needs absolute.

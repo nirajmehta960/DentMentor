@@ -3,6 +3,7 @@
 
 import { Resend } from "resend";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { getAppBaseUrl } from "./_utils/url";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -210,9 +211,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isMentor = userType === "mentor";
     const redirectUrl =
       dashboardUrl ||
-      (process.env.VITE_APP_URL
-        ? `${process.env.VITE_APP_URL}/dashboard`
-        : undefined);
+      `${getAppBaseUrl()}/dashboard`;
 
     let emailHTML: string;
     let emailSubject: string;
