@@ -18,14 +18,14 @@ export function convertToUTC(date: string, time: string): string {
   // Parse date and time components
   const dateParts = date.split('-');
   const timeParts = time.split(':');
-  
+
   if (dateParts.length !== 3 || timeParts.length < 2) {
     throw new Error('Invalid date or time format');
   }
 
   const [year, month, day] = dateParts.map(Number);
   const [hours, minutes] = timeParts.map(Number);
-  
+
   // Validate parsed values
   if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
     throw new Error('Invalid date or time values');
@@ -34,15 +34,15 @@ export function convertToUTC(date: string, time: string): string {
   if (month < 1 || month > 12 || day < 1 || day > 31 || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
     throw new Error('Date or time values out of valid range');
   }
-  
+
   // Create date in UTC directly to avoid timezone conversion issues
   const utcDateTime = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
-  
+
   // Validate the created date
   if (isNaN(utcDateTime.getTime())) {
     throw new Error('Invalid date could not be created');
   }
-  
+
   return utcDateTime.toISOString();
 }
 
@@ -51,7 +51,7 @@ export function formatTimeForDisplay(timeString: string, timezone?: string): str
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    
+
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -86,7 +86,36 @@ export function generateIdempotencyKey(
   time: string,
   menteeId: string
 ): string {
+  // We now use a random key for actual idempotency, but we persist it
+  // The deterministic key generation was problematic for retries/refresh
+  // This function might be deprecated or used for the STORAGE key generation
   return `${mentorId}-${serviceId}-${date}-${time}-${menteeId}`;
+}
+
+export function generateStorageKey(
+  mentorId: string,
+  date: string,
+  time: string
+): string {
+  return `booking_idempotency_${mentorId}_${date}_${time}`;
+}
+
+export function getStoredIdempotencyKey(mentorId: string, date: string, time: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const storageKey = generateStorageKey(mentorId, date, time);
+  return localStorage.getItem(storageKey);
+}
+
+export function saveIdempotencyKey(mentorId: string, date: string, time: string, key: string): void {
+  if (typeof window === 'undefined') return;
+  const storageKey = generateStorageKey(mentorId, date, time);
+  localStorage.setItem(storageKey, key);
+}
+
+export function clearIdempotencyKey(mentorId: string, date: string, time: string): void {
+  if (typeof window === 'undefined') return;
+  const storageKey = generateStorageKey(mentorId, date, time);
+  localStorage.removeItem(storageKey);
 }
 
 export function generateUUIDIdempotencyKey(): string {
@@ -137,7 +166,7 @@ export function validateBookingRequest(
     if (!dateAvailability || !dateAvailability.slots) {
       errors.push('No availability found for selected date');
     } else {
-      const selectedSlot = dateAvailability.slots.find((slot: any) => 
+      const selectedSlot = dateAvailability.slots.find((slot: any) =>
         slot.start_time === time && slot.is_available
       );
       if (!selectedSlot) {
@@ -171,7 +200,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         action: 'Try a different time slot',
         showAlternatives: true
       };
-    
+
     case 'BOOKING_CONFLICT':
       return {
         code: errorCode,
@@ -180,7 +209,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         action: 'Select a different time',
         showAlternatives: true
       };
-    
+
     case 'MENTEE_NOT_FOUND':
       return {
         code: errorCode,
@@ -188,7 +217,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'Please complete your profile setup before booking sessions.',
         action: 'Complete Profile'
       };
-    
+
     case 'MENTOR_NOT_FOUND':
       return {
         code: errorCode,
@@ -196,7 +225,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'The selected mentor is not available for booking.',
         action: 'Choose Another Mentor'
       };
-    
+
     case 'UNAUTHORIZED':
       return {
         code: errorCode,
@@ -204,7 +233,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'Please sign in to continue with your booking.',
         action: 'Sign In'
       };
-    
+
     case 'AUTH_MISMATCH':
       return {
         code: errorCode,
@@ -212,7 +241,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'There was an authentication issue. Please refresh the page and try again.',
         action: 'Refresh Page'
       };
-    
+
     case 'SERVICE_INVALID':
       return {
         code: errorCode,
@@ -220,7 +249,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'The selected service is no longer available.',
         action: 'Choose Another Service'
       };
-    
+
     case 'INVALID_REQUEST':
       return {
         code: errorCode,
@@ -228,7 +257,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'Please check your booking details and try again.',
         action: 'Review Details'
       };
-    
+
     case 'BOOKING_FAILED':
       return {
         code: errorCode,
@@ -236,7 +265,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'Unable to complete your booking. Please try again.',
         action: 'Retry Booking'
       };
-    
+
     case 'INTERNAL_ERROR':
       return {
         code: errorCode,
@@ -244,7 +273,7 @@ export function mapBookingError(errorCode: string, details?: any): ErrorMapping 
         message: 'An unexpected error occurred. Please try again later.',
         action: 'Try Again Later'
       };
-    
+
     default:
       return {
         code: errorCode,
@@ -271,7 +300,7 @@ export function generateAlternativeSuggestions(
   timezone?: string
 ): AlternativeSuggestion[] {
   const suggestions: AlternativeSuggestion[] = [];
-  
+
   if (!availability) return suggestions;
 
   // Get available slots for the requested date
@@ -296,7 +325,7 @@ export function generateAlternativeSuggestions(
     const nextDate = new Date(requestedDateObj);
     nextDate.setDate(requestedDateObj.getDate() + i);
     const nextDateString = nextDate.toISOString().split('T')[0];
-    
+
     const nextDateAvailability = availability[nextDateString];
     if (nextDateAvailability && nextDateAvailability.slots) {
       nextDateAvailability.slots.forEach((slot: any) => {
@@ -379,29 +408,29 @@ export async function retryBookingRequest(
   options: RetryOptions = DEFAULT_RETRY_OPTIONS
 ): Promise<any> {
   const { maxRetries, retryDelay, timeout } = options;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
+
       const result = await requestFn();
       clearTimeout(timeoutId);
       return result;
-      
+
     } catch (error: any) {
       const isLastAttempt = attempt === maxRetries;
       const isTimeout = error.name === 'AbortError';
       const isNetworkError = !error.response && error.message.includes('network');
-      
+
       if (isLastAttempt || (!isTimeout && !isNetworkError)) {
         throw error;
       }
-      
+
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)));
     }
   }
-  
+
   throw new Error('Max retries exceeded');
 }

@@ -11,6 +11,7 @@ export interface Service {
   duration_minutes: number | null;
   service_type: string | null;
   is_active: boolean | null;
+  payment_status?: string; // Added to support UI checks
   created_at: string;
   updated_at: string;
 }
@@ -74,10 +75,10 @@ export async function getMentorServices(mentorId: string): Promise<Service[]> {
     throw error instanceof BookingError
       ? error
       : new BookingError({
-          code: "SERVICES_FETCH_ERROR",
-          message: "Failed to fetch mentor services",
-          details: error,
-        });
+        code: "SERVICES_FETCH_ERROR",
+        message: "Failed to fetch mentor services",
+        details: error,
+      });
   }
 }
 
@@ -124,10 +125,10 @@ export async function getAvailabilityForMonth(
     throw error instanceof BookingError
       ? error
       : new BookingError({
-          code: "AVAILABILITY_FETCH_ERROR",
-          message: "Failed to fetch mentor availability",
-          details: error,
-        });
+        code: "AVAILABILITY_FETCH_ERROR",
+        message: "Failed to fetch mentor availability",
+        details: error,
+      });
   }
 }
 
@@ -267,10 +268,10 @@ export async function createSession(
     throw error instanceof BookingError
       ? error
       : new BookingError({
-          code: "SESSION_CREATION_ERROR",
-          message: "Failed to create session",
-          details: error,
-        });
+        code: "SESSION_CREATION_ERROR",
+        message: "Failed to create session",
+        details: error,
+      });
   }
 }
 
@@ -314,10 +315,10 @@ export async function getMentorInfo(mentorId: string) {
     throw error instanceof BookingError
       ? error
       : new BookingError({
-          code: "MENTOR_INFO_ERROR",
-          message: "Failed to fetch mentor information",
-          details: error,
-        });
+        code: "MENTOR_INFO_ERROR",
+        message: "Failed to fetch mentor information",
+        details: error,
+      });
   }
 }
 
@@ -385,10 +386,10 @@ export async function validateBookingData(bookingData: {
     throw error instanceof BookingError
       ? error
       : new BookingError({
-          code: "VALIDATION_ERROR",
-          message: "Booking validation failed",
-          details: error,
-        });
+        code: "VALIDATION_ERROR",
+        message: "Booking validation failed",
+        details: error,
+      });
   }
 }
 
