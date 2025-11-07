@@ -28,6 +28,7 @@ interface AvailabilityCalendarProps {
   mentorName: string;
   mentorTimezone?: string;
   bookedSlots?: Set<string>; // Set of "date-time" strings to mark as booked
+  onMenteeTimezoneChange?: (timezone: string) => void;
 }
 
 interface CalendarDay {
@@ -135,6 +136,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   mentorName,
   mentorTimezone = "UTC",
   bookedSlots = new Set(),
+  onMenteeTimezoneChange,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [availability, setAvailability] = useState<{
@@ -142,9 +144,14 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userTimezone, setUserTimezone] = useState(() => 
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  );
+  const [userTimezone, setUserTimezone] = useState(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // Notify parent of initial timezone
+    if (onMenteeTimezoneChange) {
+      setTimeout(() => onMenteeTimezoneChange(tz), 0);
+    }
+    return tz;
+  });
   const { toast } = useToast();
 
   // Load availability when month changes
@@ -210,7 +217,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
 
-      const dateString = date.toISOString().split("T")[0];
+      const dateString = format(date, "yyyy-MM-dd");
       const dayAvailability = availability[dateString] || null;
       const availableSlots =
         dayAvailability?.slots?.filter((slot) => slot.is_available).length || 0;
@@ -252,7 +259,8 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   };
 
   const isDateInPast = (dateString: string) => {
-    const date = new Date(dateString);
+    const [y, m, d] = dateString.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     date.setHours(0, 0, 0, 0);
@@ -420,7 +428,10 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           <div className="mt-4 pt-4 border-t border-border/50">
             <TimezoneSelector
               selectedTimezone={userTimezone}
-              onTimezoneChange={setUserTimezone}
+              onTimezoneChange={(tz) => {
+                setUserTimezone(tz);
+                onMenteeTimezoneChange?.(tz);
+              }}
             />
           </div>
         </div>
@@ -431,16 +442,24 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
             <div className="space-y-4 h-full">
               <div className="text-center pb-3 border-b border-border/50">
                 <p className="text-sm text-muted-foreground">
-                  {format(new Date(selectedDate), 'EEEE')}
+                  {(() => {
+                    const [y, m, d] = selectedDate.split('-').map(Number);
+                    const localDate = new Date(y, m - 1, d);
+                    return format(localDate, 'EEEE');
+                  })()}
                 </p>
                 <p className="text-lg font-semibold text-foreground">
-                  {format(new Date(selectedDate), 'MMMM d, yyyy')}
+                  {(() => {
+                    const [y, m, d] = selectedDate.split('-').map(Number);
+                    const localDate = new Date(y, m - 1, d);
+                    return format(localDate, 'MMMM d, yyyy');
+                  })()}
                 </p>
               </div>
 
               <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                 {selectedDayAvailability.slots &&
-                selectedDayAvailability.slots.length > 0 ? (
+                  selectedDayAvailability.slots.length > 0 ? (
                   (() => {
                     const { morning, afternoon, evening } = groupTimeSlotsByPeriod(
                       selectedDayAvailability.slots
