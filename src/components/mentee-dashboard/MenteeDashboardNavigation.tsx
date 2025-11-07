@@ -1,8 +1,6 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import React, { useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,143 +10,221 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  GraduationCap,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Settings,
+  HelpCircle,
   LogOut,
   User,
-  Settings,
-  Bell,
+  GraduationCap,
+  Camera,
   Search,
-  Menu,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/useAuth";
+import { Link, useNavigate } from "react-router-dom";
+import { ProfileImageCropper } from "@/components/dashboard/ProfileImageCropper";
+import { supabase } from "@/integrations/supabase/client";
 import { NotificationsPopover } from "@/components/dashboard/NotificationsPopover";
+import { useToast } from "@/hooks/use-toast";
 
 export function MenteeDashboardNavigation() {
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [showImageCropper, setShowImageCropper] = useState(false);
+
   const handleSignOut = async () => {
     try {
       await signOut();
-      // Redirect immediately to sign in page
       window.location.replace("/auth?tab=signin");
     } catch (error) {
-      // Even on error, redirect to sign in page
       window.location.replace("/auth?tab=signin");
     }
   };
 
-  const initials = profile
-    ? `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""
-      }`.toUpperCase()
-    : "U";
+  const initials =
+    profile?.first_name && profile?.last_name
+      ? `${profile.first_name[0]}${profile.last_name[0]}`
+      : "U";
+
+  const handleImageSaved = useCallback(
+    async (croppedImage: string) => {
+      try {
+        if (!user?.id) return;
+
+        // Update general profile avatar
+        const { error: pError } = await supabase
+          .from("profiles")
+          .update({ avatar_url: croppedImage })
+          .eq("user_id", user.id);
+        if (pError) throw pError;
+
+        toast({
+          title: "Profile picture updated",
+          description: "Your photo has been saved.",
+        });
+        setShowImageCropper(false);
+      } catch (e) {
+        toast({
+          title: "Error updating photo",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+    [user?.id, toast]
+  );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="w-full flex h-16 items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/20 rounded-lg blur-md group-hover:blur-lg transition-all" />
-            <GraduationCap className="relative h-8 w-8 text-primary" />
-          </div>
-          <span className="font-bold text-xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-            DentMentor
-          </span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link
-            to="/mentors"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-          >
-            <Search className="h-4 w-4" />
-            Find Mentors
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-r from-primary to-primary/80">
+              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <span className="text-lg sm:text-xl font-bold text-primary">
+              DentMentor
+            </span>
           </Link>
-        </nav>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <NotificationsPopover />
-
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Right side - Navigation and User Menu */}
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+            {/* Quick Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
               <Button
                 variant="ghost"
-                className="relative h-10 w-10 rounded-full ring-2 ring-primary/20 hover:ring-primary/40 transition-all"
+                size="sm"
+                asChild
+                className="text-xs sm:text-sm"
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage
-                    src={profile?.avatar_url || undefined}
-                    alt={profile?.first_name || "User"}
-                  />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <Link to="/mentors">Browse Mentors</Link>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 p-2" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {profile?.first_name} {profile?.last_name}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    Student
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="cursor-pointer text-destructive focus:text-destructive"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </nav>
 
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <nav className="flex flex-col gap-4 mt-8">
-                <Link
-                  to="/mentors"
-                  className="flex items-center gap-3 text-lg font-medium hover:text-primary transition-colors p-3 rounded-lg hover:bg-muted"
+            {/* Notifications */}
+            <NotificationsPopover />
+
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full p-0"
                 >
-                  <Search className="h-5 w-5" />
-                  Find Mentors
-                </Link>
-                <Link
-                  to="/mentee-dashboard"
-                  className="flex items-center gap-3 text-lg font-medium hover:text-primary transition-colors p-3 rounded-lg hover:bg-muted"
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10">
+                    <AvatarImage src={profile?.avatar_url || undefined} />
+                    <AvatarFallback className="font-semibold text-xs sm:text-sm">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-56 sm:w-64"
+                align="end"
+                forceMount
+              >
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-xs sm:text-sm font-medium leading-none">
+                      {profile?.first_name} {profile?.last_name}
+                    </p>
+                    <p className="text-[10px] sm:text-xs leading-none text-muted-foreground truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {/* Mentees likely don't have the same /onboarding?edit=1 page as mentors, maybe a settings page? 
+                    For now, I'll point to a generic profile/settings or keep it simple.
+                    The original mentor nav had "Edit Profile" -> /onboarding?edit=1
+                    The original mentee nav had "Profile" (no link) and "Settings" (no link).
+                    
+                    I will add Change Picture as it works with profiles table.
+                */}
+                <DropdownMenuItem
+                  onClick={() => setShowImageCropper(true)}
+                  className="text-xs sm:text-sm"
                 >
-                  <User className="h-5 w-5" />
-                  Dashboard
-                </Link>
-              </nav>
-            </SheetContent>
-          </Sheet>
+                  <Camera className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Change Picture
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild className="text-xs sm:text-sm">
+                  {/* Fallback to something safe or keep generic */}
+                  <Link to="/mentee-dashboard" className="cursor-pointer">
+                    <User className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem className="text-xs sm:text-sm">
+                  <Settings className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-xs sm:text-sm">
+                  <HelpCircle className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Help & Support
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+
+                {/* Sign Out with Confirmation */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 text-xs sm:text-sm"
+                    >
+                      <LogOut className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-base sm:text-lg">
+                        Are you sure you want to sign out?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-xs sm:text-sm">
+                        You will be redirected to the login page and will need
+                        to sign in again to access your dashboard.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                      <AlertDialogCancel className="text-xs sm:text-sm w-full sm:w-auto">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleSignOut}
+                        className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm w-full sm:w-auto"
+                      >
+                        Sign Out
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
+
+      <ProfileImageCropper
+        open={showImageCropper}
+        onOpenChange={setShowImageCropper}
+        onImageSaved={handleImageSaved}
+      />
     </header>
   );
 }
