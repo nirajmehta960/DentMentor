@@ -20,6 +20,10 @@ import {
   generateAlternativeSuggestions,
   invalidateBookingCaches,
   retryBookingRequest,
+  getStoredIdempotencyKey,
+  saveIdempotencyKey,
+  clearIdempotencyKey,
+  generateUUIDIdempotencyKey,
   type ErrorMapping,
   type AlternativeSuggestion
 } from '@/lib/utils/booking';
@@ -60,9 +64,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [idempotencyKey, setIdempotencyKey] = useState<string>('');
   const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set()); // Track booked slots to remove from UI
   const [mentorTimezone, setMentorTimezone] = useState<string>("UTC"); // Track mentor's timezone
+  const [menteeTimezone, setMenteeTimezone] = useState<string>(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
 
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -71,7 +78,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     const fetchMentorTimezone = async () => {
       try {
         const mentorInfo = await getMentorInfo(mentorId);
-        const timezone = mentorInfo.mentorProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+        // Cast to any to avoid type inference issues with Supabase result types
+        const timezone = (mentorInfo.mentorProfile as any).timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
         setMentorTimezone(timezone);
       } catch (error) {
         // Use default if fetch fails
@@ -153,8 +161,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       return;
     }
 
-    // Generate idempotency key
-    const key = generateIdempotencyKey(mentorId, selectedService.id, selectedDate, selectedTime, user.id);
+    // Generate or retrieve idempotency key
+    let key = getStoredIdempotencyKey(mentorId, selectedDate, selectedTime);
+    if (!key) {
+      key = generateUUIDIdempotencyKey();
+      saveIdempotencyKey(mentorId, selectedDate, selectedTime, key);
+    }
     setIdempotencyKey(key);
 
     // Client-side validation
@@ -207,6 +219,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         p_date: dateStr,
         p_start_time_local: selectedTime,
         p_timezone: mentorTimezone, // Use mentor's timezone for consistency
+        p_mentee_timezone: menteeTimezone, // Use mentee's selected timezone
         p_idempotency_key: key,
         p_amount_cents: Math.round(selectedService.price * 100)
       });
@@ -223,11 +236,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       // 2. Create Stripe Checkout Session
       const checkoutResponse = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({
           reservationId: reservationData.reservation_id,
-          menteeId: user.id,
-          serviceId: selectedService.id,
         }),
       });
 
@@ -254,7 +268,22 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       if (error.message?.includes('SLOT_UNAVAILABLE')) {
         errorCode = 'SLOT_UNAVAILABLE';
         errorMessage = 'This slot was just taken. Please choose another time.';
+      } else if (error.message?.includes('IDEMPOTENCY_KEY_EXPIRED')) {
+        // Handle expired key: clear it and retry efficiently
+        console.log('Idempotency key expired, regenerating...');
+        clearIdempotencyKey(mentorId, selectedDate, selectedTime);
+        setIdempotencyKey('');
+
+        // Let's just create a new key and retry immediately
+        const newKey = generateUUIDIdempotencyKey();
+        saveIdempotencyKey(mentorId, selectedDate, selectedTime, newKey);
+        setIdempotencyKey(newKey);
+
+        // Retry the call immediately by recursively calling the function
+        // The new key is already saved in localStorage, so the next call will pick it up
+        return handleConfirmBooking();
       }
+
 
       const errorMapping = mapBookingError(errorCode, error);
       errorMapping.message = errorMessage;
@@ -399,7 +428,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={handleRetryBooking}
+                        onClick={() => setBookingError(null)}
                         disabled={bookingState === 'booking'}
                       >
                         <RefreshCw className={`w-4 h-4 mr-2 ${bookingState === 'booking' ? 'animate-spin' : ''}`} />
@@ -473,6 +502,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 selectedTime={selectedTime}
                 mentorName={mentorName}
                 mentorTimezone={mentorTimezone}
+                onMenteeTimezoneChange={setMenteeTimezone}
                 bookedSlots={bookedSlots}
               />
             )}
