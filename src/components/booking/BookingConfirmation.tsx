@@ -39,7 +39,8 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
 
   const formatDate = (dateString: string) => {
     try {
-      const date = new Date(dateString);
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -56,7 +57,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
       const [hours, minutes] = timeString.split(':');
       const date = new Date();
       date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      
+
       return date.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
@@ -76,7 +77,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   };
 
   const canConfirm = acceptedTerms && acceptedPolicy && !isLoading;
-  
+
   const isPendingPayment = bookingData?.service?.payment_status === 'pending';
 
   return (
@@ -87,7 +88,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         <p className="text-muted-foreground">
           Please review your session details before confirming
         </p>
-        
+
         {isPendingPayment && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
             <div className="flex items-center gap-2 text-yellow-800">
@@ -198,8 +199,8 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Cancellation Policy:</strong> You can cancel or reschedule your session up to 24 hours 
-          before the scheduled time for a full refund. Cancellations within 24 hours are subject to a 50% 
+          <strong>Cancellation Policy:</strong> You can cancel or reschedule your session up to 24 hours
+          before the scheduled time for a full refund. Cancellations within 24 hours are subject to a 50%
           cancellation fee.
         </AlertDescription>
       </Alert>
@@ -217,7 +218,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
             <a href="/terms" className="text-primary hover:underline" target="_blank">
               Terms of Service
             </a>{' '}
-            and understand that this session is for educational guidance only and does not 
+            and understand that this session is for educational guidance only and does not
             constitute professional medical advice.
           </label>
         </div>
@@ -272,7 +273,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
 
       {/* Payment Info */}
       <div className="text-center text-xs text-muted-foreground">
-        Payment will be processed securely. You will be charged ${bookingData.totalPrice} 
+        Payment will be processed securely. You will be charged ${bookingData.totalPrice}
         upon confirmation.
       </div>
     </div>
