@@ -5,20 +5,74 @@ import { Resend } from "resend";
 
 // --- INLINED UTILS START (to fix module resolution issues) ---
 
+export class AppError extends Error {
+    public readonly code: string;
+    public readonly statusCode: number;
+    public readonly isRetryable: boolean;
+    public readonly details?: any;
+
+    constructor(
+        code: string,
+        message: string,
+        statusCode: number = 500,
+        isRetryable: boolean = false,
+        details?: any
+    ) {
+        super(message);
+        this.name = "AppError";
+        this.code = code;
+        this.statusCode = statusCode;
+        this.isRetryable = isRetryable;
+        this.details = details;
+    }
+}
+
 const APP_NAME = process.env.APP_NAME || "DentMentor";
 const EMAIL_FROM = process.env.EMAIL_FROM;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // 1. URL Helper
 function getAppBaseUrl(): string {
-    if (process.env.VITE_APP_URL) return process.env.VITE_APP_URL.replace(/\/$/, "");
-    if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
-    if (process.env.VERCEL_URL) {
-        const url = process.env.VERCEL_URL;
-        return url.startsWith("http") ? url.replace(/\/$/, "") : `https://${url}`.replace(/\/$/, "");
+    // 1. Production/Explicit overrides (safe sources)
+    const explicitUrl = process.env.APP_URL ?? process.env.VITE_APP_URL;
+
+    // 2. Production safety check:
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+        if (explicitUrl) {
+            return explicitUrl.replace(/\/$/, "");
+        }
+        if (process.env.VERCEL_URL) {
+            const url = process.env.VERCEL_URL;
+            return url.startsWith("http") ? url.replace(/\/$/, "") : `https://${url}`.replace(/\/$/, "");
+        }
+        throw new AppError("CONFIG_ERROR", "Missing APP_URL or VITE_APP_URL in production environment", 500);
     }
-    return "http://localhost:8080";
+
+    // 3. Local Development Fallbacks
+    return explicitUrl?.replace(/\/$/, "") ?? "http://localhost:8080";
 }
+
+// ... (Email Templates and other helpers remain unchanged, skipping for brevity in replacement chunk if possible, but simplest to overwrite the function and keep helpers if range allows. 
+// Wait, the range 6-312 covers EVERYTHING inline. That's huge. 
+// I should use `multi_replace_file_content` or targeted `replace_file_content`.
+// The user prompt implies I should just do it. I will use `replace_file_content` but I need to be careful not to delete the helper functions `createBaseEmailHTML`, etc.
+// I will target the `sendBookingConfirmationEmailsDeduped` function specifically and the start of the file separately? 
+// Or I can just overwrite the `sendBookingConfirmationEmailsDeduped` function and add AppError above it? No, AppError needs to be available generally.
+// I'll add AppError at the top, and replace the function at the bottom.
+// I'll use MULTI_REPLACE.
+
+// PART 1: Add AppError
+// PART 2: Replace sendBookingConfirmationEmailsDeduped
+// PART 3: Update `handler` call site (Wait, that's in `handler` function, outside the utils block).
+
+// I will switch to `multi_replace_file_content`.
+
+// Re-planning for `multi_replace_file_content`.
+// Chunk 1: Insert AppError after line 6.
+// Chunk 2: Replace `sendBookingConfirmationEmailsDeduped`.
+// Chunk 3: Update call site in `handler`.
+
+
 
 // 2. Email Templates
 const getTimezoneAbbr = (timezone: string): string => {
@@ -129,33 +183,74 @@ const createMentorBookingConfirmedEmailHTML = ({
     return createBaseEmailHTML(`New Booking - ${APP_NAME}`, APP_NAME, "New Booking Received", contentHTML, `This email confirms a new booking on ${APP_NAME}.`);
 };
 
-// 3. Email Sending Logic
+// 4. Calendar Helper
+const generateICS = ({
+    sessionId,
+    startTimeUTC,
+    durationMinutes,
+    serviceTitle,
+    mentorName,
+    menteeName,
+    dashboardUrl,
+}: any) => {
+    const start = new Date(startTimeUTC);
+    const end = new Date(start.getTime() + durationMinutes * 60000);
+
+    const formatDate = (date: Date) =>
+        date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+    const now = formatDate(new Date());
+    const dtStart = formatDate(start);
+    const dtEnd = formatDate(end);
+
+    return [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//DentMentor//Booking//EN",
+        "METHOD:REQUEST",
+        "BEGIN:VEVENT",
+        `UID:dentmentor-${sessionId}@dentmentor.com`,
+        `DTSTAMP:${now}`,
+        `DTSTART:${dtStart}`,
+        `DTEND:${dtEnd}`,
+        `SUMMARY:DentMentor Session: ${serviceTitle}`,
+        `DESCRIPTION:Mentorship session between ${mentorName} and ${menteeName}.\\n\\nView details: ${dashboardUrl}`,
+        "LOCATION:DentMentor",
+        "STATUS:CONFIRMED",
+        "SEQUENCE:0",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ].join("\r\n");
+};
+
+// 5. Email Sending Logic
 async function sendBookingConfirmationEmailsDeduped({
     reservationId, sessionId, mentorTimezone = "UTC", menteeTimezone = "UTC"
 }: any) {
+    const errors: string[] = [];
+
     if (!process.env.RESEND_API_KEY || !EMAIL_FROM) {
-        console.error("Missing email configuration");
-        return { success: false, error: "Configuration missing" };
+        throw new AppError("CONFIG_ERROR", "Missing email configuration", 500);
     }
     const resend = new Resend(process.env.RESEND_API_KEY);
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseServiceKey) throw new Error("Missing Supabase credentials");
+    if (!supabaseUrl || !supabaseServiceKey) throw new AppError("CONFIG_ERROR", "Missing Supabase credentials", 500);
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
     if (!sessionId || !reservationId || !UUID_REGEX.test(sessionId) || !UUID_REGEX.test(reservationId)) {
-        throw new Error("Invalid/Missing ID format");
+        throw new AppError("VALIDATION_ERROR", "Invalid/Missing ID format", 400);
     }
 
     const { data: reservation } = await supabase.from("booking_reservations").select("*").eq("id", reservationId).single();
-    if (!reservation) throw new Error("Reservation not found");
+    if (!reservation) throw new AppError("NOT_FOUND", "Reservation not found", 404);
 
     const { data: session } = await supabase.from("sessions").select("*").eq("id", sessionId).single();
-    if (!session) throw new Error("Session not found");
+    if (!session) throw new AppError("NOT_FOUND", "Session not found", 404);
 
     const { data: mentorProfile } = await supabase.from("mentor_profiles").select("user_id, timezone").eq("id", reservation.mentor_id).single();
-    if (!mentorProfile) throw new Error("Mentor profile not found");
+    if (!mentorProfile) throw new AppError("NOT_FOUND", "Mentor profile not found", 500);
     const { data: mentorUser } = await supabase.auth.admin.getUserById(mentorProfile.user_id);
     const mentorEmail = mentorUser?.user?.email;
     const { data: mentorPublic } = await supabase.from("profiles").select("first_name, last_name").eq("user_id", mentorProfile.user_id).single();
@@ -167,7 +262,7 @@ async function sendBookingConfirmationEmailsDeduped({
     const { data: menteePublic } = await supabase.from("profiles").select("first_name, last_name").eq("user_id", reservation.mentee_user_id).single();
     const menteeName = menteePublic ? `${menteePublic.first_name} ${menteePublic.last_name || ''}`.trim() : "Student";
 
-    if (!mentorEmail || !menteeEmail) throw new Error("Missing emails");
+    if (!mentorEmail || !menteeEmail) throw new AppError("DATA_ERROR", "Missing emails", 400);
 
     const resolvedMentorTimezone = mentorProfile.timezone || mentorTimezone;
     const resolvedMenteeTimezone = menteeProfile?.timezone || menteeTimezone;
@@ -182,55 +277,84 @@ async function sendBookingConfirmationEmailsDeduped({
     const menteeDashboardUrl = `${baseUrl}/mentee-dashboard?tab=sessions`;
     const mentorDashboardUrl = `${baseUrl}/dashboard?tab=sessions`;
 
-    let menteeSent = false;
-    if (!reservation.mentee_email_sent_at) {
-        const { data: updated } = await supabase
-            .from("booking_reservations")
-            .update({ mentee_email_sent_at: new Date().toISOString() })
-            .eq("id", reservationId)
-            .is("mentee_email_sent_at", null)
-            .select();
+    // Generate ICS content
+    const icsContent = generateICS({
+        sessionId,
+        startTimeUTC: session.session_date,
+        durationMinutes: session.duration_minutes,
+        serviceTitle,
+        mentorName,
+        menteeName,
+        dashboardUrl: menteeDashboardUrl // Using generic dashboard link, could customize per user if needed
+    });
 
-        if (updated && updated.length > 0) {
-            try {
-                await resend.emails.send({
-                    from: EMAIL_FROM, to: menteeEmail, subject: `Booking confirmed: ${serviceTitle}`,
-                    html: createMenteeBookingConfirmedEmailHTML({
-                        menteeName, mentorName, serviceTitle, sessionDate: session.session_date,
-                        durationMinutes: session.duration_minutes, price: session.price_paid,
-                        dashboardUrl: menteeDashboardUrl, timezone: resolvedMenteeTimezone
-                    }),
-                });
-                menteeSent = true;
-            } catch (e) { console.error("Mentee email failed", e); }
-        } else { menteeSent = true; }
-    } else { menteeSent = true; }
+    const icsAttachment = {
+        filename: "dentmentor-session.ics",
+        content: Buffer.from(icsContent).toString("base64"),
+        contentType: "text/calendar; charset=utf-8",
+    };
+
+    let menteeSent = false;
+    // Check if previously sent
+    if (reservation.mentee_email_sent_at) {
+        console.log(`[Email] Skipping mentee email (already sent at ${reservation.mentee_email_sent_at})`, { reservationId });
+    } else {
+        try {
+            await resend.emails.send({
+                from: EMAIL_FROM, to: menteeEmail, subject: `Booking confirmed: ${serviceTitle}`,
+                html: createMenteeBookingConfirmedEmailHTML({
+                    menteeName, mentorName, serviceTitle, sessionDate: session.session_date,
+                    durationMinutes: session.duration_minutes, price: session.price_paid,
+                    dashboardUrl: menteeDashboardUrl, timezone: resolvedMenteeTimezone
+                }),
+                attachments: [icsAttachment]
+            });
+            console.log(`[Email] Mentee email sent successfully`, { reservationId, menteeEmail });
+            menteeSent = true;
+
+            // Update DB after success
+            await supabase
+                .from("booking_reservations")
+                .update({ mentee_email_sent_at: new Date().toISOString() })
+                .eq("id", reservationId);
+
+        } catch (e: any) {
+            console.error("Mentee email failed", e);
+            errors.push(`Mentee email failed: ${e.message}`);
+        }
+    }
 
     let mentorSent = false;
-    if (!reservation.mentor_email_sent_at) {
-        const { data: updated } = await supabase
-            .from("booking_reservations")
-            .update({ mentor_email_sent_at: new Date().toISOString() })
-            .eq("id", reservationId)
-            .is("mentor_email_sent_at", null)
-            .select();
+    // Check if previously sent
+    if (reservation.mentor_email_sent_at) {
+        console.log(`[Email] Skipping mentor email (already sent at ${reservation.mentor_email_sent_at})`, { reservationId });
+    } else {
+        try {
+            await resend.emails.send({
+                from: EMAIL_FROM, to: mentorEmail, subject: `New booking confirmed: ${serviceTitle}`,
+                html: createMentorBookingConfirmedEmailHTML({
+                    mentorName, menteeName, serviceTitle, sessionDate: session.session_date,
+                    durationMinutes: session.duration_minutes, price: session.price_paid,
+                    dashboardUrl: mentorDashboardUrl, timezone: resolvedMentorTimezone
+                }),
+                attachments: [icsAttachment]
+            });
+            console.log(`[Email] Mentor email sent successfully`, { reservationId, mentorEmail });
+            mentorSent = true;
 
-        if (updated && updated.length > 0) {
-            try {
-                await resend.emails.send({
-                    from: EMAIL_FROM, to: mentorEmail, subject: `New booking confirmed: ${serviceTitle}`,
-                    html: createMentorBookingConfirmedEmailHTML({
-                        mentorName, menteeName, serviceTitle, sessionDate: session.session_date,
-                        durationMinutes: session.duration_minutes, price: session.price_paid,
-                        dashboardUrl: mentorDashboardUrl, timezone: resolvedMentorTimezone
-                    }),
-                });
-                mentorSent = true;
-            } catch (e) { console.error("Mentor email failed", e); }
-        } else { mentorSent = true; }
-    } else { mentorSent = true; }
+            // Update DB after success
+            await supabase
+                .from("booking_reservations")
+                .update({ mentor_email_sent_at: new Date().toISOString() })
+                .eq("id", reservationId);
 
-    return { menteeSent, mentorSent };
+        } catch (e: any) {
+            console.error("Mentor email failed", e);
+            errors.push(`Mentor email failed: ${e.message}`);
+        }
+    }
+
+    return { menteeSent, mentorSent, errors };
 }
 
 // --- INLINED UTILS END ---
@@ -309,6 +433,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }));
     };
 
+    // --- IDEMPOTENCY CHECK START ---
+    const stripeEventId = event.id;
+    const stripeEventType = event.type;
+    const eventObject = event.data.object as any;
+    const reservationId = eventObject.metadata?.reservation_id || null;
+    // Extract likely session ID depending on event type, or null
+    const eventSessionId = stripeEventType.startsWith('checkout.session') ? eventObject.id : null;
+
+    try {
+        const { error: insertError } = await supabase.from('booking_events').insert({
+            event_type: stripeEventType,
+            stripe_event_id: stripeEventId,
+            reservation_id: reservationId ? reservationId : null,
+            stripe_session_id: eventSessionId || 'N/A',
+            session_id: null, // Internal session ID is not known yet, will be updated later
+            status: 'processing',
+            payload: {
+                id: eventObject.id,
+                metadata: eventObject.metadata,
+                payment_intent: eventObject.payment_intent,
+                reservation_id: reservationId
+            }
+        });
+
+        if (insertError) {
+            // Check for unique violation (Postgres code 23505)
+            if (insertError.code === '23505' || insertError.message?.includes('duplicate key')) {
+                log(`[Idempotency] Event already processed. Skipping.`, { stripeEventId });
+                return res.status(200).json({ received: true, idempotent: true });
+            }
+            // For other errors, we log but might want to proceed or fail.
+            // Failing ensures we don't process without a trace.
+            log(`[Idempotency] Failed to insert event record`, { error: insertError }, 'error');
+            throw insertError;
+        }
+    } catch (err: any) {
+        log(`[Idempotency] Critical error inserting event`, { error: err?.message }, 'error');
+        return res.status(500).json({ error: "Failed to track event" });
+    }
+    // --- IDEMPOTENCY CHECK END ---
+
     try {
         switch (event.type) {
             case "checkout.session.completed": {
@@ -320,8 +485,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 log(`Processing checkout.session.completed`, { reservationId, sessionId, paymentIntentId });
 
                 if (!reservationId) {
-                    log("Missing reservation_id in metadata", {}, 'error');
-                    return res.status(400).json({ error: "Missing metadata" });
+                    throw new Error("Missing reservation_id in metadata");
                 }
 
                 // 1. Confirm Booking (RPC)
@@ -336,7 +500,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
                 if (confirmError) {
                     log("Error confirming booking", { error: confirmError }, 'error');
-                    return res.status(500).json({ error: confirmError.message });
+                    throw confirmError;
                 }
 
                 const resultStatus = (confirmData as any)?.status;
@@ -357,8 +521,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
                     log("Email process completed", { result });
 
+                    if (result.errors && result.errors.length > 0) {
+                        log("Partial email failure", { errors: result.errors }, 'warn');
+                    }
+
+                    // Update booking event with session link if available
+                    if (confirmedSessionId) {
+                        await supabase.from('booking_events')
+                            .update({ session_id: confirmedSessionId })
+                            .eq('stripe_event_id', stripeEventId);
+                    }
+
                 } catch (emailErr: any) {
                     log("Failed to execute email service", { error: emailErr?.message || emailErr }, 'error');
+                    // We don't fail the whole webhook for emails, but we log it
                 }
 
                 break;
@@ -377,6 +553,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
                     if (cancelError) {
                         log("Error releasing expired hold", { error: cancelError }, 'error');
+                        throw cancelError;
                     } else {
                         log("Successfully released hold", { reservationId });
                     }
@@ -393,7 +570,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 log(`Unhandled event type`, { type: event.type });
         }
 
+        // --- SUCCESS UPDATE ---
+        await supabase.from('booking_events')
+            .update({ status: 'completed', updated_at: new Date().toISOString() })
+            .eq('stripe_event_id', stripeEventId);
+
         return res.status(200).json({ received: true });
+
     } catch (err: any) {
         console.error(JSON.stringify({
             level: 'error',
@@ -401,6 +584,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             stack: err.stack,
             eventId: event?.id
         }));
+
+        // --- FAILURE UPDATE ---
+        await supabase.from('booking_events')
+            .update({
+                status: 'failed',
+                error_message: err.message || 'Unknown error',
+                updated_at: new Date().toISOString()
+            })
+            .eq('stripe_event_id', stripeEventId);
+
         return res.status(500).json({ error: "Webhook handler failed" });
     }
 }

@@ -28,7 +28,7 @@ import {
   type AlternativeSuggestion
 } from '@/lib/utils/booking';
 import { useQueryClient } from '@tanstack/react-query';
-import { sendBookingConfirmationEmails } from '@/services/emailService';
+
 import { supabase } from '@/integrations/supabase/client';
 
 interface BookingModalProps {
@@ -250,7 +250,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         throw new Error(errData.error || 'Failed to create payment session');
       }
 
-      const { checkoutUrl } = await checkoutResponse.json();
+      const { data } = await checkoutResponse.json();
+      const checkoutUrl = data?.checkoutUrl;
 
       if (checkoutUrl) {
         // 3. Redirect to Stripe
@@ -370,11 +371,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div><strong>Price:</strong> ${bookingResult.price_paid || selectedService?.price || 0}</div>
             </div>
 
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>✓ Confirmation email sent</p>
-              <p>✓ Calendar invite will arrive shortly</p>
-              <p>✓ Meeting link provided 24h before session</p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              You’ll receive a confirmation email and calendar invite after payment is confirmed.
+            </p>
 
             <Button onClick={onClose} className="w-full">
               Done

@@ -50,11 +50,7 @@ export interface SendWelcomeEmailParams {
   userType: "mentor" | "mentee";
 }
 
-export interface SendBookingConfirmationParams {
-  sessionId: string;
-  mentorTimezone: string;
-  menteeTimezone: string;
-}
+
 
 export async function sendWelcomeEmail({
   email,
@@ -108,51 +104,3 @@ export async function sendWelcomeEmail({
   }
 }
 
-export async function sendBookingConfirmationEmails({
-  sessionId,
-  mentorTimezone,
-  menteeTimezone,
-}: SendBookingConfirmationParams): Promise<{ error?: Error }> {
-  const apiUrl = getApiUrl();
-  const endpoint = `${apiUrl}/api/send-booking-confirmation-email`;
-
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sessionId,
-        mentorTimezone,
-        menteeTimezone,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage =
-        errorData.error || `HTTP error! status: ${response.status}`;
-      throw new Error(errorMessage);
-    }
-
-    await response.json();
-    return {};
-  } catch (error: any) {
-    // Don't throw error - we don't want to block booking if email fails
-    // Handle connection refused errors gracefully (dev server not running)
-    if (
-      error?.message?.includes("ERR_CONNECTION_REFUSED") ||
-      error?.message?.includes("Failed to fetch") ||
-      error?.name === "TypeError"
-    ) {
-      return {
-        error: new Error(
-          "Email service unavailable in development. Please ensure 'vercel dev' is running."
-        ),
-      };
-    }
-
-    return { error: error as Error };
-  }
-}
