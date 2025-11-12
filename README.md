@@ -281,18 +281,18 @@ Contributions are welcome! Here's how you can help:
 
 ---
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
 ## Author
 
 **Niraj Mehta**
 
 - GitHub: [@nirajmehta960](https://github.com/nirajmehta960)
 - LinkedIn: [Niraj Mehta](https://linkedin.com/in/niraj-mehta)
+
+---
+
+## Copyright
+
+© 2025 Niraj Mehta. DentMentor. All rights reserved.
 
 ---
 
