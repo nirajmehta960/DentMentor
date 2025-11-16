@@ -29,6 +29,8 @@ docs/
 
 # Temporary debug files
 *.sql
+!supabase/migrations/*.sql
+!supabase/queries/*.sql
 check-*.sql
 fix-*.sql
 test-*.sql
