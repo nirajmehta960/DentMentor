@@ -1,12 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { DollarSign, ArrowRight, ArrowLeft, Plus, Edit, Trash2, Package } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  DollarSign,
+  ArrowRight,
+  ArrowLeft,
+  Plus,
+  Edit,
+  Trash2,
+  Package,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Service {
   id: string;
@@ -22,59 +30,66 @@ interface ServicesOfferedStepProps {
   onPrevious: () => void;
 }
 
-const serviceTemplates: Omit<Service, 'id'>[] = [
+const serviceTemplates: Omit<Service, "id">[] = [
   {
-    title: 'SOP Review & Feedback',
-    description: 'Comprehensive review of Statement of Purpose with detailed feedback and suggestions for improvement.',
+    title: "SOP Review & Feedback",
+    description:
+      "Comprehensive review of Statement of Purpose with detailed feedback and suggestions for improvement.",
     price: 0, // No predefined price
-    duration: 60
+    duration: 60,
   },
   {
-    title: 'Mock Interview Session',
-    description: 'Practice dental school interview with real-time feedback on answers, body language, and communication skills.',
+    title: "Mock Interview Session",
+    description:
+      "Practice dental school interview with real-time feedback on answers, body language, and communication skills.",
     price: 0, // No predefined price
-    duration: 45
+    duration: 45,
   },
   {
-    title: 'CV/Resume Review',
-    description: 'Professional review and enhancement of your CV/resume for dental school applications.',
+    title: "CV/Resume Review",
+    description:
+      "Professional review and enhancement of your CV/resume for dental school applications.",
     price: 0, // No predefined price
-    duration: 45
+    duration: 45,
   },
   {
-    title: 'Application Strategy Consultation',
-    description: 'Personalized guidance on school selection, application timeline, and strategic planning.',
+    title: "Application Strategy Consultation",
+    description:
+      "Personalized guidance on school selection, application timeline, and strategic planning.",
     price: 0, // No predefined price
-    duration: 60
-  }
+    duration: 60,
+  },
 ];
 
-export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOfferedStepProps) => {
-  const [services, setServices] = useState<Service[]>(data?.services || []);
+export const ServicesOfferedStep = ({
+  data,
+  onNext,
+  onPrevious,
+}: ServicesOfferedStepProps) => {
+  // Use lazy initializer to only initialize services once from data
+  // This prevents services from being reset when the data prop changes
+  const [services, setServices] = useState<Service[]>(
+    () => data?.services || []
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    price: '',
-    duration: ''
+    title: "",
+    description: "",
+    price: "",
+    duration: "",
   });
 
   const { toast } = useToast();
 
-  // Update services when data prop changes (for edit mode)
-  useEffect(() => {
-    setServices(data?.services || []);
-  }, [data]);
-
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const addTemplateService = (template: Omit<Service, 'id'>) => {
+  const addTemplateService = (template: Omit<Service, "id">) => {
     const newService: Service = {
       id: generateId(),
-      ...template
+      ...template,
     };
-    setServices(prev => [...prev, newService]);
+    setServices((prev) => [...prev, newService]);
     toast({
       title: "Service added!",
       description: `${template.title} has been added to your services.`,
@@ -86,7 +101,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       toast({
         title: "Title required",
         description: "Please enter a service title.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -95,7 +110,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       toast({
         title: "Description required",
         description: "Please enter a service description.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -104,7 +119,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       toast({
         title: "Price required",
         description: "Please enter a valid price.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -113,7 +128,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       toast({
         title: "Duration required",
         description: "Please enter a valid duration.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -123,13 +138,13 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       title: formData.title,
       description: formData.description,
       price: parseFloat(formData.price),
-      duration: parseInt(formData.duration)
+      duration: parseInt(formData.duration),
     };
 
-    setServices(prev => [...prev, newService]);
-    setFormData({ title: '', description: '', price: '', duration: '' });
+    setServices((prev) => [...prev, newService]);
+    setFormData({ title: "", description: "", price: "", duration: "" });
     setIsCreating(false);
-    
+
     toast({
       title: "Service created!",
       description: `${newService.title} has been added to your services.`,
@@ -137,14 +152,14 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
   };
 
   const handleUpdateService = (id: string) => {
-    const service = services.find(s => s.id === id);
+    const service = services.find((s) => s.id === id);
     if (!service) return;
 
     if (!formData.title.trim()) {
       toast({
         title: "Title required",
         description: "Please enter a service title.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -153,7 +168,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       toast({
         title: "Description required",
         description: "Please enter a service description.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -162,7 +177,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       toast({
         title: "Price required",
         description: "Please enter a valid price.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -171,20 +186,28 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       toast({
         title: "Duration required",
         description: "Please enter a valid duration.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    setServices(prev => prev.map(s => 
-      s.id === id 
-        ? { ...s, title: formData.title, description: formData.description, price: parseFloat(formData.price), duration: parseInt(formData.duration) }
-        : s
-    ));
-    
-    setFormData({ title: '', description: '', price: '', duration: '' });
+    setServices((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              title: formData.title,
+              description: formData.description,
+              price: parseFloat(formData.price),
+              duration: parseInt(formData.duration),
+            }
+          : s
+      )
+    );
+
+    setFormData({ title: "", description: "", price: "", duration: "" });
     setEditingId(null);
-    
+
     toast({
       title: "Service updated!",
       description: `${formData.title} has been updated.`,
@@ -192,9 +215,9 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
   };
 
   const handleDeleteService = (id: string) => {
-    const service = services.find(s => s.id === id);
-    setServices(prev => prev.filter(s => s.id !== id));
-    
+    const service = services.find((s) => s.id === id);
+    setServices((prev) => prev.filter((s) => s.id !== id));
+
     if (service) {
       toast({
         title: "Service removed",
@@ -208,7 +231,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       title: service.title,
       description: service.description,
       price: service.price.toString(),
-      duration: service.duration.toString()
+      duration: service.duration.toString(),
     });
     setEditingId(service.id);
     setIsCreating(true);
@@ -216,12 +239,12 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (services.length === 0) {
       toast({
         title: "At least one service required",
         description: "Please add at least one service to continue.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -244,12 +267,17 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
         <h3 className="text-lg font-semibold">Popular Service Templates</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {serviceTemplates.map((template, index) => (
-            <Card key={index} className="border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors">
+            <Card
+              key={index}
+              className="border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors"
+            >
               <CardContent className="p-4">
                 <div className="space-y-3">
                   <div>
                     <h4 className="font-semibold text-sm">{template.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {template.description}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Duration: {template.duration} min</span>
@@ -287,7 +315,7 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
         <Card className="border-primary/20">
           <CardHeader>
             <CardTitle className="text-lg">
-              {editingId ? 'Edit Service' : 'Create New Service'}
+              {editingId ? "Edit Service" : "Create New Service"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -298,7 +326,9 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
                   id="title"
                   placeholder="e.g., Personal Statement Review"
                   value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, title: e.target.value }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -308,22 +338,29 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
                   type="number"
                   placeholder="50"
                   value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, price: e.target.value }))
+                  }
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="description">Description *</Label>
               <Textarea
                 id="description"
                 placeholder="Describe what this service includes and how it helps students..."
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 rows={3}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="duration">Duration (minutes) *</Label>
               <Input
@@ -331,23 +368,34 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
                 type="number"
                 placeholder="60"
                 value={formData.duration}
-                onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, duration: e.target.value }))
+                }
               />
             </div>
-            
+
             <div className="flex gap-2">
               <Button
-                onClick={editingId ? () => handleUpdateService(editingId) : handleCreateService}
+                onClick={
+                  editingId
+                    ? () => handleUpdateService(editingId)
+                    : handleCreateService
+                }
                 className="flex-1"
               >
-                {editingId ? 'Update Service' : 'Create Service'}
+                {editingId ? "Update Service" : "Create Service"}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => {
                   setIsCreating(false);
                   setEditingId(null);
-                  setFormData({ title: '', description: '', price: '', duration: '' });
+                  setFormData({
+                    title: "",
+                    description: "",
+                    price: "",
+                    duration: "",
+                  });
                 }}
               >
                 Cancel
@@ -360,7 +408,9 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
       {/* Current Services */}
       {services.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Your Services ({services.length})</h3>
+          <h3 className="text-lg font-semibold">
+            Your Services ({services.length})
+          </h3>
           <div className="space-y-3">
             {services.map((service) => (
               <Card key={service.id} className="border">
@@ -372,7 +422,9 @@ export const ServicesOfferedStep = ({ data, onNext, onPrevious }: ServicesOffere
                         <Badge variant="secondary">${service.price}</Badge>
                         <Badge variant="outline">{service.duration} min</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{service.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {service.description}
+                      </p>
                     </div>
                     <div className="flex gap-2 ml-4">
                       <Button
