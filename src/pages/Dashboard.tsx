@@ -1,22 +1,33 @@
-import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
-import { DashboardNavigation } from '@/components/dashboard/DashboardNavigation';
-import { WelcomeBar } from '@/components/dashboard/WelcomeBar';
-import { QuickStats } from '@/components/dashboard/QuickStats';
-import { SessionManagement } from '@/components/dashboard/SessionManagement';
-import { ProfileManagement } from '@/components/dashboard/ProfileManagement';
-import { AvailabilityCalendar } from '@/components/dashboard/AvailabilityCalendar';
-import { RecentActivity } from '@/components/dashboard/RecentActivity';
-import { MonthlyAvailabilityPanel } from '@/components/dashboard/MonthlyAvailabilityPanel';
+import React from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
+import { DashboardNavigation } from "@/components/dashboard/DashboardNavigation";
+import { WelcomeBar } from "@/components/dashboard/WelcomeBar";
+import { QuickStats } from "@/components/dashboard/QuickStats";
+import { SessionManagement } from "@/components/dashboard/SessionManagement";
+import { ProfileManagement } from "@/components/dashboard/ProfileManagement";
+import { AvailabilityCalendar } from "@/components/dashboard/AvailabilityCalendar";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { MonthlyAvailabilityPanel } from "@/components/dashboard/MonthlyAvailabilityPanel";
 
 export default function Dashboard() {
-  const { user, userType, onboardingComplete, isLoading } = useAuth();
+  const {
+    user,
+    userType,
+    onboardingComplete,
+    isLoading,
+    isAuthLoading,
+    isProfileLoading,
+  } = useAuth();
 
-  if (isLoading) {
+  // Show loading while authentication or profiles are loading
+  if (isLoading || isAuthLoading || (user && isProfileLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -25,7 +36,11 @@ export default function Dashboard() {
     return <Navigate to="/auth" replace />;
   }
 
-  if (userType !== 'mentor') {
+  if (!userType) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (userType !== "mentor") {
     return <Navigate to="/" replace />;
   }
 
@@ -56,7 +71,10 @@ export default function Dashboard() {
             <ProfileManagement />
           </div>
           <div className="lg:col-span-2 space-y-8">
-            <MonthlyAvailabilityPanel currentMonth={new Date()} onMonthChange={() => {}} />
+            <MonthlyAvailabilityPanel
+              currentMonth={new Date()}
+              onMonthChange={() => {}}
+            />
           </div>
         </div>
 
