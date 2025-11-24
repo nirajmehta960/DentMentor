@@ -34,3 +34,4 @@ fix-*.sql
 test-*.sql
 debug-*.sql
 standardize-*.sql
+.vercel
