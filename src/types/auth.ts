@@ -1,6 +1,6 @@
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session } from "@supabase/supabase-js";
 
-export type UserType = 'mentor' | 'mentee' | null;
+export type UserType = "mentor" | "mentee" | null;
 
 export interface AuthProfile {
   id: string;
@@ -94,11 +94,18 @@ export interface AuthState {
 export interface AuthActions {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (data: SignUpData) => Promise<{ error?: string }>;
-  signInWithGoogle: (userType: 'mentor' | 'mentee') => Promise<{ error?: string }>;
+  signInWithGoogle: (
+    userType: "mentor" | "mentee"
+  ) => Promise<{ error?: string }>;
   signOut: () => Promise<{ error?: string }>;
   updateProfile: (updates: Partial<AuthProfile>) => Promise<boolean>;
-  updateMentorProfile: (updates: Partial<MentorProfile>, updateContext?: boolean) => Promise<{ success: boolean; error?: string }>;
-  updateMenteeProfile: (updates: Partial<MenteeProfile>) => Promise<boolean>;
+  updateMentorProfile: (
+    updates: Partial<MentorProfile>,
+    updateContext?: boolean
+  ) => Promise<{ success: boolean; error?: string }>;
+  updateMenteeProfile: (
+    updates: Partial<MenteeProfile>
+  ) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
   clearError: () => void;
 }
@@ -110,7 +117,7 @@ export interface SignUpData {
   firstName: string;
   lastName: string;
   phone: string;
-  userType: 'mentor' | 'mentee';
+  userType: "mentor" | "mentee";
   agreedToTerms: boolean;
 }
 
