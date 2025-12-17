@@ -4,10 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { 
-  PublicOnlyRoute, 
-  OnboardingRoute, 
-  CompletedOnboardingRoute 
+import {
+  PublicOnlyRoute,
+  OnboardingRoute,
+  CompletedOnboardingRoute,
 } from "@/components/auth/ProtectedRoute";
 import { PublicOrAuthRoute } from "@/components/auth/PublicOrAuthRoute";
 import Index from "./pages/Index";
@@ -19,6 +19,7 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import MenteeOnboarding from "./pages/MenteeOnboarding";
 import Dashboard from "./pages/Dashboard";
+import MenteeDashboard from "./pages/MenteeDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,55 +37,63 @@ const App = () => (
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/about" element={<About />} />
             <Route path="/apply-mentor" element={<ApplyMentor />} />
-            
+
             {/* Mentors page - accessible to both authenticated and unauthenticated users */}
-            <Route 
-              path="/mentors" 
+            <Route
+              path="/mentors"
               element={
-                <PublicOrAuthRoute allowedUserTypes={['mentor', 'mentee']}>
+                <PublicOrAuthRoute allowedUserTypes={["mentor", "mentee"]}>
                   <Mentors />
                 </PublicOrAuthRoute>
-              } 
+              }
             />
-            
+
             {/* Auth route - only for non-authenticated users */}
-            <Route 
-              path="/auth" 
+            <Route
+              path="/auth"
               element={
                 <PublicOnlyRoute>
                   <Auth />
                 </PublicOnlyRoute>
-              } 
+              }
             />
-            
+
             {/* Onboarding routes - for users with incomplete onboarding */}
-            <Route 
-              path="/onboarding" 
+            <Route
+              path="/onboarding"
               element={
                 <OnboardingRoute userType="mentor">
                   <Onboarding />
                 </OnboardingRoute>
-              } 
+              }
             />
-            <Route 
-              path="/mentee-onboarding" 
+            <Route
+              path="/mentee-onboarding"
               element={
                 <OnboardingRoute userType="mentee">
                   <MenteeOnboarding />
                 </OnboardingRoute>
-              } 
+              }
             />
-            
-            {/* Dashboard route - for mentors with completed onboarding */}
-            <Route 
-              path="/dashboard" 
+
+            {/* Dashboard routes - for users with completed onboarding */}
+            <Route
+              path="/dashboard"
               element={
-                <CompletedOnboardingRoute allowedUserTypes={['mentor']}>
+                <CompletedOnboardingRoute allowedUserTypes={["mentor"]}>
                   <Dashboard />
                 </CompletedOnboardingRoute>
-              } 
+              }
             />
-            
+            <Route
+              path="/mentee-dashboard"
+              element={
+                <CompletedOnboardingRoute allowedUserTypes={["mentee"]}>
+                  <MenteeDashboard />
+                </CompletedOnboardingRoute>
+              }
+            />
+
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

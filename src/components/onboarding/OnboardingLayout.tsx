@@ -40,25 +40,21 @@ export const OnboardingLayout = ({
   const { signOut } = useAuth();
 
   const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
-      const { error } = await signOut();
-      if (error) {
+      const result = await signOut();
+      if (result.error) {
         toast({
           title: "Error signing out",
-          description: error,
+          description: result.error,
           variant: "destructive",
         });
       }
-      // Redirect to landing page after successful sign out
-      if (!error) {
-        window.location.replace("/");
-      }
+      // Redirect immediately to sign in page
+      window.location.replace("/auth?tab=signin");
     } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Even on error, redirect to sign in page
+      window.location.replace("/auth?tab=signin");
     } finally {
       setIsSigningOut(false);
     }
