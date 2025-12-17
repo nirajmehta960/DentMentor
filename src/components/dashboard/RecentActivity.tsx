@@ -1,204 +1,261 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Activity, 
-  MessageCircle, 
-  Calendar, 
-  Star, 
-  DollarSign, 
-  Reply, 
-  Eye, 
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Activity,
+  MessageCircle,
+  Calendar,
+  Star,
+  DollarSign,
+  Reply,
+  Eye,
   Filter,
-  Check,
-  X
-} from 'lucide-react';
-import { useRecentActivity } from '@/hooks/useRecentActivity';
-import { formatDistanceToNow } from 'date-fns';
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
+import { useRecentActivity } from "@/hooks/useRecentActivity";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export function RecentActivity() {
   const { activities, isLoading } = useRecentActivity();
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<string>("all");
 
-  const getActivityIcon = (type: string) => {
+  const getActivityConfig = (type: string) => {
     switch (type) {
-      case 'session_completed':
-        return Calendar;
-      case 'new_message':
-        return MessageCircle;
-      case 'new_feedback':
-        return Star;
-      case 'payment_received':
-        return DollarSign;
+      case "session_completed":
+        return {
+          icon: Calendar,
+          color: "text-emerald-600",
+          bg: "bg-emerald-500/10",
+          label: "Session",
+        };
+      case "new_message":
+        return {
+          icon: MessageCircle,
+          color: "text-blue-600",
+          bg: "bg-blue-500/10",
+          label: "Message",
+        };
+      case "new_feedback":
+        return {
+          icon: Star,
+          color: "text-amber-600",
+          bg: "bg-amber-500/10",
+          label: "Feedback",
+        };
+      case "payment_received":
+        return {
+          icon: DollarSign,
+          color: "text-emerald-600",
+          bg: "bg-emerald-500/10",
+          label: "Payment",
+        };
       default:
-        return Activity;
+        return {
+          icon: Activity,
+          color: "text-gray-600",
+          bg: "bg-gray-500/10",
+          label: "Activity",
+        };
     }
   };
 
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'session_completed':
-        return 'text-green-600';
-      case 'new_message':
-        return 'text-blue-600';
-      case 'new_feedback':
-        return 'text-yellow-600';
-      case 'payment_received':
-        return 'text-green-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
+  const filters = [
+    { key: "all", label: "All" },
+    { key: "session_completed", label: "Sessions" },
+    { key: "new_message", label: "Messages" },
+    { key: "new_feedback", label: "Feedback" },
+    { key: "payment_received", label: "Payments" },
+  ];
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Recent Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-muted rounded-full"></div>
+      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden">
+        <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 animate-pulse"></div>
+            <div className="h-5 sm:h-6 w-28 sm:w-32 bg-muted rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="p-4 sm:p-5 md:p-6">
+          <div className="animate-pulse space-y-3 sm:space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex items-start gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-muted rounded-lg sm:rounded-xl"></div>
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="h-3 sm:h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-2.5 sm:h-3 bg-muted rounded w-1/2"></div>
                 </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
-  const filteredActivities = activities?.filter(activity => 
-    filter === 'all' || activity.type === filter
+  const filteredActivities = activities?.filter(
+    (activity) => filter === "all" || activity.type === filter
   );
 
-  const getQuickActionButton = (activity: any) => {
+  const getQuickAction = (activity: any) => {
     switch (activity.type) {
-      case 'new_message':
-        return (
-          <Button variant="ghost" size="sm">
-            <Reply className="w-3 h-3 mr-1" />
-            Reply
-          </Button>
-        );
-      case 'session_completed':
-        return (
-          <Button variant="ghost" size="sm">
-            <Eye className="w-3 h-3 mr-1" />
-            View Details
-          </Button>
-        );
-      case 'new_feedback':
-        return (
-          <Button variant="ghost" size="sm">
-            <Reply className="w-3 h-3 mr-1" />
-            Respond
-          </Button>
-        );
+      case "new_message":
+        return { label: "Reply", icon: Reply };
+      case "session_completed":
+        return { label: "View Details", icon: Eye };
+      case "new_feedback":
+        return { label: "Respond", icon: Reply };
       default:
         return null;
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Recent Activity
+    <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">
+                Recent Activity
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Your latest updates
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
-          </div>
-        </CardTitle>
-        
-        {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-2">
-          {['all', 'session_completed', 'new_message', 'new_feedback', 'payment_received'].map((filterType) => (
-            <Button
-              key={filterType}
-              variant={filter === filterType ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter(filterType)}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground flex-shrink-0"
+          >
+            <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Filter</span>
+          </Button>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200",
+                filter === f.key
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
             >
-              {filterType === 'all' ? 'All' : 
-               filterType === 'session_completed' ? 'Sessions' :
-               filterType === 'new_message' ? 'Messages' :
-               filterType === 'new_feedback' ? 'Feedback' :
-               'Payments'}
-            </Button>
+              {f.label}
+            </button>
           ))}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      </div>
+
+      <div className="p-4 sm:p-5 md:p-6">
+        <div className="space-y-3 sm:space-y-4">
           {filteredActivities?.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No activities found</p>
+            <div className="text-center py-8 sm:py-12 bg-muted/30 rounded-lg sm:rounded-xl">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-sm sm:text-base font-medium text-foreground mb-1">
+                No activities yet
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Your recent activities will appear here
+              </p>
             </div>
           ) : (
-            filteredActivities?.map((activity) => {
-              const Icon = getActivityIcon(activity.type);
-              const iconColor = getActivityColor(activity.type);
-              
+            filteredActivities?.map((activity, index) => {
+              const config = getActivityConfig(activity.type);
+              const Icon = config.icon;
+              const quickAction = getQuickAction(activity);
+
               return (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className={`p-2 rounded-full bg-muted ${iconColor}`}>
-                    <Icon className="w-4 h-4" />
+                <div
+                  key={activity.id}
+                  className={cn(
+                    "group relative flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg sm:rounded-xl",
+                    "border border-transparent hover:border-border/50 hover:bg-muted/30",
+                    "transition-all duration-200"
+                  )}
+                >
+                  {/* Icon */}
+                  <div
+                    className={cn(
+                      "w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0",
+                      config.bg
+                    )}
+                  >
+                    <Icon
+                      className={cn("w-4 h-4 sm:w-5 sm:h-5", config.color)}
+                    />
                   </div>
-                  
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">
-                        {activity.title}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
-                        </Badge>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Check className="w-3 h-3" />
-                        </Button>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5 sm:gap-2">
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <p className="text-sm sm:text-base font-medium text-foreground">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:line-clamp-1">
+                          {activity.description}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDistanceToNow(new Date(activity.created_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                        {!(activity as any).is_read && (
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary" />
+                        )}
                       </div>
                     </div>
-                    
-                    <p className="text-sm text-muted-foreground">
-                      {activity.description}
-                    </p>
-                    
-                    <div className="flex items-center justify-between mt-2">
+
+                    {/* User info & Quick Action */}
+                    <div className="flex items-center justify-between mt-2 sm:mt-3 gap-2">
                       {activity.metadata?.mentee_name && (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-5 h-5">
-                            <AvatarImage src={activity.metadata.mentee_avatar} />
-                            <AvatarFallback className="text-xs">
+                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                          <Avatar className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0">
+                            <AvatarImage
+                              src={activity.metadata.mentee_avatar}
+                            />
+                            <AvatarFallback className="text-[10px] sm:text-xs bg-primary/10 text-primary">
                               {activity.metadata.mentee_name[0]}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
                             {activity.metadata.mentee_name}
                           </span>
                         </div>
                       )}
-                      
-                      <div className="flex items-center gap-1">
-                        {getQuickActionButton(activity)}
-                      </div>
+
+                      {quickAction && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 sm:h-7 px-1.5 sm:px-2 text-[10px] sm:text-xs opacity-0 group-hover:opacity-100 transition-opacity text-primary hover:text-primary hover:bg-primary/10 flex-shrink-0"
+                        >
+                          <quickAction.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3 sm:mr-1" />
+                          <span className="hidden sm:inline">
+                            {quickAction.label}
+                          </span>
+                          <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 sm:ml-1" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -206,7 +263,21 @@ export function RecentActivity() {
             })
           )}
         </div>
-      </CardContent>
-    </Card>
+
+        {/* View All Link */}
+        {(filteredActivities?.length || 0) > 0 && (
+          <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-border/50">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-primary hover:text-primary hover:bg-primary/5 text-xs sm:text-sm"
+            >
+              View All Activity
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" />
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

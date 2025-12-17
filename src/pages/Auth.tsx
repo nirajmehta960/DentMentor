@@ -69,22 +69,22 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 
       <Card className="w-full max-w-md relative z-10 shadow-large border-0 bg-background/95 backdrop-blur-sm">
-        <CardHeader className="text-center space-y-6">
+        <CardHeader className="text-center space-y-4 sm:space-y-6 p-4 sm:p-6">
           {/* Logo */}
-          <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
-            <GraduationCap className="w-8 h-8 text-primary-foreground" />
+          <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-primary rounded-xl sm:rounded-2xl flex items-center justify-center shadow-medium">
+            <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary-foreground" />
           </div>
 
           {/* Title and Description */}
           <div className="space-y-2">
-            <CardTitle className="text-2xl font-bold text-foreground">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
               Join DentMentor
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-sm sm:text-base text-muted-foreground">
               Connect with dental professionals and accelerate your career
             </CardDescription>
           </div>
@@ -143,19 +143,25 @@ const Auth = () => {
           )}
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
-              <TabsTrigger value="signup" className="flex items-center gap-2">
-                <UserPlus className="w-4 h-4" />
+            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-muted/50">
+              <TabsTrigger
+                value="signup"
+                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+              >
+                <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Sign Up
               </TabsTrigger>
-              <TabsTrigger value="signin" className="flex items-center gap-2">
-                <LogIn className="w-4 h-4" />
+              <TabsTrigger
+                value="signin"
+                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+              >
+                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Sign In
               </TabsTrigger>
             </TabsList>
@@ -163,7 +169,7 @@ const Auth = () => {
             {(error || searchParams.get("message")) && (
               <Alert
                 variant={error ? "destructive" : "default"}
-                className="mb-4"
+                className="mb-4 text-xs sm:text-sm"
               >
                 <AlertDescription>
                   {error ||
@@ -172,38 +178,38 @@ const Auth = () => {
               </Alert>
             )}
 
-            <TabsContent value="signup" className="space-y-6">
+            <TabsContent value="signup" className="space-y-4 sm:space-y-6">
               {/* Google Sign Up - Only authentication method */}
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 border-2 hover:bg-muted/50 transition-all duration-200"
+                className="w-full h-11 sm:h-12 border-2 hover:bg-muted/50 transition-all duration-200 text-sm sm:text-base"
                 onClick={handleGoogleSignUp}
                 disabled={isAuthLoading}
               >
-                <Chrome className="w-5 h-5 mr-3" />
+                <Chrome className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                 Continue with Google
               </Button>
 
-              <p className="text-sm text-center text-muted-foreground">
+              <p className="text-xs sm:text-sm text-center text-muted-foreground">
                 Sign up with your Google account to get started
               </p>
             </TabsContent>
 
-            <TabsContent value="signin" className="space-y-6">
+            <TabsContent value="signin" className="space-y-4 sm:space-y-6">
               {/* Google Sign In - Only authentication method */}
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 border-2 hover:bg-muted/50 transition-all duration-200"
+                className="w-full h-11 sm:h-12 border-2 hover:bg-muted/50 transition-all duration-200 text-sm sm:text-base"
                 onClick={handleGoogleSignIn}
                 disabled={isAuthLoading}
               >
-                <Chrome className="w-5 h-5 mr-3" />
+                <Chrome className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                 Continue with Google
               </Button>
 
-              <p className="text-sm text-center text-muted-foreground">
+              <p className="text-xs sm:text-sm text-center text-muted-foreground">
                 Sign in with your Google account
               </p>
             </TabsContent>
