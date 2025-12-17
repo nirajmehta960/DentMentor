@@ -8,7 +8,6 @@ import { SessionManagement } from "@/components/dashboard/SessionManagement";
 import { ProfileManagement } from "@/components/dashboard/ProfileManagement";
 import { AvailabilityCalendar } from "@/components/dashboard/AvailabilityCalendar";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { MonthlyAvailabilityPanel } from "@/components/dashboard/MonthlyAvailabilityPanel";
 
 export default function Dashboard() {
   const {
@@ -23,10 +22,15 @@ export default function Dashboard() {
   // Show loading while authentication or profiles are loading
   if (isLoading || isAuthLoading || (user && isProfileLoading)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-12 h-12 border-4 border-primary/20 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Loading your dashboard...
+          </p>
         </div>
       </div>
     );
@@ -49,40 +53,38 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNavigation />
-      <div className="container mx-auto px-4 py-6 space-y-8">
-        <WelcomeBar />
-        <QuickStats />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      {/* Subtle pattern overlay */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-        {/* Row 1: Session Management (60%) | Availability Calendar (40%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3 space-y-8">
+      <DashboardNavigation />
+
+      <main className="relative z-10 container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        {/* Welcome Section */}
+        <section className="mb-4 sm:mb-6 md:mb-8">
+          <WelcomeBar />
+        </section>
+
+        {/* Stats Section */}
+        <section className="mb-6 sm:mb-8 md:mb-10">
+          <QuickStats />
+        </section>
+
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8">
+          {/* Left Column - Session Management & Availability Calendar */}
+          <div className="lg:col-span-5 space-y-4 sm:space-y-6 md:space-y-8">
             <SessionManagement />
-          </div>
-          <div className="lg:col-span-2 space-y-8">
             <AvailabilityCalendar />
           </div>
-        </div>
 
-        {/* Row 2: Profile Management (60%) | Your Availability (40%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3 space-y-8">
+          {/* Right Column - Profile Management & Recent Activity */}
+          <div className="lg:col-span-7 space-y-4 sm:space-y-6 md:space-y-8">
             <ProfileManagement />
-          </div>
-          <div className="lg:col-span-2 space-y-8">
-            <MonthlyAvailabilityPanel
-              currentMonth={new Date()}
-              onMonthChange={() => {}}
-            />
+            <RecentActivity />
           </div>
         </div>
-
-        {/* Row 3: Recent Activity (Full width) */}
-        <div>
-          <RecentActivity />
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
