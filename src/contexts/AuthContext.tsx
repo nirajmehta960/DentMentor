@@ -55,6 +55,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const welcomeEmailSentRef = useRef<Set<string>>(new Set());
   const emailSendingInProgressRef = useRef<Set<string>>(new Set());
 
+  // Flag to prevent re-authentication immediately after sign out
+  const isSigningOutRef = useRef<boolean>(false);
+
   // Helper function to check if welcome email was already sent
   const hasWelcomeEmailBeenSent = (userId: string): boolean => {
     // Check ref first (fast, for current session)
@@ -303,6 +306,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (!mounted) return;
+
+          // If we're in the process of signing out, ignore auth state changes
+          if (isSigningOutRef.current && event !== "SIGNED_OUT") {
+            return;
+          }
 
           // Prevent duplicate processing of the same session
           const sessionId = session?.user?.id;
@@ -630,7 +638,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     variant: "destructive",
                   });
                   setTimeout(() => {
-                    supabase.auth.signOut();
+                    // Use local scope to avoid 403 errors
+                    supabase.auth.signOut({ scope: "local" }).catch(() => {
+                      // Ignore errors - local state will be cleared anyway
+                    });
                   }, 3000);
                 } else {
                   // New user without userType - they should have signed up, but let's allow them to proceed
@@ -639,6 +650,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
             }
           } else if (event === "SIGNED_OUT") {
+            // Clear the signing out flag
+            isSigningOutRef.current = false;
+
             // Clear state on sign out
             setState({
               user: null,
@@ -693,33 +707,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         // Check for existing session
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (mounted && session) {
-          const userType = (session.user.user_metadata?.user_type ||
-            session.user.app_metadata?.user_type) as UserType;
-
-          setState((prev) => ({
-            ...prev,
-            user: session.user,
-            session,
-            userType,
-            isAuthLoading: false,
-          }));
-
-          // Load profiles after setting auth state
-          if (userType) {
-            setTimeout(() => {
-              loadUserProfiles(session.user.id, userType, session.user);
-            }, 0);
-          }
-        } else {
+        // First check if we just signed out (prevent re-authentication)
+        const justSignedOut = sessionStorage.getItem(
+          "dentmentor_just_signed_out"
+        );
+        if (justSignedOut) {
+          // Clear the flag and skip session check
+          sessionStorage.removeItem("dentmentor_just_signed_out");
           setState((prev) => ({
             ...prev,
             isAuthLoading: false,
             isLoading: false,
           }));
+        } else {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (mounted && session) {
+            const userType = (session.user.user_metadata?.user_type ||
+              session.user.app_metadata?.user_type) as UserType;
+
+            setState((prev) => ({
+              ...prev,
+              user: session.user,
+              session,
+              userType,
+              isAuthLoading: false,
+            }));
+
+            // Load profiles after setting auth state
+            if (userType) {
+              setTimeout(() => {
+                loadUserProfiles(session.user.id, userType, session.user);
+              }, 0);
+            }
+          } else {
+            setState((prev) => ({
+              ...prev,
+              isAuthLoading: false,
+              isLoading: false,
+            }));
+          }
         }
       } catch (error) {
         if (mounted) {
@@ -750,35 +778,193 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setState((prev) => ({ ...prev, error: null }));
   }, []);
 
-  // Sign up and sign in functions removed - using Google OAuth only
+  // Sign up function with email/password
   const signUp = useCallback(
-    async (_signUpData: SignUpData) => {
-      setState((prev) => ({ ...prev, isLoading: false }));
-      toast({
-        title: "Email signup disabled",
-        description: "Please use Google OAuth to sign up.",
-        variant: "destructive",
-      });
-      return {
-        success: false,
-        error: "Email signup is disabled. Please use Google OAuth.",
-      };
+    async (signUpData: SignUpData) => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        // Sign up with Supabase
+        const { data, error } = await supabase.auth.signUp({
+          email: signUpData.email,
+          password: signUpData.password,
+          options: {
+            data: {
+              first_name: signUpData.firstName,
+              last_name: signUpData.lastName,
+              phone: signUpData.phone,
+              user_type: signUpData.userType,
+            },
+            emailRedirectTo: `${window.location.origin}/auth?tab=signin`,
+          },
+        });
+
+        if (error) throw error;
+
+        if (!data.user) {
+          throw new Error("Failed to create user account");
+        }
+
+        // Create profile entry
+        const { error: profileError } = await supabase.from("profiles").insert({
+          user_id: data.user.id,
+          first_name: signUpData.firstName,
+          last_name: signUpData.lastName,
+          phone: signUpData.phone,
+          user_type: signUpData.userType,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        if (profileError) {
+          console.warn("Profile creation error:", profileError);
+          // Don't fail signup if profile creation fails - it will be created on first login
+        }
+
+        // Create user type specific profile
+        if (signUpData.userType === "mentor") {
+          const { error: mentorError } = await supabase
+            .from("mentor_profiles")
+            .insert({
+              user_id: data.user.id,
+              onboarding_step: 1,
+              onboarding_completed: false,
+              verification_status: "pending",
+              is_verified: false,
+              is_active: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+
+          if (mentorError) {
+            console.warn("Mentor profile creation error:", mentorError);
+          }
+        } else if (signUpData.userType === "mentee") {
+          const { error: menteeError } = await supabase
+            .from("mentee_profiles")
+            .insert({
+              user_id: data.user.id,
+              onboarding_step: 1,
+              onboarding_completed: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+
+          if (menteeError) {
+            console.warn("Mentee profile creation error:", menteeError);
+          }
+        }
+
+        // Show success message
+        toast({
+          title: "Account created successfully",
+          description:
+            "Please check your email to confirm your account before signing in.",
+        });
+
+        setState((prev) => ({ ...prev, isLoading: false }));
+
+        return { success: true };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to create account. Please try again.";
+
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        toast({
+          title: "Sign up failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+
+        return { success: false, error: errorMessage };
+      }
     },
     [toast]
   );
 
+  // Sign in function with email/password
   const signIn = useCallback(
-    async (_email: string, _password: string) => {
-      setState((prev) => ({ ...prev, isLoading: false }));
-      toast({
-        title: "Email signin disabled",
-        description: "Please use Google OAuth to sign in.",
-        variant: "destructive",
-      });
-      return {
-        success: false,
-        error: "Email signin is disabled. Please use Google OAuth.",
-      };
+    async (email: string, password: string) => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        if (!data.user) {
+          throw new Error("Failed to sign in");
+        }
+
+        // Get user type from metadata or profile
+        let userType = (data.user.user_metadata?.user_type ||
+          data.user.app_metadata?.user_type) as UserType;
+
+        // If no userType in metadata, try to get it from profile
+        if (!userType) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("user_type")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (profile?.user_type) {
+            userType = profile.user_type as UserType;
+            // Update user metadata with userType for future logins
+            await supabase.auth.updateUser({
+              data: { user_type: userType },
+            });
+          }
+        }
+
+        // Load user profiles - this will also check for userType in profiles if not found
+        await loadUserProfiles(data.user.id, userType || "mentee", data.user);
+
+        // Get final userType from state after profile load (in case it was updated)
+        const finalUserType =
+          userType ||
+          ((data.user.user_metadata?.user_type ||
+            data.user.app_metadata?.user_type) as UserType);
+
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          user: data.user,
+          session: data.session,
+          userType: finalUserType || null,
+        }));
+
+        return { success: true };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to sign in. Please check your credentials.";
+
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+
+        toast({
+          title: "Sign in failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+
+        return { success: false, error: errorMessage };
+      }
     },
     [toast]
   );
@@ -847,14 +1033,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Sign out function
   const signOut = useCallback(async () => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    // Set flag to prevent re-authentication during sign out
+    isSigningOutRef.current = true;
 
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
-
+      // Clear local state first
       setState({
         user: null,
         session: null,
@@ -870,19 +1053,108 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         error: null,
       });
 
-      return { success: true };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Sign out failed";
-      setState((prev) => ({ ...prev, isLoading: false, error: errorMessage }));
-      toast({
-        title: "Sign out failed",
-        description: errorMessage,
-        variant: "destructive",
+      // Clear session storage
+      sessionStorage.removeItem("dentmentor_oauth_userType");
+      sessionStorage.removeItem("dentmentor_oauth_timestamp");
+      sessionStorage.removeItem("dentmentor-signup-data");
+
+      // Set flag to prevent re-authentication on page reload
+      sessionStorage.setItem("dentmentor_just_signed_out", "true");
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+
+      // Even if there's an error, clear Supabase storage manually
+      // Clear all Supabase-related localStorage items
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        if (supabaseUrl) {
+          // Get the project ref from the URL
+          const projectRef = supabaseUrl.split("//")[1]?.split(".")[0];
+          if (projectRef) {
+            // Clear the main auth token
+            const authTokenKey = `sb-${projectRef}-auth-token`;
+            localStorage.removeItem(authTokenKey);
+          }
+        }
+
+        // Clear all keys that might contain Supabase data
+        Object.keys(localStorage).forEach((key) => {
+          if (key.includes("supabase") || key.includes("sb-")) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (clearError) {
+        // Ignore localStorage errors
+        console.warn("Error clearing localStorage:", clearError);
+      }
+
+      if (error) {
+        console.warn("Supabase signOut error:", error);
+        // Continue anyway - we've cleared local state
+      }
+
+      // Verify session is cleared (non-blocking, happens in background)
+      // Don't await this - let redirect happen immediately
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          // Session still exists, force clear it in background
+          console.warn("Session still exists after signOut, forcing clear");
+          supabase.auth.signOut().catch(() => {
+            // Ignore errors
+          });
+          // Clear localStorage again
+          Object.keys(localStorage).forEach((key) => {
+            if (key.includes("supabase") || key.includes("sb-")) {
+              localStorage.removeItem(key);
+            }
+          });
+        }
       });
+
+      // Return immediately - redirect will happen from navigation component
+      return { success: true };
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to sign out";
+
+      // Even on error, clear local state and storage
+      setState({
+        user: null,
+        session: null,
+        profile: null,
+        mentorProfile: null,
+        menteeProfile: null,
+        userType: null,
+        onboardingComplete: false,
+        currentOnboardingStep: 1,
+        isLoading: false,
+        isAuthLoading: false,
+        isProfileLoading: false,
+        error: null,
+      });
+
+      // Clear session storage
+      sessionStorage.removeItem("dentmentor_oauth_userType");
+      sessionStorage.removeItem("dentmentor_oauth_timestamp");
+      sessionStorage.removeItem("dentmentor-signup-data");
+
+      // Set flag to prevent re-authentication on page reload
+      sessionStorage.setItem("dentmentor_just_signed_out", "true");
+
+      // Clear Supabase localStorage
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.includes("supabase") || key.includes("sb-")) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (clearError) {
+        // Ignore
+      }
+
       return { success: false, error: errorMessage };
     }
-  }, [toast]);
+  }, []);
 
   // Update profile function
   const updateProfile = useCallback(

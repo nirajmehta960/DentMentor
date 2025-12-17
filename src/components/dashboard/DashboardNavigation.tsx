@@ -44,10 +44,11 @@ export function DashboardNavigation() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      // Redirect to landing page after successful sign out
-      window.location.replace("/");
+      // Redirect immediately to sign in page
+      window.location.replace("/auth?tab=signin");
     } catch (error) {
-      // Silently handle error
+      // Even on error, redirect to sign in page
+      window.location.replace("/auth?tab=signin");
     }
   };
 

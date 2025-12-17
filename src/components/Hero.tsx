@@ -107,7 +107,7 @@ const Hero = () => {
               asChild
               variant="outline"
               size="lg"
-              className="text-white border-white/30 hover:bg-white/10 group backdrop-blur-sm w-full sm:w-auto text-sm sm:text-base"
+              className="bg-transparent text-white border-white/30 hover:bg-white hover:text-primary group backdrop-blur-sm w-full sm:w-auto text-sm sm:text-base transition-colors"
             >
               <Link to="/mentors" className="flex items-center justify-center">
                 <Users className="mr-2 w-4 h-4 sm:w-5 sm:h-5" />

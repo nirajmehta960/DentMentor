@@ -62,7 +62,7 @@ export function useBookedSessions(month: Date) {
         const userIds = menteeProfiles?.map((mp) => mp.user_id) || [];
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name, email")
+          .select("id, first_name, last_name")
           .in("id", userIds);
 
         if (profilesError) throw profilesError;
@@ -94,7 +94,7 @@ export function useBookedSessions(month: Date) {
                   profile.last_name || ""
                 }`.trim() || "Unknown"
               : "Unknown",
-            mentee_email: profile?.email || "",
+            mentee_email: "", // Email is stored in auth.users, not accessible from profiles table
           };
         });
 
@@ -140,7 +140,7 @@ export function useBookedSessions(month: Date) {
       const userIds = menteeProfiles?.map((mp) => mp.user_id) || [];
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, email")
+        .select("id, first_name, last_name")
         .in("id", userIds);
 
       if (profilesError) throw profilesError;
@@ -183,4 +183,3 @@ export function useBookedSessions(month: Date) {
 
   return { bookedSessions, isLoading, refetch };
 }
-
