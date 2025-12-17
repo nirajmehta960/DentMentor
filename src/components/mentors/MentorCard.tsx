@@ -6,6 +6,7 @@ import {
   CheckCircle,
   Calendar,
   Languages,
+  BadgeCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +66,9 @@ export const MentorCard = ({
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => setShowPreview(true)}
     >
+      {/* Top gradient accent - Teal bar at top on hover */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
       {/* Gradient Background Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -107,7 +111,9 @@ export const MentorCard = ({
                   {mentor.verified && (
                     <Tooltip>
                       <TooltipTrigger>
-                        <CheckCircle className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 text-blue-500 flex-shrink-0" />
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 bg-primary rounded-full flex items-center justify-center ring-2 ring-background flex-shrink-0">
+                          <BadgeCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-primary-foreground" />
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Verified Mentor</p>
@@ -262,7 +268,9 @@ export const MentorCard = ({
                   {mentor.verified && (
                     <Tooltip>
                       <TooltipTrigger>
-                        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-primary rounded-full flex items-center justify-center ring-2 ring-background flex-shrink-0">
+                          <BadgeCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary-foreground" />
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Verified Mentor</p>
