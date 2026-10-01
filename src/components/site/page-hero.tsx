@@ -53,7 +53,7 @@ export function PageHero({
         <Enter delay={0.07}>
           <h1
             className={cn(
-              "max-w-[52rem] text-balance font-display text-display-2 font-medium tracking-[-0.035em] text-band-fg sm:text-[clamp(2.5rem,1.6rem+3vw,4rem)]",
+              "max-w-[52rem] text-balance font-display text-display-2 font-medium leading-[1.06] tracking-[-0.035em] text-band-fg sm:text-[clamp(2.5rem,1.6rem+3vw,4rem)] sm:leading-[1.06]",
             )}
           >
             {lines.map((line, i) => (

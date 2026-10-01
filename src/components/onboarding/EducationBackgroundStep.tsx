@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ChoiceCard,
   FormSection,
+  CONTROL_EDGE,
   RequiredMark,
   StepActions,
   StepHeader,
@@ -402,7 +403,7 @@ export const EducationBackgroundStep = ({
               htmlFor="current-student"
               selected={formData.current_status === "Current Student"}
               control={
-                <RadioGroupItem value="Current Student" id="current-student" />
+                <RadioGroupItem value="Current Student" id="current-student" className={CONTROL_EDGE} />
               }
               title="Current student"
               description="I am currently enrolled in a US dental school"
@@ -410,7 +411,7 @@ export const EducationBackgroundStep = ({
             <ChoiceCard
               htmlFor="graduate"
               selected={formData.current_status === "Graduate"}
-              control={<RadioGroupItem value="Graduate" id="graduate" />}
+              control={<RadioGroupItem value="Graduate" id="graduate" className={CONTROL_EDGE} />}
               title="Graduate"
               description="I have graduated from a US dental school"
             />

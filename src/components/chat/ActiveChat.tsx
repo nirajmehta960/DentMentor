@@ -139,7 +139,7 @@ export function ActiveChat({ sessionId, initialOtherUser, onRead }: ActiveChatPr
                     }
 
                     setTimeout(() => {
-                        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+                        scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 100);
                 }
             )
@@ -231,7 +231,7 @@ export function ActiveChat({ sessionId, initialOtherUser, onRead }: ActiveChatPr
 
             setTimeout(() => {
                 if (scrollRef.current) {
-                    scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+                    scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }, 100);
 
@@ -253,7 +253,7 @@ export function ActiveChat({ sessionId, initialOtherUser, onRead }: ActiveChatPr
     // Scroll to bottom on initial load
     useEffect(() => {
         if (!loading && messages.length > 0) {
-            scrollRef.current?.scrollIntoView();
+            scrollRef.current?.scrollIntoView({ block: 'nearest' });
         }
     }, [loading]);
 

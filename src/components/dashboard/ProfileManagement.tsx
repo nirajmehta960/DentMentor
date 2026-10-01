@@ -286,11 +286,14 @@ export function ProfileManagement() {
                 value={averageRating > 0 ? (mentorProfile as any)?.average_rating : "—"}
                 hint={averageRating > 0 ? undefined : "No ratings yet"}
               />
-              <Figure
-                icon={DollarSign}
-                label="Hourly rate"
-                value={formatUsd(mentorProfile?.hourly_rate || 0)}
-              />
+              {/* The rate the mentor entered at onboarding; hidden rather than shown as $0 when unset. */}
+              {Number(mentorProfile?.hourly_rate) > 0 && (
+                <Figure
+                  icon={DollarSign}
+                  label="Hourly rate"
+                  value={formatUsd(mentorProfile?.hourly_rate)}
+                />
+              )}
             </ul>
           </WorkPanel>
 

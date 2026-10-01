@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { BadgeCheck, ChevronDown, Star, X } from 'lucide-react';
+import { BadgeCheck, ChevronDown, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,10 +53,20 @@ const languages = [
   'Portuguese'
 ];
 
-const availabilityOptions = [
-  { value: 'available', label: 'Available' },
-  { value: 'busy', label: 'Busy' },
-  { value: 'offline', label: 'Offline' }
+/*
+ * Rating, price and availability filters (and the rating, price and reviews
+ * sorts) are not offered: `useMentors` fills them with invented values — a 4.5
+ * rating for every unrated mentor, reviews at 30% of sessions, a $100 rate the
+ * cards no longer show (they show the mentor's real service prices), and
+ * "available" for everyone. Filtering on them would contradict the cards.
+ * Restore them once `use-mentor-search` filters on real data.
+ *
+ * The "rating" sort value stays as the default order: with no real ratings it
+ * keeps the directory's own order.
+ */
+const sortOptions = [
+  { value: 'rating', label: 'Default order' },
+  { value: 'experience', label: 'Most experience' }
 ];
 
 const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -141,9 +151,6 @@ export const FilterSidebar = ({
     sort: true,
     specialty: true,
     experience: true,
-    rating: true,
-    price: true,
-    availability: false,
     languages: false,
     verified: true
   });
@@ -174,13 +181,6 @@ export const FilterSidebar = ({
       ? [...filters.languages, language]
       : filters.languages.filter(l => l !== language);
     onFilterChange('languages', newLanguages);
-  };
-
-  const handleAvailabilityChange = (availability: string, checked: boolean) => {
-    const newAvailability = checked
-      ? [...filters.availability, availability]
-      : filters.availability.filter(a => a !== availability);
-    onFilterChange('availability', newAvailability);
   };
 
   const clearAllFilters = () => {
@@ -243,10 +243,11 @@ export const FilterSidebar = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent data-lenis-prevent="">
-              <SelectItem value="rating">Highest Rated</SelectItem>
-              <SelectItem value="price">Lowest Price</SelectItem>
-              <SelectItem value="experience">Most Experience</SelectItem>
-              <SelectItem value="reviews">Most Reviews</SelectItem>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </FilterSection>
@@ -284,59 +285,6 @@ export const FilterSidebar = ({
               <span>{filters.experience[1]} years</span>
             </div>
           </div>
-        </FilterSection>
-
-        {/* Rating Filter */}
-        <FilterSection title="Minimum rating" open={expandedSections.rating} onToggle={() => toggleSection('rating')} panelId={id('section-rating')}>
-          <ul className="flex flex-col">
-            {[4.5, 4.0, 3.5, 3.0].map((rating) => (
-              <CheckRow
-                key={rating}
-                boxId={id(`rating-${rating}`)}
-                checked={filters.rating === rating}
-                onCheckedChange={(checked) => onFilterChange('rating', checked ? rating : 0)}
-              >
-                <Star className="size-3.5 fill-current text-secondary" aria-hidden="true" />
-                <span className="tabular-nums">{rating.toFixed(1)}</span>
-                <span className="text-muted-foreground">&amp; up</span>
-              </CheckRow>
-            ))}
-          </ul>
-        </FilterSection>
-
-        {/* Price Range */}
-        <FilterSection title="Price range" open={expandedSections.price} onToggle={() => toggleSection('price')} panelId={id('section-price')}>
-          <div className="px-1 pt-2">
-            <Slider
-              value={filters.priceRange}
-              onValueChange={(value) => onFilterChange('priceRange', value)}
-              max={300}
-              min={50}
-              step={10}
-              className="mb-3"
-              aria-label="Price range"
-            />
-            <div className="flex justify-between text-xs tabular-nums text-muted-foreground">
-              <span>${filters.priceRange[0]}</span>
-              <span>${filters.priceRange[1]}</span>
-            </div>
-          </div>
-        </FilterSection>
-
-        {/* Availability Filter */}
-        <FilterSection title="Availability" open={expandedSections.availability} onToggle={() => toggleSection('availability')} panelId={id('section-availability')}>
-          <ul className="flex flex-col">
-            {availabilityOptions.map((option) => (
-              <CheckRow
-                key={option.value}
-                boxId={id(`availability-${option.value}`)}
-                checked={filters.availability.includes(option.value)}
-                onCheckedChange={(checked) => handleAvailabilityChange(option.value, checked)}
-              >
-                {option.label}
-              </CheckRow>
-            ))}
-          </ul>
         </FilterSection>
 
         {/* Verified Filter */}

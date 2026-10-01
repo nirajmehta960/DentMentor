@@ -18,6 +18,7 @@ import {
   formatPrice,
   hasRealAvatar,
   specialties,
+  visibleLanguages,
   visibleLocation,
   visibleRating,
 } from "./mentor-display";
@@ -47,13 +48,8 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
   // The mentor's own active services, with what they cost and how long they run.
   const services = mentor.mentorServices ?? [];
 
-  // Get languages
-  const getLanguages = () => {
-    if (mentor.languages && mentor.languages.length > 0) {
-      return mentor.languages;
-    }
-    return ["English"];
-  };
+  // Only languages the mentor entered — never the hook's ["English"] default.
+  const languages = visibleLanguages(mentor);
 
   const handleBookSession = () => {
     setShowBooking(true);
@@ -179,11 +175,11 @@ export const QuickPreviewModal = ({ mentor, isOpen, onClose }: QuickPreviewModal
               </section>
             ) : null}
 
-            {getLanguages().length > 0 ? (
+            {languages.length > 0 ? (
               <section className="flex flex-col gap-3">
                 <h3 className={cn(LABEL, "text-primary")}>Languages</h3>
                 <ul className="flex flex-wrap gap-1.5">
-                  {getLanguages().map((language) => (
+                  {languages.map((language) => (
                     <li key={language} className={CHIP}>
                       {language}
                     </li>

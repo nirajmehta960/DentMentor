@@ -90,7 +90,7 @@ export function RecommendedMentors() {
                     {specialties.length ? (
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {specialties.map((s) => (
-                          <StatusPill key={s}>{s}</StatusPill>
+                          <StatusPill key={s} className="whitespace-normal break-words">{s}</StatusPill>
                         ))}
                       </div>
                     ) : null}

@@ -402,7 +402,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       {/* Calendar + time slots side by side */}
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* Calendar Section */}
-        <div className="min-w-0 flex-1 rounded-xl border border-border bg-white p-2 sm:p-5">
+        <div className="min-w-0 flex-1 rounded-xl border border-border bg-white p-1 sm:p-5">
           {/* Month Navigation */}
           <div className="mb-2 flex items-center justify-between gap-2 pl-2 sm:pl-1">
             <h4 className="text-base font-semibold text-foreground">
@@ -429,7 +429,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           </div>
 
           {/* Day Headers */}
-          <div className="mb-1 grid grid-cols-7 gap-0.5 sm:gap-1">
+          <div className="mb-1 grid grid-cols-7 gap-0 sm:gap-1">
             {DAYS_OF_WEEK.map((day) => (
               <div key={day} className={cn(LABEL, "py-2 text-center text-muted-foreground")}>
                 {day}
@@ -438,7 +438,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           </div>
 
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+          <div className="grid grid-cols-7 gap-0 sm:gap-1">
             {calendarDays.map((day) => {
               const slotCount = day.availableSlots;
               const isPast = isDateInPast(day.date);

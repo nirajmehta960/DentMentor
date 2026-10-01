@@ -32,7 +32,10 @@ export function SessionIncludes() {
                   className="flex h-full flex-col gap-3 rounded-xl border bg-white p-6 shadow-[var(--card-shadow)]"
                   style={{ borderColor: HAIRLINE }}
                 >
-                  <span className="stat self-start rounded-pill bg-[rgb(15_112_93/0.07)] px-2.5 py-1 text-band-signal">
+                  <span
+                    className="self-start rounded-pill bg-[rgb(15_112_93/0.07)] px-2.5 py-1 text-[0.8125rem] font-medium text-band-signal"
+                    data-numeric=""
+                  >
                     {service.duration}
                   </span>
                   <h3 className="text-[1.125rem] font-medium leading-[1.25] tracking-[-0.01em] text-band-fg">{service.title}</h3>

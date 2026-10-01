@@ -8,6 +8,7 @@ import { Loader2, MessageSquare, MessageSquareOff, Search } from "lucide-react";
 import { ActiveChat } from "@/components/chat/ActiveChat";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { AppPageHeader } from "@/components/site";
 
 interface Conversation {
     conversation_key: string;
@@ -28,8 +29,17 @@ interface Profile {
     avatar_url: string | null;
 }
 
-export function MessagesTab() {
-    const { user } = useAuth();
+interface MessagesTabProps {
+    /**
+     * Render the tab's own "Messages" page header (the old component always
+     * rendered a "Messages" heading). Defaults to true so every caller keeps a
+     * heading; pass false only when the page supplies its own.
+     */
+    showHeader?: boolean;
+}
+
+export function MessagesTab({ showHeader = true }: MessagesTabProps = {}) {
+    const { user, userType } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const sessionIdParam = searchParams.get('sessionId');
 
@@ -163,12 +173,22 @@ export function MessagesTab() {
             return fullName.includes(searchQuery.toLowerCase());
         });
 
-    // Shared with the mentee dashboard, which may render outside the site kit's
-    // AppShell, so this view uses the app theme tokens (same teal ink and
-    // hairline) rather than band tokens. The page supplies its own header.
+    // Shared by the mentor and mentee dashboards (both render inside the kit's
+    // AppShell). The box below uses the app theme tokens (same teal ink and
+    // hairline) and is sized to the space left under the dashboard chrome and
+    // this header, so opening a thread doesn't scroll the whole window.
+    const otherParty = userType === "mentor" ? "mentee" : "mentor";
     return (
+        <div className="flex flex-col gap-6">
+        {showHeader && (
+            <AppPageHeader
+                eyebrow="Messages"
+                title="Inbox"
+                description={`Each booked session has its own thread with your ${otherParty}.`}
+            />
+        )}
         <div
-            className="flex h-[max(30rem,calc(100dvh_-_15rem))] overflow-hidden rounded-[14px] border bg-white shadow-soft lg:h-[max(32rem,calc(100dvh_-_13rem))]"
+            className="flex h-[max(28rem,calc(100dvh_-_22.5rem))] overflow-hidden rounded-[14px] border bg-white shadow-soft lg:h-[max(32rem,calc(100dvh_-_18.5rem))]"
             style={{ borderColor: "#E3ECEA" }}
         >
             {/* Left Sidebar: Conversation List */}
@@ -304,6 +324,7 @@ export function MessagesTab() {
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 }

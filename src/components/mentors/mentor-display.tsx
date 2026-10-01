@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  *
  * `useMentors` fills gaps in a profile with invented values: a 4.5 rating for
  * every unrated mentor, a review count of 30% of sessions, five years'
- * experience, a $100 rate, "United States", "Dental School", a stock portrait,
+ * experience, a $100 rate, "United States", "Dental School", ["English"], a stock portrait,
  * "< 2 hours" response time and "available" for everyone. Those placeholders are
  * matched here and never shown. When the hook stops inventing them, delete the
  * matching entries below.
@@ -20,6 +20,8 @@ const PLACEHOLDER = {
   rating: 4.5,
   school: "Dental School",
   location: "United States",
+  /** `languages_spoken || ['English']` — a lone "English" is the hook's default. */
+  languages: ["English"],
   avatars: ["https://images.unsplash.com/photo-1559839734-2b71ea197ec2", "/placeholder.svg"],
 } as const;
 
@@ -143,6 +145,20 @@ export function visibleRating(mentor: Mentor): number | null {
 
 export function visibleLocation(mentor: Mentor): string | null {
   return mentor.location && mentor.location !== PLACEHOLDER.location ? mentor.location : null;
+}
+
+/**
+ * The languages a mentor entered. The hook substitutes ["English"] when none
+ * were, so a lone "English" is treated as not entered.
+ */
+export function visibleLanguages(mentor: Mentor): string[] {
+  const languages = (mentor.languages ?? []).filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  );
+  const isPlaceholder =
+    languages.length === PLACEHOLDER.languages.length &&
+    languages.every((language, i) => language === PLACEHOLDER.languages[i]);
+  return isPlaceholder ? [] : Array.from(new Set(languages));
 }
 
 export function formatPrice(amount: number): string {

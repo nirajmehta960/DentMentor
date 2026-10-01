@@ -67,7 +67,7 @@ export const OnboardingLayout = ({
           variant="ghost"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className="h-11 px-3 text-muted-foreground hover:text-foreground sm:px-4"
+          className="h-11 min-w-11 px-3 text-muted-foreground hover:text-foreground sm:px-4"
         >
           <LogOut aria-hidden="true" />
           <span className="sr-only sm:not-sr-only">

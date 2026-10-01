@@ -102,7 +102,7 @@ export function MenteeProfileManagement() {
             <DetailRow icon={Target} label="Target programs">
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {menteeProfile.target_programs.map((program) => (
-                  <StatusPill key={program}>{program}</StatusPill>
+                  <StatusPill key={program} className="whitespace-normal break-words">{program}</StatusPill>
                 ))}
               </div>
             </DetailRow>

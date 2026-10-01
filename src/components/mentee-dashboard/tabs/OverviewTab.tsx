@@ -159,7 +159,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
                       {specialties.length || from !== null ? (
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           {specialties.map((s) => (
-                            <StatusPill key={s}>{s}</StatusPill>
+                            <StatusPill key={s} className="whitespace-normal break-words">{s}</StatusPill>
                           ))}
                           {from !== null ? (
                             <span className="text-[0.8125rem] text-band-muted tabular-nums">

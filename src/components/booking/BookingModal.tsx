@@ -396,7 +396,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         data-lenis-prevent=""
         className="flex max-h-[90vh] flex-col gap-0 overflow-y-auto p-0 sm:max-w-4xl [&>button:last-child]:hidden"
       >
-        <DialogHeader className="relative flex-row items-center gap-3 space-y-0 border-b border-border px-5 py-4 text-left sm:px-8 sm:py-5">
+        <DialogHeader className="relative flex-row items-center gap-3 space-y-0 border-b border-border px-4 py-4 text-left sm:px-8 sm:py-5">
           <PersonAvatar name={mentorName} src={mentorAvatar} className="size-11 text-sm" />
           <div className="min-w-0 flex-1 pr-10">
             <DialogTitle className="font-display text-lg tracking-[-0.02em] text-foreground">Book a session</DialogTitle>
@@ -408,7 +408,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           </DialogClose>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 px-5 py-6 sm:px-8 sm:py-7">
+        <div className="flex flex-col gap-6 px-4 py-6 sm:px-8 sm:py-7">
           {/* Progress Indicator */}
           <ProgressIndicator
             currentStep={currentStep}
@@ -520,7 +520,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Navigation Buttons */}
         {currentStep !== 'confirmation' && (
-          <div className="sticky bottom-0 mt-auto flex gap-3 border-t border-border bg-white/95 px-5 py-4 backdrop-blur sm:px-8">
+          <div className="sticky bottom-0 mt-auto flex gap-3 border-t border-border bg-white/95 px-4 py-4 backdrop-blur sm:px-8">
             <Button
               variant="outline"
               size="lg"

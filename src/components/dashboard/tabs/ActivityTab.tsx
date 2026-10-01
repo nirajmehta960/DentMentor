@@ -94,7 +94,7 @@ export function ActivityTab() {
     <div className="flex flex-col gap-6">
       <AppPageHeader
         eyebrow="Activity"
-        title="Activity"
+        title="What's happened lately"
         description="Sessions, messages, feedback and payments, newest first."
       />
 

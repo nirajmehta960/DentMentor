@@ -22,6 +22,13 @@ import { cn } from "@/lib/utils";
 export const SELECTED_EDGE = "rgb(15 112 93 / 0.55)";
 /** The dashed edge of an upload zone — a touch stronger than a hairline, so the dashes read. */
 export const DASHED_EDGE = "rgb(9 67 56 / 0.22)";
+/**
+ * The edge of an unchecked shadcn Checkbox / RadioGroupItem. The kit's
+ * `border-color` rule would otherwise reduce their `border-primary` edge to a
+ * 1.25:1 hairline; brand teal on white clears the 3:1 non-text contrast bar.
+ * `!` is needed because the kit rule wins on source order.
+ */
+export const CONTROL_EDGE = "!border-[rgb(15_112_93)]";
 const SIGNAL = "rgb(15 112 93)";
 /* The landing's how-it-works rail: the line and an unvisited circle's edge. */
 const RAIL = "rgb(15 112 93 / 0.18)";

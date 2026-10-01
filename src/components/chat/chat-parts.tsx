@@ -63,7 +63,7 @@ export function PersonAvatar({ person, size = "md" }: { person: ChatPerson | nul
     return (
         <Avatar className={size === "lg" ? "h-11 w-11" : "h-10 w-10"}>
             <AvatarImage src={person?.avatar_url || ""} alt="" className="object-cover" />
-            <AvatarFallback className="bg-[rgb(15_112_93/0.1)] text-[0.8125rem] font-semibold text-band-signal">
+            <AvatarFallback className="bg-band-signal/10 text-[0.8125rem] font-semibold text-band-signal">
                 {initials(person)}
             </AvatarFallback>
         </Avatar>
@@ -365,7 +365,7 @@ export function ChatComposer({
                     onChange={(e) => onValueChange(e.target.value)}
                     placeholder="Type a message..."
                     autoComplete="off"
-                    className="h-11 flex-1 rounded-full bg-[rgb(249_251_251)] px-5"
+                    className="h-11 flex-1 rounded-full bg-band-fg/[0.02] px-5"
                     disabled={sending}
                 />
                 <Button
