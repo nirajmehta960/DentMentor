@@ -10,17 +10,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card } from "@/components/ui/card";
-import {
-  GraduationCap,
-  ArrowRight,
-  ArrowLeft,
-  School,
-  Calendar,
-  BookOpen,
-  Award,
-} from "lucide-react";
+import { GraduationCap, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  ChoiceCard,
+  FormSection,
+  RequiredMark,
+  StepActions,
+  StepHeader,
+} from "./onboarding-ui";
 
 interface EducationBackgroundStepProps {
   data: any;
@@ -200,33 +198,22 @@ export const EducationBackgroundStep = ({
   const years = Array.from({ length: 50 }, (_, i) => currentYear + 10 - i);
 
   return (
-    <div className="space-y-8">
-      {/* Step Header */}
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mb-4">
-          <GraduationCap className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Education Background
-        </h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Help students understand your educational journey and qualifications
-        </p>
-      </div>
+    <div>
+      <StepHeader
+        icon={GraduationCap}
+        title="Education"
+        description="Help students understand your educational journey and qualifications."
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         {/* BDS Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-            <School className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">
-              BDS / Bachelor's Degree
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="bds-university">BDS University *</Label>
+        <FormSection title="BDS / Bachelor's degree">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="bds-university">
+                BDS university
+                <RequiredMark />
+              </Label>
               <Input
                 id="bds-university"
                 placeholder="e.g., BPKIHS, Dharan, Nepal"
@@ -238,12 +225,14 @@ export const EducationBackgroundStep = ({
                   }))
                 }
                 disabled={isEditModeFromUrl}
-                className="h-12 border-border/50 focus:border-primary"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="bds-year">BDS Graduation Year *</Label>
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="bds-year">
+                BDS graduation year
+                <RequiredMark />
+              </Label>
               <Select
                 value={formData.bds_graduation_year.toString()}
                 onValueChange={(value) =>
@@ -254,7 +243,7 @@ export const EducationBackgroundStep = ({
                 }
                 disabled={isEditModeFromUrl}
               >
-                <SelectTrigger className="h-12 border-border/50">
+                <SelectTrigger id="bds-year" className="tabular-nums">
                   <SelectValue placeholder="Select graduation year" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
@@ -267,20 +256,13 @@ export const EducationBackgroundStep = ({
               </Select>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {/* MDS Section (Optional) */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-            <BookOpen className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">
-              MDS / Master's Degree (Optional)
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="mds-university">MDS University</Label>
+        <FormSection title="MDS / Master's degree" optional>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="mds-university">MDS university</Label>
               <Input
                 id="mds-university"
                 placeholder="e.g., Nobel Medical College"
@@ -292,12 +274,11 @@ export const EducationBackgroundStep = ({
                   }))
                 }
                 disabled={isEditModeFromUrl}
-                className="h-12 border-border/50 focus:border-primary"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="mds-year">MDS Graduation Year</Label>
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="mds-year">MDS graduation year</Label>
               <Select
                 value={formData.mds_graduation_year?.toString() || ""}
                 onValueChange={(value) =>
@@ -308,7 +289,7 @@ export const EducationBackgroundStep = ({
                 }
                 disabled={isEditModeFromUrl}
               >
-                <SelectTrigger className="h-12 border-border/50">
+                <SelectTrigger id="mds-year" className="tabular-nums">
                   <SelectValue placeholder="Select graduation year" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
@@ -322,8 +303,8 @@ export const EducationBackgroundStep = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="mds-specialization">MDS Specialization</Label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="mds-specialization">MDS specialization</Label>
             <Select
               value={formData.mds_specialization}
               onValueChange={(value) =>
@@ -334,7 +315,7 @@ export const EducationBackgroundStep = ({
               }
               disabled={isEditModeFromUrl}
             >
-              <SelectTrigger className="h-12 border-border/50">
+              <SelectTrigger id="mds-specialization">
                 <SelectValue placeholder="Select your specialization" />
               </SelectTrigger>
               <SelectContent>
@@ -346,155 +327,102 @@ export const EducationBackgroundStep = ({
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </FormSection>
 
         {/* US Dental School Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-            <Award className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">US Dental School</h3>
+        <FormSection title="U.S. dental school">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="dental-school">
+              U.S. dental school
+              <RequiredMark />
+            </Label>
+            <Select
+              value={formData.us_dental_school}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  us_dental_school: value,
+                }))
+              }
+              disabled={isEditModeFromUrl}
+            >
+              <SelectTrigger id="dental-school">
+                <SelectValue placeholder="Select your US dental school" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {usDentalSchools.map((school) => (
+                  <SelectItem key={school} value={school}>
+                    {school}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="dental-school">US Dental School *</Label>
-              <Select
-                value={formData.us_dental_school}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    us_dental_school: value,
-                  }))
-                }
-                disabled={isEditModeFromUrl}
-              >
-                <SelectTrigger className="h-12 border-border/50">
-                  <SelectValue placeholder="Select your US dental school" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {usDentalSchools.map((school) => (
-                    <SelectItem key={school} value={school}>
-                      {school}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dental-year">
-                US Dental School Graduation Year / Expected *
-              </Label>
-              <Select
-                value={formData.us_dental_school_graduation_year.toString()}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    us_dental_school_graduation_year: parseInt(value),
-                  }))
-                }
-                disabled={isEditModeFromUrl}
-              >
-                <SelectTrigger className="h-12 border-border/50">
-                  <SelectValue placeholder="Select graduation year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex flex-col gap-2 sm:max-w-[calc(50%-0.625rem)]">
+            <Label htmlFor="dental-year">
+              Graduation year (or expected)
+              <RequiredMark />
+            </Label>
+            <Select
+              value={formData.us_dental_school_graduation_year.toString()}
+              onValueChange={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  us_dental_school_graduation_year: parseInt(value),
+                }))
+              }
+              disabled={isEditModeFromUrl}
+            >
+              <SelectTrigger id="dental-year" className="tabular-nums">
+                <SelectValue placeholder="Select graduation year" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
+        </FormSection>
 
         {/* Current Status */}
-        <div className="space-y-4">
-          <Label className="text-base font-semibold">Current Status *</Label>
+        <FormSection title="Current status" titleId="current-status-title" required>
           <RadioGroup
             value={formData.current_status}
             onValueChange={(value) =>
               setFormData((prev) => ({ ...prev, current_status: value }))
             }
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            aria-labelledby="current-status-title"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2"
           >
-            <Card
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                formData.current_status === "Current Student"
-                  ? "border-primary bg-primary/5 shadow-md"
-                  : "border-border/50 hover:border-primary/30"
-              }`}
-            >
-              <label
-                htmlFor="current-student"
-                className="flex items-start gap-4 p-5 cursor-pointer"
-              >
-                <RadioGroupItem
-                  value="Current Student"
-                  id="current-student"
-                  className="mt-1"
-                />
-                <div>
-                  <div className="font-semibold text-foreground">
-                    Current Student
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    I am currently enrolled in a US dental school
-                  </div>
-                </div>
-              </label>
-            </Card>
-
-            <Card
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                formData.current_status === "Graduate"
-                  ? "border-primary bg-primary/5 shadow-md"
-                  : "border-border/50 hover:border-primary/30"
-              }`}
-            >
-              <label
-                htmlFor="graduate"
-                className="flex items-start gap-4 p-5 cursor-pointer"
-              >
-                <RadioGroupItem
-                  value="Graduate"
-                  id="graduate"
-                  className="mt-1"
-                />
-                <div>
-                  <div className="font-semibold text-foreground">Graduate</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    I have graduated from a US dental school
-                  </div>
-                </div>
-              </label>
-            </Card>
+            <ChoiceCard
+              htmlFor="current-student"
+              selected={formData.current_status === "Current Student"}
+              control={
+                <RadioGroupItem value="Current Student" id="current-student" />
+              }
+              title="Current student"
+              description="I am currently enrolled in a US dental school"
+            />
+            <ChoiceCard
+              htmlFor="graduate"
+              selected={formData.current_status === "Graduate"}
+              control={<RadioGroupItem value="Graduate" id="graduate" />}
+              title="Graduate"
+              description="I have graduated from a US dental school"
+            />
           </RadioGroup>
-        </div>
+        </FormSection>
 
-        {/* Navigation */}
-        <div className="flex justify-between pt-6 border-t border-border/50">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onPrevious}
-            size="lg"
-            className="px-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
-          </Button>
-          <Button
-            type="submit"
-            size="lg"
-            className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
-          >
+        <StepActions onBack={onPrevious}>
+          <Button type="submit" size="lg">
             Continue
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight aria-hidden="true" />
           </Button>
-        </div>
+        </StepActions>
       </form>
     </div>
   );

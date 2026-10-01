@@ -3,35 +3,32 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  UserPlus,
-  LogIn,
   UserCheck,
   GraduationCap,
-  Chrome,
-  Mail,
-  Lock,
-  User,
-  Phone,
   Eye,
   EyeOff,
   Loader2,
+  CircleAlert,
+  Info,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSignUpFormPersistence } from "@/hooks/useFormPersistence";
 import { Link } from "react-router-dom";
+import { Enter } from "@/components/site";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { GoogleMark } from "@/components/auth/GoogleMark";
+import { cn } from "@/lib/utils";
+
+/* Inside the kit scope a border colour needs `!` to beat the band rule. The
+   theme's --destructive is 3.8:1 on white, so field errors use red-700 (6.5:1). */
+const INVALID_FIELD = "!border-red-600 focus-visible:ring-red-600";
+const FIELD_ERROR = "text-[0.8125rem] leading-relaxed text-red-700";
+const LINK = "font-medium text-band-signal underline-offset-4 hover:underline";
 
 const Auth = () => {
   const { signIn, signUp, signInWithGoogle, error, isAuthLoading, clearError } =
@@ -159,504 +156,436 @@ const Auth = () => {
     await signIn(signInData.email, signInData.password);
   };
 
+  const passwordStrength = getPasswordStrength(signUpData.password);
+  const emailInvalid = !!signUpData.email && !validateEmail(signUpData.email);
+  const passwordInvalid =
+    !!signUpData.password && !validatePassword(signUpData.password);
+  const confirmInvalid =
+    !!signUpData.confirmPassword &&
+    signUpData.password !== signUpData.confirmPassword;
+  const notice = error || searchParams.get("message");
+
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-3 sm:p-4">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+    <AuthLayout>
+      <Enter>
+        <div className="mb-8 flex flex-col gap-2.5">
+          <p className="label text-band-signal">
+            {activeTab === "signup" ? "Create your account" : "Sign in"}
+          </p>
+          <h1 className="text-balance font-display text-[clamp(1.875rem,1.5rem+1.2vw,2.375rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-band-fg">
+            {activeTab === "signup" ? "Join DentMentor" : "Welcome back"}
+          </h1>
+          <p className="text-[0.9375rem] leading-relaxed text-band-muted">
+            {activeTab === "signup"
+              ? "A free account to book 1:1 sessions with a mentor — or to offer them."
+              : "Sign in to manage your sessions, messages and profile."}
+          </p>
+        </div>
+      </Enter>
 
-      <Card className="w-full max-w-md relative z-10 shadow-large border-0 bg-background/95 backdrop-blur-sm">
-        <CardHeader className="text-center space-y-4 sm:space-y-6 p-4 sm:p-6">
-          {/* Logo */}
-          <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-primary rounded-xl sm:rounded-2xl flex items-center justify-center shadow-medium">
-            <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary-foreground" />
-          </div>
+      <Enter delay={0.07}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid h-[3.25rem] w-full grid-cols-2">
+            <TabsTrigger value="signin" className="h-11">
+              Sign in
+            </TabsTrigger>
+            <TabsTrigger value="signup" className="h-11">
+              Sign up
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Title and Description */}
-          <div className="space-y-2">
-            <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
-              Join DentMentor
-            </CardTitle>
-            <CardDescription className="text-sm sm:text-base text-muted-foreground">
-              Connect with dental professionals and accelerate your career
-            </CardDescription>
-          </div>
+          {notice && (
+            <Alert
+              variant={error ? "destructive" : "default"}
+              className={cn(
+                "mt-5 rounded-[10px] px-4 py-3.5 text-[0.875rem] [&>svg]:left-4 [&>svg]:top-[1.0625rem] [&>svg~*]:pl-7",
+                error
+                  ? "bg-red-50 text-red-800 [&>svg]:text-red-700"
+                  : "bg-[rgb(15_112_93/0.05)] text-band-fg [&>svg]:text-band-signal"
+              )}
+              style={{
+                borderColor: error
+                  ? "rgb(185 28 28 / 0.25)"
+                  : "rgb(15 112 93 / 0.25)",
+              }}
+            >
+              {error ? (
+                <CircleAlert className="size-4" aria-hidden="true" />
+              ) : (
+                <Info className="size-4" aria-hidden="true" />
+              )}
+              <AlertDescription>
+                {error ||
+                  decodeURIComponent(searchParams.get("message") || "")}
+              </AlertDescription>
+            </Alert>
+          )}
 
-          {/* Role Selection - Only show for sign up */}
-          {activeTab === "signup" && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-foreground">
-                I want to:
-              </Label>
+          <TabsContent value="signup" className="mt-6 flex flex-col gap-6">
+            {/* Role selection */}
+            <div className="flex flex-col gap-2.5">
+              <p id="role-label" className="text-sm font-medium text-band-fg">
+                I want to
+              </p>
               <ToggleGroup
                 type="single"
+                aria-labelledby="role-label"
                 value={selectedRole}
                 onValueChange={(value) => {
                   if (value) {
                     setSelectedRole(value as "student" | "mentor");
                   }
                 }}
-                className="grid grid-cols-1 gap-2 w-full"
+                className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1"
               >
                 <ToggleGroupItem
                   value="student"
-                  className="flex items-center gap-3 p-4 h-auto data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border-2 data-[state=on]:border-primary/50 transition-all duration-200"
+                  className="h-11 gap-2 rounded-full px-3 text-[0.8125rem] text-muted-foreground hover:bg-transparent sm:text-sm hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-soft"
                 >
-                  <UserCheck className="w-5 h-5" />
-                  <div className="text-left">
-                    <div className="font-medium">Find a Mentor</div>
-                    <div className="text-xs opacity-80">
-                      I'm a dental student
-                    </div>
-                  </div>
+                  <UserCheck className="hidden size-4 sm:block" aria-hidden="true" />
+                  Find a mentor
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="mentor"
-                  className="flex items-center gap-3 p-4 h-auto data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground border-2 data-[state=on]:border-secondary/50 transition-all duration-200"
+                  className="h-11 gap-2 rounded-full px-3 text-[0.8125rem] text-muted-foreground hover:bg-transparent sm:text-sm hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-soft"
                 >
-                  <GraduationCap className="w-5 h-5" />
-                  <div className="text-left">
-                    <div className="font-medium">Become a Mentor</div>
-                    <div className="text-xs opacity-80">
-                      I'm a dental professional
-                    </div>
-                  </div>
+                  <GraduationCap className="hidden size-4 sm:block" aria-hidden="true" />
+                  Become a mentor
                 </ToggleGroupItem>
               </ToggleGroup>
-            </div>
-          )}
-
-          {/* Trust Signal - Only show for sign up */}
-          {activeTab === "signup" && (
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">
-                Join 500+ international dental graduates
+              <p className="text-[0.8125rem] leading-relaxed text-band-muted">
+                {selectedRole === "student"
+                  ? "For international dentists preparing for U.S. dental programs."
+                  : "For current students and graduates of U.S. dental schools."}
               </p>
             </div>
-          )}
-        </CardHeader>
 
-        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-muted/50">
-              <TabsTrigger
-                value="signup"
-                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-              >
-                <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Sign Up
-              </TabsTrigger>
-              <TabsTrigger
-                value="signin"
-                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-              >
-                <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Sign In
-              </TabsTrigger>
-            </TabsList>
+            {/* Google Sign Up */}
+            <Button
+              type="button"
+              variant="outline"
+              size="xl"
+              className="w-full"
+              onClick={handleGoogleSignUp}
+              disabled={isAuthLoading}
+            >
+              <GoogleMark />
+              Continue with Google
+            </Button>
 
-            {(error || searchParams.get("message")) && (
-              <Alert
-                variant={error ? "destructive" : "default"}
-                className="mb-4 text-xs sm:text-sm"
-              >
-                <AlertDescription>
-                  {error ||
-                    decodeURIComponent(searchParams.get("message") || "")}
-                </AlertDescription>
-              </Alert>
-            )}
+            <OrDivider />
 
-            <TabsContent value="signup" className="space-y-4 sm:space-y-6">
-              {/* Google Sign Up */}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 sm:h-12 border-2 hover:bg-muted/50 transition-all duration-200 text-sm sm:text-base"
-                onClick={handleGoogleSignUp}
-                disabled={isAuthLoading}
-              >
-                <Chrome className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                Continue with Google
-              </Button>
-
-              <div className="relative">
-                <Separator />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="bg-background px-3 text-xs text-muted-foreground">
-                    OR
-                  </span>
+            <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <Label htmlFor="firstName">First name</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    autoComplete="given-name"
+                    placeholder="John"
+                    value={signUpData.firstName}
+                    onChange={(e) => updateField("firstName", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <Label htmlFor="lastName">Last name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    autoComplete="family-name"
+                    placeholder="Doe"
+                    value={signUpData.lastName}
+                    onChange={(e) => updateField("lastName", e.target.value)}
+                    required
+                  />
                 </div>
               </div>
 
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="firstName"
-                      className="text-foreground font-medium text-xs sm:text-sm"
-                    >
-                      First Name
-                    </Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="firstName"
-                        type="text"
-                        placeholder="John"
-                        value={signUpData.firstName}
-                        onChange={(e) =>
-                          updateField("firstName", e.target.value)
-                        }
-                        className="pl-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20"
-                        required
-                      />
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="john@university.edu"
+                  value={signUpData.email}
+                  onChange={(e) => updateField("email", e.target.value)}
+                  aria-invalid={emailInvalid || undefined}
+                  aria-describedby={emailInvalid ? "email-error" : undefined}
+                  className={cn(emailInvalid && INVALID_FIELD)}
+                  required
+                />
+                {emailInvalid && (
+                  <p id="email-error" className={FIELD_ERROR}>
+                    Please enter a valid email address
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="phone">Phone number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="+1 (555) 123-4567"
+                  value={signUpData.phone}
+                  onChange={(e) => updateField("phone", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Create a strong password"
+                    value={signUpData.password}
+                    onChange={(e) => updateField("password", e.target.value)}
+                    aria-invalid={passwordInvalid || undefined}
+                    aria-describedby="password-help"
+                    className={cn("pr-12", passwordInvalid && INVALID_FIELD)}
+                    required
+                    minLength={6}
+                  />
+                  <PasswordToggle
+                    shown={showPassword}
+                    onToggle={() => setShowPassword(!showPassword)}
+                  />
+                </div>
+                {signUpData.password ? (
+                  <div id="password-help" className="flex flex-col gap-1.5">
+                    <div className="flex gap-1" aria-hidden="true">
+                      {[1, 2, 3, 4].map((level) => (
+                        <div
+                          key={level}
+                          className={cn(
+                            "h-1 flex-1 rounded-full transition-colors duration-200",
+                            passwordStrength >= level
+                              ? passwordStrength <= 2
+                                ? "bg-red-600"
+                                : passwordStrength <= 3
+                                ? "bg-amber-500"
+                                : "bg-band-signal"
+                              : "bg-[rgb(9_67_56/0.1)]"
+                          )}
+                        />
+                      ))}
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="lastName"
-                      className="text-foreground font-medium text-xs sm:text-sm"
-                    >
-                      Last Name
-                    </Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="lastName"
-                        type="text"
-                        placeholder="Doe"
-                        value={signUpData.lastName}
-                        onChange={(e) =>
-                          updateField("lastName", e.target.value)
-                        }
-                        className="pl-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="email"
-                    className="text-foreground font-medium text-xs sm:text-sm"
-                  >
-                    Email
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="john@university.edu"
-                      value={signUpData.email}
-                      onChange={(e) => updateField("email", e.target.value)}
-                      className={`pl-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20 ${
-                        signUpData.email && !validateEmail(signUpData.email)
-                          ? "border-destructive"
-                          : ""
-                      }`}
-                      required
-                    />
-                  </div>
-                  {signUpData.email && !validateEmail(signUpData.email) && (
-                    <p className="text-xs text-destructive">
-                      Please enter a valid email address
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="phone"
-                    className="text-foreground font-medium text-xs sm:text-sm"
-                  >
-                    Phone Number
-                  </Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+1 (555) 123-4567"
-                      value={signUpData.phone}
-                      onChange={(e) => updateField("phone", e.target.value)}
-                      className="pl-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="password"
-                    className="text-foreground font-medium text-xs sm:text-sm"
-                  >
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Create a strong password"
-                      value={signUpData.password}
-                      onChange={(e) => updateField("password", e.target.value)}
-                      className={`pl-10 pr-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20 ${
-                        signUpData.password &&
-                        !validatePassword(signUpData.password)
-                          ? "border-destructive"
-                          : ""
-                      }`}
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  {signUpData.password && (
-                    <div className="space-y-1">
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4].map((level) => (
-                          <div
-                            key={level}
-                            className={`h-1 flex-1 rounded-full transition-colors ${
-                              getPasswordStrength(signUpData.password) >= level
-                                ? level <= 2
-                                  ? "bg-destructive"
-                                  : level <= 3
-                                  ? "bg-orange-500"
-                                  : "bg-green-500"
-                                : "bg-border"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Password strength:{" "}
-                        {getPasswordStrength(signUpData.password) <= 2
+                    <p className="text-[0.8125rem] text-band-muted">
+                      Password strength:{" "}
+                      <span className="font-medium text-band-fg">
+                        {passwordStrength <= 2
                           ? "Weak"
-                          : getPasswordStrength(signUpData.password) <= 3
+                          : passwordStrength <= 3
                           ? "Medium"
                           : "Strong"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="confirmPassword"
-                    className="text-foreground font-medium text-xs sm:text-sm"
-                  >
-                    Confirm Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      value={signUpData.confirmPassword}
-                      onChange={(e) =>
-                        updateField("confirmPassword", e.target.value)
-                      }
-                      className={`pl-10 pr-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20 ${
-                        signUpData.confirmPassword &&
-                        signUpData.password !== signUpData.confirmPassword
-                          ? "border-destructive"
-                          : ""
-                      }`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
+                      </span>
+                    </p>
                   </div>
-                  {signUpData.confirmPassword &&
-                    signUpData.password !== signUpData.confirmPassword && (
-                      <p className="text-xs text-destructive">
-                        Passwords do not match
-                      </p>
-                    )}
-                </div>
+                ) : (
+                  <p id="password-help" className="text-[0.8125rem] text-band-muted">
+                    Use at least 6 characters.
+                  </p>
+                )}
+              </div>
 
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="terms"
-                    checked={signUpData.agreedToTerms}
-                    onCheckedChange={(checked) =>
-                      updateField("agreedToTerms", !!checked)
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Confirm your password"
+                    value={signUpData.confirmPassword}
+                    onChange={(e) =>
+                      updateField("confirmPassword", e.target.value)
                     }
-                    className="mt-1"
+                    aria-invalid={confirmInvalid || undefined}
+                    aria-describedby={
+                      confirmInvalid ? "confirm-password-error" : undefined
+                    }
+                    className={cn("pr-12", confirmInvalid && INVALID_FIELD)}
+                    required
                   />
-                  <div className="text-xs text-muted-foreground leading-relaxed">
-                    I agree to the{" "}
-                    <Link to="/terms" className="text-primary hover:underline">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      to="/privacy"
-                      className="text-primary hover:underline"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </div>
+                  <PasswordToggle
+                    shown={showConfirmPassword}
+                    onToggle={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }
+                  />
                 </div>
+                {confirmInvalid && (
+                  <p id="confirm-password-error" className={FIELD_ERROR}>
+                    Passwords do not match
+                  </p>
+                )}
+              </div>
 
-                <Button
-                  type="submit"
-                  className="w-full h-11 sm:h-12 font-medium text-xs sm:text-sm transition-all duration-200 hover:shadow-glow/20"
-                  disabled={isAuthLoading}
+              <div className="mt-1 flex items-start gap-3">
+                <Checkbox
+                  id="terms"
+                  checked={signUpData.agreedToTerms}
+                  onCheckedChange={(checked) =>
+                    updateField("agreedToTerms", !!checked)
+                  }
+                  className="mt-0.5 size-5 rounded-[5px]"
+                />
+                <label
+                  htmlFor="terms"
+                  className="text-[0.8125rem] leading-relaxed text-band-muted"
                 >
-                  {isAuthLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating Account...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Create Account
-                    </>
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
+                  I agree to the{" "}
+                  <Link to="/terms" className={LINK}>
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link to="/privacy" className={LINK}>
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
 
-            <TabsContent value="signin" className="space-y-4 sm:space-y-6">
-              {/* Google Sign In */}
               <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 sm:h-12 border-2 hover:bg-muted/50 transition-all duration-200 text-sm sm:text-base"
-                onClick={handleGoogleSignIn}
+                type="submit"
+                variant="hero"
+                size="xl"
+                className="mt-2 w-full"
                 disabled={isAuthLoading}
               >
-                <Chrome className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-                Continue with Google
+                {isAuthLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" aria-hidden="true" />
+                    Creating Account...
+                  </>
+                ) : (
+                  "Create account"
+                )}
               </Button>
+            </form>
+          </TabsContent>
 
-              <div className="relative">
-                <Separator />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="bg-background px-3 text-xs text-muted-foreground">
-                    OR
-                  </span>
+          <TabsContent value="signin" className="mt-6 flex flex-col gap-6">
+            {/* Google Sign In */}
+            <Button
+              type="button"
+              variant="outline"
+              size="xl"
+              className="w-full"
+              onClick={handleGoogleSignIn}
+              disabled={isAuthLoading}
+            >
+              <GoogleMark />
+              Continue with Google
+            </Button>
+
+            <OrDivider />
+
+            <form onSubmit={handleSignIn} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="signInEmail">Email</Label>
+                <Input
+                  id="signInEmail"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="john@university.edu"
+                  value={signInData.email}
+                  onChange={(e) =>
+                    setSignInData((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="signInPassword">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="signInPassword"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={signInData.password}
+                    onChange={(e) =>
+                      setSignInData((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    className="pr-12"
+                    required
+                  />
+                  <PasswordToggle
+                    shown={showPassword}
+                    onToggle={() => setShowPassword(!showPassword)}
+                  />
                 </div>
               </div>
 
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="signInEmail"
-                    className="text-foreground font-medium text-xs sm:text-sm"
-                  >
-                    Email
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="signInEmail"
-                      type="email"
-                      placeholder="john@university.edu"
-                      value={signInData.email}
-                      onChange={(e) =>
-                        setSignInData((prev) => ({
-                          ...prev,
-                          email: e.target.value,
-                        }))
-                      }
-                      className="pl-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="signInPassword"
-                    className="text-foreground font-medium text-xs sm:text-sm"
-                  >
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="signInPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={signInData.password}
-                      onChange={(e) =>
-                        setSignInData((prev) => ({
-                          ...prev,
-                          password: e.target.value,
-                        }))
-                      }
-                      className="pl-10 pr-10 h-11 sm:h-12 text-xs sm:text-sm transition-all duration-200 focus:shadow-glow/20"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full h-11 sm:h-12 font-medium text-xs sm:text-sm transition-all duration-200 hover:shadow-glow/20"
-                  disabled={isAuthLoading}
-                >
-                  {isAuthLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Signing In...
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="w-4 h-4 mr-2" />
-                      Sign In
-                    </>
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+              <Button
+                type="submit"
+                size="xl"
+                className="mt-2 w-full"
+                disabled={isAuthLoading}
+              >
+                {isAuthLoading ? (
+                  <>
+                    <Loader2 className="animate-spin" aria-hidden="true" />
+                    Signing In...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
+      </Enter>
+    </AuthLayout>
   );
 };
+
+/** Show/hide for a password field: a 44px target on the input's right edge. */
+function PasswordToggle({
+  shown,
+  onToggle,
+}: {
+  shown: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={shown ? "Hide password" : "Show password"}
+      className="absolute right-0 top-0 grid size-11 place-items-center rounded-r-[10px] text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {shown ? (
+        <EyeOff className="size-4" aria-hidden="true" />
+      ) : (
+        <Eye className="size-4" aria-hidden="true" />
+      )}
+    </button>
+  );
+}
+
+function OrDivider() {
+  return (
+    <div className="flex items-center gap-3">
+      <span aria-hidden="true" className="h-px flex-1 bg-[rgb(9_67_56/0.12)]" />
+      <span className="label text-band-faint">or</span>
+      <span aria-hidden="true" className="h-px flex-1 bg-[rgb(9_67_56/0.12)]" />
+    </div>
+  );
+}
 
 export default Auth;

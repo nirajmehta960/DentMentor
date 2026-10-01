@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { X, Filter, ChevronDown, ChevronUp, Star, DollarSign, Clock, Languages, MapPin, BookOpen, CheckCircle } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { BadgeCheck, ChevronDown, Star, X } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { HAIRLINE, Panel, Reveal } from '@/components/site';
 import { Filters } from '@/hooks/use-mentor-search';
+import { cn } from '@/lib/utils';
+import { LABEL } from './mentor-display';
 
 interface FilterSidebarProps {
   filters: Filters;
@@ -51,18 +54,88 @@ const languages = [
 ];
 
 const availabilityOptions = [
-  { value: 'available', label: 'Available', color: 'bg-green-500' },
-  { value: 'busy', label: 'Busy', color: 'bg-yellow-500' },
-  { value: 'offline', label: 'Offline', color: 'bg-gray-400' }
+  { value: 'available', label: 'Available' },
+  { value: 'busy', label: 'Busy' },
+  { value: 'offline', label: 'Offline' }
 ];
 
-export const FilterSidebar = ({ 
-  filters, 
-  onFilterChange, 
-  sortBy, 
-  onSortChange, 
-  isVisible, 
-  onClose 
+const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+function FilterSection({
+  title,
+  open,
+  onToggle,
+  panelId,
+  children,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  panelId: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="border-b px-5 last:border-b-0" style={{ borderColor: HAIRLINE }}>
+      <h3>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={panelId}
+          className="group flex h-12 w-full items-center justify-between text-left"
+        >
+          <span className={cn(LABEL, 'text-muted-foreground group-hover:text-foreground')}>{title}</span>
+          <ChevronDown
+            aria-hidden="true"
+            className={cn(
+              'size-4 text-muted-foreground transition-transform duration-200 ease-dm group-hover:text-foreground',
+              open && 'rotate-180'
+            )}
+          />
+        </button>
+      </h3>
+      {open ? (
+        <div id={panelId} className="pb-5">
+          {children}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function CheckRow({
+  boxId,
+  checked,
+  onCheckedChange,
+  children,
+}: {
+  boxId: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <li className="flex items-center gap-3">
+      <Checkbox id={boxId} checked={checked} onCheckedChange={(value) => onCheckedChange(value as boolean)} />
+      <label htmlFor={boxId} className="flex min-h-10 flex-1 cursor-pointer items-center gap-1.5 text-sm text-foreground">
+        {children}
+      </label>
+    </li>
+  );
+}
+
+/**
+ * The directory's filters: a sticky hairline panel beside the results on large
+ * screens, a left sheet below them. Both render the same body from the same
+ * state; ids are prefixed per instance so each label points at its own box.
+ */
+export const FilterSidebar = ({
+  filters,
+  onFilterChange,
+  sortBy,
+  onSortChange,
+  isVisible,
+  onClose
 }: FilterSidebarProps) => {
   const [expandedSections, setExpandedSections] = useState({
     sort: true,
@@ -121,300 +194,201 @@ export const FilterSidebar = ({
     onFilterChange('verified', false);
   };
 
-  const activeFiltersCount = 
-    filters.specialty.length + 
-    filters.location.length + 
-    filters.availability.length + 
-    filters.languages.length + 
-    (filters.rating > 0 ? 1 : 0) + 
+  const activeFiltersCount =
+    filters.specialty.length +
+    filters.location.length +
+    filters.availability.length +
+    filters.languages.length +
+    (filters.rating > 0 ? 1 : 0) +
     (filters.verified ? 1 : 0);
 
-  return (
-    <>
-      {/* Mobile Overlay */}
-      {isVisible && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 animate-fade-in"
-          onClick={onClose}
-        />
-      )}
+  const renderBody = (idPrefix: string, closeButton?: () => void) => {
+    const id = (name: string) => `${idPrefix}-${slug(name)}`;
 
-      {/* Sidebar */}
-      <div className={`
-        fixed lg:sticky top-0 left-0 h-screen lg:h-auto w-80 bg-white border-r border-border z-50 lg:z-auto
-        transform transition-transform duration-300 ease-out lg:transform-none
-        ${isVisible ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent
-      `}>
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-lg">Filters</h3>
-              {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="ml-2 animate-bounce-in">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {activeFiltersCount > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={clearAllFilters}
-                  className="text-xs"
-                >
-                  Clear All
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="lg:hidden"
-              >
-                <X className="w-4 h-4" />
+    return (
+      <div className="flex flex-col">
+        {/* Header */}
+        <div className="flex min-h-16 items-center justify-between gap-3 border-b px-5 py-3" style={{ borderColor: HAIRLINE }}>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[0.9375rem] font-semibold text-foreground">Filters</h2>
+            {activeFiltersCount > 0 && (
+              <span className="grid h-6 min-w-6 place-items-center rounded-full bg-[rgb(15_112_93/0.1)] px-1.5 text-xs font-semibold tabular-nums text-primary">
+                {activeFiltersCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {activeFiltersCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                Clear all
               </Button>
+            )}
+            {closeButton ? (
+              <button
+                type="button"
+                onClick={closeButton}
+                aria-label="Close filters"
+                className="grid size-11 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Sort Section */}
+        <FilterSection title="Sort by" open={expandedSections.sort} onToggle={() => toggleSection('sort')} panelId={id('section-sort')}>
+          <Select value={sortBy} onValueChange={onSortChange}>
+            <SelectTrigger className="w-full" aria-label="Sort by">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent data-lenis-prevent="">
+              <SelectItem value="rating">Highest Rated</SelectItem>
+              <SelectItem value="price">Lowest Price</SelectItem>
+              <SelectItem value="experience">Most Experience</SelectItem>
+              <SelectItem value="reviews">Most Reviews</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterSection>
+
+        {/* Specialty Filter */}
+        <FilterSection title="Specialty" open={expandedSections.specialty} onToggle={() => toggleSection('specialty')} panelId={id('section-specialty')}>
+          <ul className="flex flex-col">
+            {specialties.map((specialty) => (
+              <CheckRow
+                key={specialty}
+                boxId={id(`specialty-${specialty}`)}
+                checked={filters.specialty.includes(specialty)}
+                onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked)}
+              >
+                {specialty}
+              </CheckRow>
+            ))}
+          </ul>
+        </FilterSection>
+
+        {/* Experience Range */}
+        <FilterSection title="Experience" open={expandedSections.experience} onToggle={() => toggleSection('experience')} panelId={id('section-experience')}>
+          <div className="px-1 pt-2">
+            <Slider
+              value={filters.experience}
+              onValueChange={(value) => onFilterChange('experience', value)}
+              max={20}
+              min={0}
+              step={1}
+              className="mb-3"
+              aria-label="Years of experience"
+            />
+            <div className="flex justify-between text-xs tabular-nums text-muted-foreground">
+              <span>{filters.experience[0]} years</span>
+              <span>{filters.experience[1]} years</span>
             </div>
           </div>
+        </FilterSection>
 
-          {/* Sort Section */}
-          <div className="mb-6">
-            <button
-              onClick={() => toggleSection('sort')}
-              className="flex items-center justify-between w-full text-left mb-3 group"
-            >
-              <span className="font-medium text-sm text-foreground">Sort By</span>
-              {expandedSections.sort ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              )}
-            </button>
-            
-            {expandedSections.sort && (
-              <div className="animate-accordion-down">
-                <Select value={sortBy} onValueChange={onSortChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                    <SelectItem value="price">Lowest Price</SelectItem>
-                    <SelectItem value="experience">Most Experience</SelectItem>
-                    <SelectItem value="reviews">Most Reviews</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
+        {/* Rating Filter */}
+        <FilterSection title="Minimum rating" open={expandedSections.rating} onToggle={() => toggleSection('rating')} panelId={id('section-rating')}>
+          <ul className="flex flex-col">
+            {[4.5, 4.0, 3.5, 3.0].map((rating) => (
+              <CheckRow
+                key={rating}
+                boxId={id(`rating-${rating}`)}
+                checked={filters.rating === rating}
+                onCheckedChange={(checked) => onFilterChange('rating', checked ? rating : 0)}
+              >
+                <Star className="size-3.5 fill-current text-secondary" aria-hidden="true" />
+                <span className="tabular-nums">{rating.toFixed(1)}</span>
+                <span className="text-muted-foreground">&amp; up</span>
+              </CheckRow>
+            ))}
+          </ul>
+        </FilterSection>
 
-          <Separator />
-
-          {/* Specialty Filter */}
-          <div className="mb-6 mt-6">
-            <button
-              onClick={() => toggleSection('specialty')}
-              className="flex items-center justify-between w-full text-left mb-3 group"
-            >
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm text-foreground">Specialty</span>
-              </div>
-              {expandedSections.specialty ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              )}
-            </button>
-            
-            {expandedSections.specialty && (
-              <div className="space-y-3 animate-accordion-down">
-                {specialties.map((specialty, index) => (
-                  <div key={specialty} className="flex items-center space-x-2 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                    <Checkbox
-                      id={specialty}
-                      checked={filters.specialty.includes(specialty)}
-                      onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked as boolean)}
-                    />
-                    <label htmlFor={specialty} className="text-sm text-foreground cursor-pointer">
-                      {specialty}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Experience Range */}
-          <div className="mb-6">
-            <button
-              onClick={() => toggleSection('experience')}
-              className="flex items-center justify-between w-full text-left mb-3 group"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm text-foreground">Experience</span>
-              </div>
-              {expandedSections.experience ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              )}
-            </button>
-            
-            {expandedSections.experience && (
-              <div className="animate-accordion-down">
-                <div className="px-2">
-                  <Slider
-                    value={filters.experience}
-                    onValueChange={(value) => onFilterChange('experience', value)}
-                    max={20}
-                    min={0}
-                    step={1}
-                    className="mb-2"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{filters.experience[0]} years</span>
-                    <span>{filters.experience[1]} years</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Rating Filter */}
-          <div className="mb-6">
-            <button
-              onClick={() => toggleSection('rating')}
-              className="flex items-center justify-between w-full text-left mb-3 group"
-            >
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm text-foreground">Minimum Rating</span>
-              </div>
-              {expandedSections.rating ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              )}
-            </button>
-            
-            {expandedSections.rating && (
-              <div className="space-y-2 animate-accordion-down">
-                {[4.5, 4.0, 3.5, 3.0].map((rating) => (
-                  <div key={rating} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`rating-${rating}`}
-                      checked={filters.rating === rating}
-                      onCheckedChange={(checked) => onFilterChange('rating', checked ? rating : 0)}
-                    />
-                    <label htmlFor={`rating-${rating}`} className="flex items-center text-sm text-foreground cursor-pointer">
-                      <span className="mr-1">{rating}</span>
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3 h-3 ${i < rating ? 'text-secondary fill-current' : 'text-muted-foreground'}`}
-                        />
-                      ))}
-                      <span className="ml-1 text-muted-foreground">& up</span>
-                    </label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Price Range */}
-          <div className="mb-6">
-            <button
-              onClick={() => toggleSection('price')}
-              className="flex items-center justify-between w-full text-left mb-3 group"
-            >
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm text-foreground">Price Range</span>
-              </div>
-              {expandedSections.price ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              )}
-            </button>
-            
-            {expandedSections.price && (
-              <div className="animate-accordion-down">
-                <div className="px-2">
-                  <Slider
-                    value={filters.priceRange}
-                    onValueChange={(value) => onFilterChange('priceRange', value)}
-                    max={300}
-                    min={50}
-                    step={10}
-                    className="mb-2"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>${filters.priceRange[0]}</span>
-                    <span>${filters.priceRange[1]}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Availability Filter */}
-          <div className="mb-6">
-            <button
-              onClick={() => toggleSection('availability')}
-              className="flex items-center justify-between w-full text-left mb-3 group"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm text-foreground">Availability</span>
-              </div>
-              {expandedSections.availability ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              )}
-            </button>
-            
-            {expandedSections.availability && (
-              <div className="space-y-3 animate-accordion-down">
-                {availabilityOptions.map((option, index) => (
-                  <div key={option.value} className="flex items-center space-x-2 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                    <Checkbox
-                      id={option.value}
-                      checked={filters.availability.includes(option.value)}
-                      onCheckedChange={(checked) => handleAvailabilityChange(option.value, checked as boolean)}
-                    />
-                    <label htmlFor={option.value} className="flex items-center text-sm text-foreground cursor-pointer">
-                      <div className={`w-2 h-2 rounded-full ${option.color} mr-2`} />
-                      {option.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Verified Filter */}
-          <div className="mb-6">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="verified"
-                checked={filters.verified}
-                onCheckedChange={(checked) => onFilterChange('verified', checked as boolean)}
-              />
-              <label htmlFor="verified" className="flex items-center text-sm text-foreground cursor-pointer">
-                <CheckCircle className="w-4 h-4 text-primary mr-2" />
-                Verified Mentors Only
-              </label>
+        {/* Price Range */}
+        <FilterSection title="Price range" open={expandedSections.price} onToggle={() => toggleSection('price')} panelId={id('section-price')}>
+          <div className="px-1 pt-2">
+            <Slider
+              value={filters.priceRange}
+              onValueChange={(value) => onFilterChange('priceRange', value)}
+              max={300}
+              min={50}
+              step={10}
+              className="mb-3"
+              aria-label="Price range"
+            />
+            <div className="flex justify-between text-xs tabular-nums text-muted-foreground">
+              <span>${filters.priceRange[0]}</span>
+              <span>${filters.priceRange[1]}</span>
             </div>
+          </div>
+        </FilterSection>
+
+        {/* Availability Filter */}
+        <FilterSection title="Availability" open={expandedSections.availability} onToggle={() => toggleSection('availability')} panelId={id('section-availability')}>
+          <ul className="flex flex-col">
+            {availabilityOptions.map((option) => (
+              <CheckRow
+                key={option.value}
+                boxId={id(`availability-${option.value}`)}
+                checked={filters.availability.includes(option.value)}
+                onCheckedChange={(checked) => handleAvailabilityChange(option.value, checked)}
+              >
+                {option.label}
+              </CheckRow>
+            ))}
+          </ul>
+        </FilterSection>
+
+        {/* Verified Filter */}
+        <div className="px-5 py-4">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id={id('verified')}
+              className="mt-3"
+              checked={filters.verified}
+              onCheckedChange={(checked) => onFilterChange('verified', checked as boolean)}
+            />
+            <label htmlFor={id('verified')} className="flex min-h-10 flex-1 cursor-pointer flex-col justify-center gap-0.5 py-2">
+              <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                <BadgeCheck className="size-4 text-primary" aria-hidden="true" />
+                Verified mentors only
+              </span>
+              <span className="text-xs leading-relaxed text-muted-foreground">
+                Mentors who completed optional document verification.
+              </span>
+            </label>
           </div>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Large screens: a sticky panel beside the results. The Reveal sits inside
+          the sticky element — wrapping it would leave sticky no room to travel. */}
+      <aside className="hidden w-64 shrink-0 lg:block" aria-label="Filters">
+        <div className="sticky top-24">
+          <Reveal>
+            <Panel data-lenis-prevent="" className="max-h-[calc(100vh-7.5rem)] overflow-y-auto bg-white">
+              {renderBody('filters-panel')}
+            </Panel>
+          </Reveal>
+        </div>
+      </aside>
+
+      {/* Below lg: the same filters in a sheet. */}
+      <Sheet open={isVisible} onOpenChange={(open) => { if (!open) onClose(); }}>
+        <SheetContent
+          side="left"
+          data-lenis-prevent=""
+          aria-describedby={undefined}
+          className="w-[min(22rem,88vw)] overflow-y-auto p-0 lg:hidden [&>button:last-child]:hidden"
+        >
+          <SheetTitle className="sr-only">Filters</SheetTitle>
+          {renderBody('filters-sheet', onClose)}
+        </SheetContent>
+      </Sheet>
     </>
   );
 };

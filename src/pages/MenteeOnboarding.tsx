@@ -6,7 +6,7 @@ import { MenteeOnboardingLayout } from "@/components/mentee-onboarding/MenteeOnb
 import { PersonalInformationStep } from "@/components/mentee-onboarding/PersonalInformationStep";
 import { ExamsTimelineStep } from "@/components/mentee-onboarding/ExamsTimelineStep";
 import { GoalsPreferencesStep } from "@/components/mentee-onboarding/GoalsPreferencesStep";
-import { Loader2 } from "lucide-react";
+import { FullPageLoader } from "@/components/auth/FullPageLoader";
 import { useToast } from "@/hooks/use-toast";
 
 const MenteeOnboarding = () => {
@@ -136,14 +136,7 @@ const MenteeOnboarding = () => {
   // Don't wait for profile loading - allow user to start onboarding immediately
   // Profile will load in background
   if (isLoading || isAuthLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#008B8B] to-[#20B2AA]">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-white mx-auto mb-4" />
-          <p className="text-white/80">Loading...</p>
-        </div>
-      </div>
-    );
+    return <FullPageLoader label="Loading..." />;
   }
 
   const renderStep = () => {

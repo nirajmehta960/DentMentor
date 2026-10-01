@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Clock, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { MetaLabel } from './dashboard-ui';
 
 interface TimeSlot {
   time: string;
@@ -20,10 +21,11 @@ interface TimeSlotModalProps {
   existingSlots?: { time: string; duration: number }[];
 }
 
-export function TimeSlotModal({ 
-  open, 
-  onOpenChange, 
-  selectedDate, 
+/* Portals to <body>, outside the AppShell: app theme tokens only. */
+export function TimeSlotModal({
+  open,
+  onOpenChange,
+  selectedDate,
   onSaveSlots,
   existingSlots = []
 }: TimeSlotModalProps) {
@@ -54,7 +56,7 @@ export function TimeSlotModal({
   const toggleTimeSlot = (time: string) => {
     const endTime = calculateEndTime(time, defaultDuration);
     const timeRange = `${time}-${endTime}`;
-    
+
     setSelectedSlots(prev => {
       const existing = prev.find(slot => slot.time === timeRange);
       if (existing) {
@@ -100,23 +102,26 @@ export function TimeSlotModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            Select Time Slots for {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto rounded-2xl p-5 sm:p-7">
+        <DialogHeader className="pr-8 text-left">
+          <MetaLabel className="text-primary">Add time slots</MetaLabel>
+          <DialogTitle className="font-display text-[1.375rem] font-semibold tracking-[-0.02em]">
+            {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}
           </DialogTitle>
+          <DialogDescription>
+            Pick the start times you're free. Each one becomes a slot of the length you choose.
+          </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-6">
+
+        <div className="flex flex-col gap-6">
           {/* Duration Selector */}
-          <div className="flex items-center gap-4">
-            <label className="text-sm font-medium">Default Duration:</label>
-            <Select 
-              value={defaultDuration.toString()} 
+          <div className="flex flex-wrap items-center gap-3">
+            <label htmlFor="slot-duration" className="text-sm font-medium text-foreground">Slot length</label>
+            <Select
+              value={defaultDuration.toString()}
               onValueChange={(value) => setDefaultDuration(parseInt(value))}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger id="slot-duration" className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -128,57 +133,73 @@ export function TimeSlotModal({
 
           {/* Selected Slots Summary */}
           {selectedSlots.length > 0 && (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">Selected Slots ({selectedSlots.length})</h3>
+                <MetaLabel>
+                  Selected <span className="tabular-nums">({selectedSlots.length})</span>
+                </MetaLabel>
                 <Button variant="ghost" size="sm" onClick={handleClear}>
-                  Clear All
+                  Clear all
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <ul className="flex flex-wrap gap-2">
                 {selectedSlots.map((slot) => {
                   const [startTime, endTime] = slot.time.split('-');
+                  const label = `${formatTime12Hour(startTime)} – ${formatTime12Hour(endTime)}`;
                   return (
-                    <Badge key={slot.time} variant="default" className="flex items-center gap-1">
-                      {formatTime12Hour(startTime)} - {formatTime12Hour(endTime)}
+                    <li
+                      key={slot.time}
+                      className="inline-flex h-9 items-center gap-1 rounded-full bg-[rgb(15_112_93/0.08)] pl-3 pr-1 text-[0.8125rem] font-medium text-primary tabular-nums ring-1 ring-inset ring-[rgb(15_112_93/0.18)]"
+                    >
+                      {label}
                       <button
+                        type="button"
                         onClick={() => removeSlot(slot.time)}
-                        className="ml-1 hover:bg-white/20 rounded-full p-0.5"
+                        aria-label={`Remove ${label}`}
+                        className="relative grid size-7 place-items-center rounded-full transition-colors after:absolute after:-inset-2 after:content-[''] hover:bg-[rgb(15_112_93/0.12)]"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="size-3.5" aria-hidden="true" />
                       </button>
-                    </Badge>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
           )}
 
           {/* Time Slot Grid */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium">Available Time Slots</h3>
-            <div className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto">
-              {timeSlots.map((time) => (
-                <Button
-                  key={time}
-                  variant={isSlotSelected(time) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleTimeSlot(time)}
-                  className="text-xs transition-colors"
-                >
-                  {formatTime12Hour(time)}
-                </Button>
-              ))}
+          <div className="flex flex-col gap-2.5">
+            <MetaLabel>Start times</MetaLabel>
+            <div className="grid max-h-80 grid-cols-3 gap-2 overflow-y-auto p-0.5 sm:grid-cols-4">
+              {timeSlots.map((time) => {
+                const selected = isSlotSelected(time);
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleTimeSlot(time)}
+                    className={cn(
+                      "h-11 rounded-[10px] border text-[0.875rem] font-medium tabular-nums transition-colors",
+                      selected
+                        ? "border-transparent bg-primary text-white"
+                        : "bg-white text-foreground hover:bg-muted"
+                    )}
+                  >
+                    {formatTime12Hour(time)}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={selectedSlots.length === 0}>
-              Save Slots ({selectedSlots.length})
+              Save <span className="tabular-nums">{selectedSlots.length}</span> {selectedSlots.length === 1 ? 'slot' : 'slots'}
             </Button>
           </div>
         </div>

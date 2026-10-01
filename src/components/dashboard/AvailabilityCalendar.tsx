@@ -28,6 +28,8 @@ import { useAvailability } from "@/hooks/useAvailability";
 import { useAuth } from "@/hooks/useAuth";
 import { TimezoneSelector } from "@/components/booking/TimezoneSelector";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { PanelHeader, WorkPanel, hairline } from "./dashboard-ui";
 
 interface SelectedSlot {
   id: string;
@@ -53,7 +55,7 @@ export function AvailabilityCalendar() {
     useAvailability();
   const { mentorProfile, updateMentorProfile } = useAuth();
   const { toast } = useToast();
-  
+
   // Get mentor timezone - use local state if set, otherwise from profile, then browser, then UTC
   const mentorTimezone = localTimezone || mentorProfile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
@@ -67,13 +69,13 @@ export function AvailabilityCalendar() {
   // Handle timezone change
   const handleTimezoneChange = async (newTimezone: string) => {
     if (!mentorProfile) return;
-    
+
     // Update local state immediately for UI responsiveness (no page refresh needed)
     setLocalTimezone(newTimezone);
-    
+
     // Update database without updating context (prevents dashboard re-render)
     const result = await updateMentorProfile({ timezone: newTimezone }, false);
-    
+
     if (result.success) {
       toast({
         title: "Timezone updated",
@@ -93,7 +95,7 @@ export function AvailabilityCalendar() {
   };
 
   const availableDates =
-    availability?.map((a) => {
+    (availability as { date: string }[] | undefined)?.map((a) => {
       const dateStr = a.date;
       const [year, month, day] = dateStr.split("-").map(Number);
       const date = new Date(year, month - 1, day);
@@ -178,45 +180,47 @@ export function AvailabilityCalendar() {
     const cells = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     return (
-      <div className="space-y-2 sm:space-y-3">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => changeMonth(-1)}
             disabled={currentMonth <= fromMonth}
-            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+            aria-label="Previous month"
+            className="size-11"
           >
-            <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <ChevronLeft className="size-4" aria-hidden="true" />
           </Button>
-          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-center flex-1">
+          <h3 className="flex-1 text-center font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-band-fg" aria-live="polite">
             {format(currentMonth, "MMMM yyyy")}
           </h3>
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => changeMonth(1)}
             disabled={currentMonth >= toMonth}
-            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+            aria-label="Next month"
+            className="size-11"
           >
-            <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <ChevronRight className="size-4" aria-hidden="true" />
           </Button>
         </div>
 
-        <div className="grid grid-cols-7 gap-y-0.5 sm:gap-y-1">
+        <div className="grid grid-cols-7">
           {daysShort.map((day) => (
             <div
               key={day}
-              className="text-center text-xs font-semibold text-muted-foreground py-1"
+              className="py-1 text-center text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-band-faint"
             >
               {day}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+        <div className="grid grid-cols-7 gap-y-1">
           {cells.map((date, idx) => {
-            if (!date) return <div key={`e-${idx}`} className="h-8 sm:h-9 md:h-10" />;
+            if (!date) return <div key={`e-${idx}`} className="aspect-square" />;
 
             const isDisabled = isPast(date) || isAfter(date, twoMonthsFromNow);
             const isSelected = selectedDate && isSameDay(date, selectedDate);
@@ -226,26 +230,21 @@ export function AvailabilityCalendar() {
             return (
               <button
                 key={date.toISOString()}
+                type="button"
                 onClick={() => handleDateSelect(date)}
                 disabled={isDisabled}
-                className={
-                  `relative mx-auto h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex items-center justify-center rounded-full transition-all text-xs sm:text-sm font-medium ` +
-                  `${isSelected ? "bg-primary text-primary-foreground scale-105 shadow-md" : ""} ` +
-                  `${
-                    isMarked && !isSelected
-                      ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary/30"
-                      : ""
-                  } ` +
-                  `${
-                    isOutsideMonth ? "text-muted-foreground opacity-50" : ""
-                  } ` +
-                  `${
-                    isDisabled
-                      ? "opacity-40 cursor-not-allowed"
-                      : "cursor-pointer hover:bg-primary/10 hover:scale-105"
-                  }`
-                }
-                aria-label={format(date, "PPP")}
+                aria-pressed={isSelected || undefined}
+                className={cn(
+                  "relative mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-[0.875rem] font-medium tabular-nums transition-colors",
+                  isSelected && "bg-band-signal text-white",
+                  isMarked && !isSelected && "bg-[rgb(15_112_93/0.08)] font-semibold text-band-signal ring-1 ring-inset ring-[rgb(15_112_93/0.24)]",
+                  !isSelected && !isMarked && "text-band-fg",
+                  isOutsideMonth && !isSelected && "opacity-50",
+                  isDisabled
+                    ? "cursor-not-allowed text-band-faint opacity-40"
+                    : !isSelected && "cursor-pointer hover:bg-band-fg/[0.05]"
+                )}
+                aria-label={`${format(date, "PPP")}${isMarked ? ", has availability" : ""}`}
               >
                 {date.getDate()}
               </button>
@@ -292,110 +291,94 @@ export function AvailabilityCalendar() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden">
-        <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 animate-pulse"></div>
-            <div className="h-5 sm:h-6 w-32 sm:w-40 bg-muted rounded animate-pulse"></div>
-          </div>
-        </div>
-        <div className="p-4 sm:p-5 md:p-6">
-          <div className="animate-pulse h-64 sm:h-72 bg-muted rounded-lg sm:rounded-xl"></div>
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {[0, 1].map((i) => (
+          <WorkPanel key={i} aria-hidden="true">
+            <div className="flex items-center gap-3 border-b px-5 py-4 sm:px-6" style={hairline}>
+              <span className="size-10 rounded-tile bg-band-fg/[0.05] motion-safe:animate-pulse" />
+              <span className="h-4 w-40 rounded bg-band-fg/[0.06] motion-safe:animate-pulse" />
+            </div>
+            <div className="p-5 sm:p-6">
+              <div className="h-72 rounded-xl bg-band-fg/[0.04] motion-safe:animate-pulse" />
+            </div>
+          </WorkPanel>
+        ))}
+        <span className="sr-only" role="status">Loading availability</span>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-      {/* Main Calendar Card */}
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm flex flex-col h-[calc(100vh-25rem)] min-h-[600px]">
-        {/* Header */}
-        <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-                  Availability Calendar
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Set your available time slots
-                </p>
-              </div>
-            </div>
-            <div className="w-full max-w-[320px]">
-              <TimezoneSelector
-                selectedTimezone={mentorTimezone}
-                onTimezoneChange={handleTimezoneChange}
-                showLabel={false}
-              />
-            </div>
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+      {/* Main Calendar Panel */}
+      <WorkPanel className="flex flex-col">
+        <PanelHeader
+          icon={CalendarIcon}
+          title="Calendar"
+          description="Choose a date in the next two months to add slots"
+        >
+          <div className="w-full sm:max-w-[320px]">
+            <p className="label mb-1.5 text-band-muted">Your timezone</p>
+            <TimezoneSelector
+              selectedTimezone={mentorTimezone}
+              onTimezoneChange={handleTimezoneChange}
+              showLabel={false}
+            />
           </div>
-        </div>
+        </PanelHeader>
 
-        <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5 pb-3 sm:pb-4 md:pb-5 flex-1 flex flex-col justify-between">
+        <div className="flex flex-1 flex-col gap-4 px-4 py-5 sm:px-6">
           {/* Calendar */}
-          <div className="flex justify-center mb-2 sm:mb-3 overflow-x-auto flex-shrink-0">
-            <div className="w-full max-w-2xl rounded-lg sm:rounded-xl border border-border/50 p-2 sm:p-3 md:p-4 pointer-events-auto min-w-0">
-              {renderGrid()}
-            </div>
+          <div className="mx-auto w-full max-w-[26rem]">
+            {renderGrid()}
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-5 pt-2 sm:pt-3 border-t border-border/50 flex-shrink-0 mt-auto">
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/10 border border-primary/20"></div>
-              <span>Available</span>
+          <div
+            className="mt-auto flex flex-wrap items-center justify-center gap-5 border-t pt-4 text-[0.8125rem] text-band-muted"
+            style={hairline}
+          >
+            <div className="flex items-center gap-2">
+              <span aria-hidden="true" className="size-3.5 rounded-full bg-[rgb(15_112_93/0.08)] ring-1 ring-inset ring-[rgb(15_112_93/0.24)]" />
+              <span>Has availability</span>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary"></div>
+            <div className="flex items-center gap-2">
+              <span aria-hidden="true" className="size-3.5 rounded-full bg-band-signal" />
               <span>Selected</span>
             </div>
           </div>
         </div>
-      </div>
+      </WorkPanel>
 
       {/* Your Availability Panel */}
-      <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm flex flex-col h-[calc(100vh-25rem)] min-h-[600px]">
-        <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-                  Your Availability
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Upcoming time slots
-                </p>
-              </div>
-            </div>
+      <WorkPanel className="flex flex-col">
+        <PanelHeader
+          icon={Clock}
+          title="Your availability"
+          description="Open slots and booked sessions by month"
+          actions={
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground flex-shrink-0"
+              className="h-10"
               onClick={async () => {
                 await refetch();
               }}
             >
-              <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+              <RefreshCw className="size-4" aria-hidden="true" />
               <span className="hidden sm:inline">Refresh</span>
+              <span className="sr-only sm:hidden">Refresh availability</span>
             </Button>
-          </div>
-        </div>
+          }
+        />
 
-        <div className="p-4 sm:p-5 md:p-6 flex-1 overflow-y-auto">
+        <div className="flex-1 px-4 py-5 sm:px-6 lg:max-h-[40rem] lg:overflow-y-auto">
           <MonthlyAvailabilityPanel
             currentMonth={currentMonth}
             onMonthChange={setCurrentMonth}
           />
         </div>
-      </div>
+      </WorkPanel>
 
       <TimeSlotModal
         open={showTimeSlotModal}

@@ -10,21 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  User,
-  ArrowRight,
-  Camera,
-  Globe,
-  Briefcase,
-  Linkedin,
-  Mail,
-  Sparkles,
-} from "lucide-react";
+import { User, ArrowRight, Camera } from "lucide-react";
 import { ProfileImageCropper } from "@/components/dashboard/ProfileImageCropper";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DASHED_EDGE,
+  FieldHint,
+  FormSection,
+  RequiredMark,
+  StepActions,
+  StepHeader,
+} from "./onboarding-ui";
 
 interface ProfessionalProfileStepProps {
   data: any;
@@ -196,219 +194,208 @@ export const ProfessionalProfileStep = ({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Step Header */}
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mb-4">
-          <User className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Professional Profile
-        </h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Tell students about your professional background and expertise
-        </p>
-      </div>
+    <div>
+      <StepHeader
+        icon={User}
+        title="Professional profile"
+        description="Tell students about your professional background and expertise."
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Profile Photo - Premium Card */}
-        <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-all bg-gradient-to-br from-primary/5 to-transparent">
-          <CardContent className="flex flex-col items-center justify-center py-10">
-            <div className="relative mb-6 group">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10 rounded-full blur-xl group-hover:blur-2xl transition-all opacity-50" />
-              <Avatar className="w-32 h-32 ring-4 ring-background shadow-2xl relative">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+        <FormSection>
+          {/* Profile photo: the avatar and the button both open the cropper. */}
+          <div
+            className="flex flex-col items-center gap-5 rounded-xl border-[1.5px] border-dashed bg-white p-6 text-center sm:flex-row sm:p-7 sm:text-left"
+            style={{ borderColor: DASHED_EDGE }}
+          >
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden="true"
+              onClick={() => setShowImageCropper(true)}
+              className="relative shrink-0 rounded-full"
+            >
+              <Avatar className="size-24 ring-1 ring-[rgb(9_67_56/0.08)]">
                 <AvatarImage src={photoPreview} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-3xl">
-                  <User className="w-16 h-16" />
+                <AvatarFallback className="bg-[rgb(15_112_93/0.08)] text-band-signal">
+                  <User className="size-10" strokeWidth={1.5} />
                 </AvatarFallback>
               </Avatar>
-              <button
-                type="button"
-                onClick={() => setShowImageCropper(true)}
-                className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+              <span
+                className="absolute -bottom-0.5 -right-0.5 grid size-8 place-items-center rounded-full border-2 bg-band-signal text-white"
+                style={{ borderColor: "#fff" }}
               >
-                <Camera className="w-8 h-8 text-white" />
-              </button>
-            </div>
+                <Camera className="size-4" strokeWidth={2} />
+              </span>
+            </button>
 
-            <div className="text-center space-y-3">
+            <div className="flex flex-col items-center gap-3 sm:items-start">
+              <div className="flex flex-col gap-1">
+                <p className="text-[0.9375rem] font-medium text-band-fg">
+                  Profile photo
+                </p>
+                <FieldHint>
+                  JPG, PNG up to 5MB. Click to upload and crop your photo.
+                </FieldHint>
+              </div>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setShowImageCropper(true)}
-                className="border-primary/30 hover:border-primary hover:bg-primary/10"
+                className="h-11"
               >
-                <Camera className="w-4 h-4 mr-2" />
-                {photoPreview ? "Change Photo" : "Upload Photo"}
+                <Camera aria-hidden="true" />
+                {photoPreview ? "Change photo" : "Upload photo"}
               </Button>
-              <p className="text-sm text-muted-foreground">
-                JPG, PNG up to 5MB. Click to upload and crop your photo.
-              </p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Email Display */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2 text-sm font-medium">
-            <Mail className="w-4 h-4 text-muted-foreground" />
-            Email Address
-          </Label>
-          <Input
-            value={formData.email}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, email: e.target.value }))
-            }
-            disabled={isEditModeFromUrl}
-            className="bg-muted/50 border-border/50 focus:border-primary h-12"
-            placeholder="your.email@example.com"
-          />
-        </div>
-
-        {/* Professional Headline */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="headline"
-            className="flex items-center gap-2 text-sm font-medium"
-          >
-            <Sparkles className="w-4 h-4 text-primary" />
-            Professional Headline *
-          </Label>
-          <Input
-            id="headline"
-            placeholder="e.g., DMD @ BU | International Student Success Mentor"
-            value={formData.professional_headline}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                professional_headline: e.target.value,
-              }))
-            }
-            maxLength={100}
-            className="h-12 border-border/50 focus:border-primary"
-          />
-          <p className="text-xs text-muted-foreground">
-            {formData.professional_headline.length}/100 characters
-          </p>
-        </div>
-
-        {/* Professional Bio */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="bio"
-            className="flex items-center gap-2 text-sm font-medium"
-          >
-            <User className="w-4 h-4 text-primary" />
-            Professional Bio *
-          </Label>
-          <Textarea
-            id="bio"
-            placeholder="Share your dental journey, achievements, and what motivates you to mentor students..."
-            value={formData.professional_bio}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                professional_bio: e.target.value,
-              }))
-            }
-            rows={5}
-            maxLength={500}
-            className="resize-none border-border/50 focus:border-primary"
-          />
-          <p className="text-xs text-muted-foreground">
-            {formData.professional_bio.length}/500 characters
-          </p>
-        </div>
-
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Country of Origin */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="country"
-              className="flex items-center gap-2 text-sm font-medium"
-            >
-              <Globe className="w-4 h-4 text-primary" />
-              Country of Origin *
-            </Label>
-            <Select
-              value={formData.country_of_origin}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, country_of_origin: value }))
-              }
-            >
-              <SelectTrigger className="h-12 border-border/50">
-                <SelectValue placeholder="Select your country of origin" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {countries.map((country) => (
-                  <SelectItem key={country} value={country}>
-                    {country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
+        </FormSection>
 
-          {/* Years of Experience */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="experience"
-              className="flex items-center gap-2 text-sm font-medium"
-            >
-              <Briefcase className="w-4 h-4 text-primary" />
-              Years of Mentoring Experience
+        <FormSection title="About you">
+          {/* Email */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email">
+              Email address
+              <RequiredMark />
             </Label>
             <Input
-              id="experience"
-              type="number"
-              placeholder="0"
-              min="0"
-              max="50"
-              value={formData.years_experience}
+              id="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, email: e.target.value }))
+              }
+              disabled={isEditModeFromUrl}
+              placeholder="your.email@example.com"
+            />
+          </div>
+
+          {/* Professional Headline */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="headline">
+              Professional headline
+              <RequiredMark />
+            </Label>
+            <Input
+              id="headline"
+              placeholder="e.g., DMD @ BU | International Student Success Mentor"
+              value={formData.professional_headline}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  years_experience: e.target.value,
+                  professional_headline: e.target.value,
                 }))
               }
-              className="h-12 border-border/50 focus:border-primary"
+              maxLength={100}
+            />
+            <FieldHint className="text-right">
+              <span data-numeric="">
+                {formData.professional_headline.length}/100
+              </span>{" "}
+              characters
+            </FieldHint>
+          </div>
+
+          {/* Professional Bio */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="bio">
+              Professional bio
+              <RequiredMark />
+            </Label>
+            <Textarea
+              id="bio"
+              placeholder="Share your dental journey, achievements, and what motivates you to mentor students..."
+              value={formData.professional_bio}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  professional_bio: e.target.value,
+                }))
+              }
+              rows={5}
+              maxLength={500}
+              className="resize-none"
+            />
+            <FieldHint className="text-right">
+              <span data-numeric="">{formData.professional_bio.length}/500</span>{" "}
+              characters
+            </FieldHint>
+          </div>
+        </FormSection>
+
+        <FormSection title="Background">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {/* Country of Origin */}
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="country">
+                Country of origin
+                <RequiredMark />
+              </Label>
+              <Select
+                value={formData.country_of_origin}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, country_of_origin: value }))
+                }
+              >
+                <SelectTrigger id="country">
+                  <SelectValue placeholder="Select your country of origin" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {countries.map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Years of Experience */}
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="experience">Years of mentoring experience</Label>
+              <Input
+                id="experience"
+                type="number"
+                inputMode="numeric"
+                placeholder="0"
+                min="0"
+                max="50"
+                value={formData.years_experience}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    years_experience: e.target.value,
+                  }))
+                }
+                className="tabular-nums"
+              />
+            </div>
+          </div>
+
+          {/* LinkedIn URL */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="linkedin" className="flex items-baseline gap-2">
+              LinkedIn profile URL
+              <span className="label text-band-faint">Optional</span>
+            </Label>
+            <Input
+              id="linkedin"
+              type="url"
+              inputMode="url"
+              placeholder="https://www.linkedin.com/in/yourprofile"
+              value={formData.linkedin_url}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, linkedin_url: e.target.value }))
+              }
             />
           </div>
-        </div>
+        </FormSection>
 
-        {/* LinkedIn URL */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="linkedin"
-            className="flex items-center gap-2 text-sm font-medium"
-          >
-            <Linkedin className="w-4 h-4 text-primary" />
-            LinkedIn Profile URL (Optional)
-          </Label>
-          <Input
-            id="linkedin"
-            type="url"
-            placeholder="https://www.linkedin.com/in/yourprofile"
-            value={formData.linkedin_url}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, linkedin_url: e.target.value }))
-            }
-            className="h-12 border-border/50 focus:border-primary"
-          />
-        </div>
-
-        {/* Navigation */}
-        <div className="flex justify-end pt-6 border-t border-border/50">
-          <Button
-            type="submit"
-            size="lg"
-            className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
-          >
+        <StepActions>
+          <Button type="submit" size="lg">
             Continue
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight aria-hidden="true" />
           </Button>
-        </div>
+        </StepActions>
       </form>
 
       {/* Profile Image Cropper */}

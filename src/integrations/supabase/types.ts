@@ -892,7 +892,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      featured_mentors: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          display_name: string | null
+          avatar_url: string | null
+          headline: string | null
+          us_dental_school: string | null
+          specializations: string[] | null
+          average_rating: number | null
+          total_sessions: number
+          starting_price: number | null
+        }[]
+      }
+      landing_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

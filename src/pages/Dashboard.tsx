@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate, useSearchParams } from 'react-router-dom';
+import { AppPageHeader, AppShell } from '@/components/site';
 import { DashboardNavigation } from '@/components/dashboard/DashboardNavigation';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardMobileNav } from '@/components/dashboard/DashboardMobileNav';
@@ -39,15 +40,17 @@ export default function Dashboard() {
   // Show loading while authentication or profiles are loading
   if (isLoading || isAuthLoading || (user && isProfileLoading)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-12 h-12 border-4 border-primary/20 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <AppShell nav={false}>
+        <div className="flex min-h-screen items-center justify-center px-6" role="status">
+          <div className="flex flex-col items-center gap-4">
+            <span
+              aria-hidden="true"
+              className="size-9 rounded-full border-2 border-band-fg/10 border-t-band-signal motion-safe:animate-spin"
+            />
+            <p className="text-[0.875rem] text-band-muted">Loading your dashboard…</p>
           </div>
-          <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
@@ -80,7 +83,18 @@ export default function Dashboard() {
       case 'activity':
         return <ActivityTab />;
       case 'messages':
-        return <MessagesTab />;
+        // MessagesTab is shared with the mentee dashboard and carries no page
+        // header of its own, so the mentor page adds one above it.
+        return (
+          <div className="flex flex-col gap-6">
+            <AppPageHeader
+              eyebrow="Messages"
+              title="Inbox"
+              description="Each booked session has its own thread with your mentee."
+            />
+            <MessagesTab />
+          </div>
+        );
       default:
 
         return <OverviewTab onNavigate={setActiveTab} />;
@@ -88,24 +102,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Subtle pattern overlay */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
-
+    <AppShell nav={false}>
       <DashboardNavigation />
 
       {/* Mobile Navigation */}
       <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="relative z-10 flex">
+      <div className="flex">
         {/* Sidebar - Desktop only */}
         <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Main Content - Fixed height with overflow */}
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-y-auto">
-          {renderActiveTab()}
-        </main>
+        <div className="min-w-0 flex-1">
+          <div className="mx-auto w-full max-w-[76rem] px-4 pb-16 pt-6 sm:px-6 sm:pt-8 lg:px-10 lg:pt-10">
+            {renderActiveTab()}
+          </div>
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

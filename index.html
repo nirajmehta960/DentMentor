@@ -3,28 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DentMentor - Connect with Dental Professionals</title>
-    <meta name="description" content="Connect with verified U.S. dental professionals and accelerate your career. Join 500+ international dental graduates who've successfully navigated the U.S. dental licensing process." />
-    <meta name="keywords" content="dental mentorship, dental professionals, dental students, dental licensing, dental career, mentorship platform" />
+    <!-- Keep in step with LANDING_META in src/components/site/content.ts. No
+         invented numbers here: scrapers and search snippets repeat these verbatim. -->
+    <title>DentMentor — Mentorship for international dentists</title>
+    <meta name="description" content="Book 1:1 sessions with U.S. dental students and graduates for SOP reviews, mock interviews, CV reviews and application strategy." />
     <meta name="author" content="Niraj Mehta" />
-    
+    <link rel="canonical" href="https://dentmentor.com/" />
+    <meta name="theme-color" content="#0f705d" />
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    
-    <!-- Open Graph / Facebook -->
+
+    <!-- Inter, the whole app's typeface (tailwind fontFamily.sans and display). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Open Graph / Facebook. Image URLs must be absolute; scrapers don't resolve relative paths. -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DentMentor" />
     <meta property="og:url" content="https://dentmentor.com/" />
-    <meta property="og:title" content="DentMentor - Connect with Dental Professionals" />
-    <meta property="og:description" content="Connect with verified U.S. dental professionals and accelerate your career. Join 500+ international dental graduates who've successfully navigated the U.S. dental licensing process." />
-    <meta property="og:image" content="/placeholder.svg" />
+    <meta property="og:title" content="DentMentor — Mentorship for international dentists" />
+    <meta property="og:description" content="Book 1:1 sessions with U.S. dental students and graduates for SOP reviews, mock interviews, CV reviews and application strategy." />
+    <meta property="og:image" content="https://dentmentor.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="DentMentor: your path to U.S. dentistry, guided by those who walked it." />
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://dentmentor.com/" />
-    <meta property="twitter:title" content="DentMentor - Connect with Dental Professionals" />
-    <meta property="twitter:description" content="Connect with verified U.S. dental professionals and accelerate your career. Join 500+ international dental graduates who've successfully navigated the U.S. dental licensing process." />
-    <meta name="twitter:image" content="/placeholder.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://dentmentor.com/" />
+    <meta name="twitter:title" content="DentMentor — Mentorship for international dentists" />
+    <meta name="twitter:description" content="Book 1:1 sessions with U.S. dental students and graduates for SOP reviews, mock interviews, CV reviews and application strategy." />
+    <meta name="twitter:image" content="https://dentmentor.com/og-image.png" />
   </head>
   <body>
     <div id="root"></div>

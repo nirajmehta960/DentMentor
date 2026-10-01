@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Loader2, Calendar, Clock, MessageSquare } from "lucide-react";
+import { AlertCircle, Check, Link2, Loader2, Mail, MessageSquare, MessagesSquare, RefreshCcw } from "lucide-react";
+import { SiteShell } from "@/components/site";
+import { DetailList, NextSteps, ResultBand, ResultPanel } from "@/components/booking/ResultPanel";
 
 
 export default function BookingSuccess() {
@@ -139,98 +141,115 @@ export default function BookingSuccess() {
         navigate("/mentee-dashboard?tab=sessions");
     };
 
-    if (isLoading || status === "pending") {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-                <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900">Confirming your payment...</h2>
-                <p className="text-gray-500 mt-2">Please wait while we secure your booking.</p>
-                <p className="text-xs text-gray-400 mt-4">Transaction ID: {sessionId ? sessionId.slice(-8) : 'Pending'}</p>
-            </div>
-        );
-    }
+    let content: ReactNode;
 
-    if (status === "error") {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 text-center">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
-                    <span className="text-3xl">⚠️</span>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
-                <p className="text-gray-600 max-w-md mb-8">
-                    We couldn't confirm your booking automatically. If you were charged, please contact support.
-                </p>
-                <Button onClick={() => navigate("/mentors")}>Return to Browse</Button>
-            </div>
+    if (isLoading || status === "pending") {
+        content = (
+            <ResultPanel
+                icon={Loader2}
+                spin
+                title="Confirming your payment…"
+                lead="Please wait while we secure your booking."
+                footnote={<>Transaction ID: {sessionId ? sessionId.slice(-8) : 'Pending'}</>}
+            />
+        );
+    } else if (status === "error") {
+        content = (
+            <ResultPanel
+                icon={AlertCircle}
+                tone="warn"
+                title="Something went wrong"
+                lead="We couldn't confirm your booking automatically. If you were charged, please contact support."
+                actions={
+                    <Button size="lg" onClick={() => navigate("/mentors")}>
+                        Back to mentors
+                    </Button>
+                }
+            />
+        );
+    } else {
+        content = (
+            <ResultPanel
+                icon={Check}
+                title="Booking confirmed"
+                lead="Your session has been successfully scheduled. We've sent a confirmation email with all the details."
+                actions={
+                    <>
+                        <Button size="lg" onClick={goToDashboard}>
+                            Go to dashboard
+                        </Button>
+                        {sessionDetails?.sessionId && (
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                onClick={() => navigate(`/messages/session/${sessionDetails.sessionId}`)}
+                            >
+                                <MessageSquare aria-hidden="true" />
+                                Message mentor
+                            </Button>
+                        )}
+                        <Button size="lg" variant="ghost" onClick={() => navigate("/mentors")}>
+                            Book another
+                        </Button>
+                    </>
+                }
+            >
+                {sessionDetails && (
+                    <DetailList
+                        rows={[
+                            { label: "Mentor", value: sessionDetails.mentorName },
+                            { label: "Service", value: sessionDetails.serviceTitle },
+                            {
+                                label: "Date",
+                                value: new Date(sessionDetails.date).toLocaleDateString(undefined, {
+                                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                                }),
+                            },
+                            {
+                                label: "Time",
+                                value: (
+                                    <>
+                                        {new Date(sessionDetails.date).toLocaleTimeString(undefined, {
+                                            hour: 'numeric', minute: '2-digit'
+                                        })} ({sessionDetails.duration} mins)
+                                    </>
+                                ),
+                            },
+                        ]}
+                    />
+                )}
+
+                <NextSteps
+                    items={[
+                        {
+                            icon: Mail,
+                            title: "Check your inbox",
+                            body: "Your confirmation email has the session details and a calendar invite.",
+                        },
+                        {
+                            icon: Link2,
+                            title: "Meeting link",
+                            body: "The meeting link is provided 24 hours before the session.",
+                        },
+                        {
+                            icon: RefreshCcw,
+                            title: "Need to move it?",
+                            body: "You can reschedule up to 24 hours before the session.",
+                        },
+                        {
+                            icon: MessagesSquare,
+                            title: "Talk to your mentor",
+                            body: "Each session has its own message thread with your mentor.",
+                        },
+                    ]}
+                />
+            </ResultPanel>
         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-300">
-                <CheckCircle className="w-10 h-10 text-green-600" />
-            </div>
-
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h1>
-            <p className="text-gray-600 max-w-md mb-8 text-lg">
-                Your session has been successfully scheduled. We've sent a confirmation email with all the details.
-            </p>
-
-            {sessionDetails && (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 max-w-sm w-full text-left">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Session Details</h3>
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <span className="w-5 h-5 flex items-center justify-center text-primary font-bold">M</span>
-                            <span className="text-gray-700 font-medium">
-                                {sessionDetails.mentorName}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="w-5 h-5 flex items-center justify-center text-primary font-bold">S</span>
-                            <span className="text-gray-700">
-                                {sessionDetails.serviceTitle}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Calendar className="w-5 h-5 text-primary" />
-                            <span className="text-gray-700">
-                                {new Date(sessionDetails.date).toLocaleDateString(undefined, {
-                                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                                })}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Clock className="w-5 h-5 text-primary" />
-                            <span className="text-gray-700">
-                                {new Date(sessionDetails.date).toLocaleTimeString(undefined, {
-                                    hour: 'numeric', minute: '2-digit'
-                                })} ({sessionDetails.duration} mins)
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="flex gap-4">
-                <Button variant="outline" onClick={() => navigate("/mentors")}>
-                    Book Another
-                </Button>
-                {sessionDetails?.sessionId && (
-                    <Button
-                        variant="secondary"
-                        onClick={() => navigate(`/messages/session/${sessionDetails.sessionId}`)}
-                        className="bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
-                    >
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Message Mentor
-                    </Button>
-                )}
-                <Button onClick={goToDashboard}>
-                    Go to Dashboard
-                </Button>
-
-            </div>
-        </div>
+        <SiteShell nav="solid">
+            <ResultBand>{content}</ResultBand>
+        </SiteShell>
     );
 }

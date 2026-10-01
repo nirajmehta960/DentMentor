@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -17,7 +15,9 @@ import {
 import { type Service } from "@/lib/supabase/booking";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { LABEL } from "@/components/mentors/mentor-display";
 import { TimezoneSelector } from "./TimezoneSelector";
+import { StepHeading } from "./booking-ui";
 
 interface AvailabilityCalendarProps {
   mentorId: string;
@@ -91,38 +91,52 @@ const TimeSlotButton: React.FC<{
 
   return (
     <button
+      type="button"
       onClick={onSelect}
       disabled={isDisabled}
+      aria-pressed={isSelected}
       className={cn(
-        "w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-center",
+        "flex min-h-11 w-full flex-col items-center justify-center rounded-full border px-4 py-2 text-center text-sm font-medium tabular-nums transition-[background-color,border-color,color] duration-200 ease-dm",
         isSelected
-          ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
-          : "bg-background border border-border hover:border-primary hover:bg-primary/5 text-foreground",
-        isDisabled && "opacity-50 cursor-not-allowed"
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-white text-foreground hover:border-primary hover:text-primary",
+        isDisabled && "cursor-not-allowed opacity-40 hover:border-border hover:text-foreground"
       )}
       title={isSlotPast ? "This time slot is in the past" : !slot.is_available ? "Slot not available" : undefined}
     >
-      <div className="font-medium">{mentorTime}</div>
+      <span className="leading-tight">{mentorTime}</span>
       {userTime && (
-        <div className="text-xs opacity-75 mt-0.5">{userTime} (your time)</div>
+        <span className={cn("mt-0.5 text-xs leading-tight", isSelected ? "text-primary-foreground/80" : "text-muted-foreground")}>
+          {userTime} (your time)
+        </span>
       )}
     </button>
   );
 };
 
 const CalendarSkeleton: React.FC = () => (
-  <div className="space-y-4">
-    <div className="flex items-center justify-between">
-      <Skeleton className="h-8 w-32" />
-      <div className="flex gap-2">
-        <Skeleton className="h-8 w-8" />
-        <Skeleton className="h-8 w-8" />
+  <div className="flex flex-col gap-4 lg:flex-row" aria-hidden="true">
+    <div className="flex-1 rounded-xl border border-border p-3 sm:p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <Skeleton className="h-6 w-32" />
+        <div className="flex gap-1">
+          <Skeleton className="size-10 rounded-full" />
+          <Skeleton className="size-10 rounded-full" />
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: 35 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-square w-full rounded-full" />
+        ))}
       </div>
     </div>
-    <div className="grid grid-cols-7 gap-2">
-      {Array.from({ length: 35 }).map((_, i) => (
-        <Skeleton key={i} className="h-12 w-full" />
-      ))}
+    <div className="rounded-xl border border-border p-4 lg:w-72">
+      <Skeleton className="mx-auto mb-4 h-5 w-32" />
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-11 w-full rounded-full" />
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -314,70 +328,124 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     return { morning, afternoon, evening };
   };
 
+  const formatDay = (dateString: string, pattern: string) => {
+    const [y, m, d] = dateString.split('-').map(Number);
+    return format(new Date(y, m - 1, d), pattern);
+  };
+
+  const renderPeriod = (label: string, slots: TimeSlotData[]) => {
+    if (slots.length === 0) return null;
+    return (
+      <div>
+        <p className={cn(LABEL, "mb-2 text-muted-foreground")}>{label}</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+          {slots
+            .filter(slot => slot.is_available) // Only show available slots
+            .map((slot, index) => {
+              const isPast = (() => {
+                try {
+                  const [hours, minutes] = slot.start_time.split(":");
+                  const slotDateTime = new Date(`${selectedDate}T${hours}:${minutes}:00`);
+                  return slotDateTime <= new Date();
+                } catch {
+                  return false;
+                }
+              })();
+              return (
+                <TimeSlotButton
+                  key={index}
+                  slot={slot}
+                  isSelected={selectedTime === slot.start_time}
+                  onSelect={() => handleTimeSelect(slot.start_time)}
+                  mentorTimezone={mentorTimezone}
+                  userTimezone={userTimezone}
+                  date={selectedDate as string}
+                  isPast={isPast}
+                />
+              );
+            })}
+        </div>
+      </div>
+    );
+  };
+
+  const emptySlots = (title: string, hint: string) => (
+    <div className="flex h-full flex-col items-center justify-center gap-1 py-8 text-center">
+      <CalendarDays className="mb-2 size-8 text-muted-foreground/60" strokeWidth={1.5} aria-hidden="true" />
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+
+  const heading = (
+    <StepHeading
+      step="Step 2 of 3"
+      title="Pick a date & time"
+      description={`Choose a day with open times, then a start time with ${mentorName}.`}
+    />
+  );
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">
-              Loading availability...
-            </span>
-          </div>
-        </div>
+      <div className="flex flex-col gap-6">
+        {heading}
+        <p className="sr-only" role="status">Loading availability…</p>
         <CalendarSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-2">
-        <h3 className="text-xl font-semibold text-foreground">Select a Date & Time</h3>
-      </div>
+    <div className="flex flex-col gap-6">
+      {heading}
 
-      {/* Calendly-style layout: Calendar + Time slots side by side */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      {/* Calendar + time slots side by side */}
+      <div className="flex flex-col gap-4 lg:flex-row">
         {/* Calendar Section */}
-        <div className="flex-1 bg-card rounded-xl border border-border/50 p-4">
+        <div className="min-w-0 flex-1 rounded-xl border border-border bg-white p-2 sm:p-5">
           {/* Month Navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-semibold text-foreground">
+          <div className="mb-2 flex items-center justify-between gap-2 pl-2 sm:pl-1">
+            <h4 className="text-base font-semibold text-foreground">
               {format(currentDate, 'MMMM yyyy')}
             </h4>
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={() => navigateMonth("prev")}
-                className="p-2 rounded-lg hover:bg-accent transition-colors"
+                aria-label="Previous month"
+                className="grid size-11 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+                <ChevronLeft className="size-5" aria-hidden="true" />
               </button>
               <button
+                type="button"
                 onClick={() => navigateMonth("next")}
-                className="p-2 rounded-lg hover:bg-accent transition-colors"
+                aria-label="Next month"
+                className="grid size-11 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="size-5" aria-hidden="true" />
               </button>
             </div>
           </div>
 
           {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="mb-1 grid grid-cols-7 gap-0.5 sm:gap-1">
             {DAYS_OF_WEEK.map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+              <div key={day} className={cn(LABEL, "py-2 text-center text-muted-foreground")}>
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {calendarDays.map((day) => {
               const slotCount = day.availableSlots;
               const isPast = isDateInPast(day.date);
               const isSelected = selectedDate === day.date;
               const hasAvailability = slotCount > 0;
               const isCurrentDay = day.isToday;
+              const isOpen = hasAvailability && !isPast;
 
               if (!day.isCurrentMonth) {
                 return <div key={day.date} className="aspect-square" />;
@@ -385,39 +453,33 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
 
               return (
                 <button
+                  type="button"
                   key={day.date}
                   onClick={() => handleDateSelect(day)}
                   disabled={isPast || !hasAvailability}
+                  aria-pressed={isSelected}
+                  aria-label={`${formatDay(day.date, 'EEEE, MMMM d')}${isOpen ? `, ${slotCount} open times` : ', no open times'}`}
                   className={cn(
-                    "aspect-square rounded-lg flex flex-col items-center justify-center text-sm transition-all relative",
-                    isPast && "opacity-40 cursor-not-allowed",
-                    !isPast && !hasAvailability && "opacity-40 cursor-not-allowed",
-                    !isPast && hasAvailability && "cursor-pointer hover:bg-primary/10",
-                    isSelected && "bg-primary text-primary-foreground hover:bg-primary",
-                    isCurrentDay && !isSelected && "ring-2 ring-primary/50",
+                    "relative flex aspect-square items-center justify-center rounded-full text-sm tabular-nums transition-colors duration-200",
+                    !isOpen && "cursor-not-allowed text-muted-foreground/50",
+                    isOpen && !isSelected && "font-semibold text-foreground hover:bg-[rgb(15_112_93/0.08)]",
+                    isSelected && "bg-primary font-semibold text-primary-foreground",
+                    isCurrentDay && !isSelected && "ring-1 ring-inset ring-primary/40",
                   )}
                 >
-                  <span className={cn(
-                    "font-medium",
-                    isSelected ? "text-primary-foreground" : "text-foreground"
-                  )}>
-                    {day.day}
-                  </span>
-                  {hasAvailability && !isPast && (
-                    <div className={cn(
-                      "absolute bottom-1 flex gap-0.5",
-                      slotCount > 3 && "gap-0"
-                    )}>
+                  <span>{day.day}</span>
+                  {isOpen && (
+                    <span aria-hidden="true" className="absolute bottom-[16%] flex gap-0.5">
                       {Array.from({ length: Math.min(slotCount, 3) }).map((_, i) => (
-                        <div
+                        <span
                           key={i}
                           className={cn(
-                            "w-1 h-1 rounded-full",
+                            "size-1 rounded-full",
                             isSelected ? "bg-primary-foreground/70" : "bg-primary"
                           )}
                         />
                       ))}
-                    </div>
+                    </span>
                   )}
                 </button>
               );
@@ -425,7 +487,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
           </div>
 
           {/* Timezone Selector */}
-          <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="mt-4 border-t border-border px-1 pt-4 sm:px-0">
             <TimezoneSelector
               selectedTimezone={userTimezone}
               onTimezoneChange={(tz) => {
@@ -437,27 +499,17 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         </div>
 
         {/* Time Slots Section - Side panel */}
-        <div className="lg:w-64 xl:w-72 bg-card rounded-xl border border-border/50 p-4">
+        <div className="rounded-xl border border-border bg-white p-4 lg:w-72 lg:shrink-0">
           {selectedDate && selectedDayAvailability ? (
-            <div className="space-y-4 h-full">
-              <div className="text-center pb-3 border-b border-border/50">
-                <p className="text-sm text-muted-foreground">
-                  {(() => {
-                    const [y, m, d] = selectedDate.split('-').map(Number);
-                    const localDate = new Date(y, m - 1, d);
-                    return format(localDate, 'EEEE');
-                  })()}
-                </p>
-                <p className="text-lg font-semibold text-foreground">
-                  {(() => {
-                    const [y, m, d] = selectedDate.split('-').map(Number);
-                    const localDate = new Date(y, m - 1, d);
-                    return format(localDate, 'MMMM d, yyyy');
-                  })()}
+            <div className="flex h-full flex-col gap-4">
+              <div className="border-b border-border pb-3 text-center">
+                <p className={cn(LABEL, "text-muted-foreground")}>{formatDay(selectedDate, 'EEEE')}</p>
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
+                  {formatDay(selectedDate, 'MMMM d, yyyy')}
                 </p>
               </div>
 
-              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              <div className="flex max-h-80 flex-col gap-4 overflow-y-auto pr-1">
                 {selectedDayAvailability.slots &&
                   selectedDayAvailability.slots.length > 0 ? (
                   (() => {
@@ -467,134 +519,21 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
 
                     return (
                       <>
-                        {morning.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              Morning
-                            </p>
-                            <div className="space-y-2">
-                              {morning
-                                .filter(slot => slot.is_available) // Only show available slots
-                                .map((slot, index) => {
-                                  const isPast = (() => {
-                                    try {
-                                      const [hours, minutes] = slot.start_time.split(":");
-                                      const slotDateTime = new Date(`${selectedDate}T${hours}:${minutes}:00`);
-                                      return slotDateTime <= new Date();
-                                    } catch {
-                                      return false;
-                                    }
-                                  })();
-                                  return (
-                                    <TimeSlotButton
-                                      key={index}
-                                      slot={slot}
-                                      isSelected={selectedTime === slot.start_time}
-                                      onSelect={() => handleTimeSelect(slot.start_time)}
-                                      mentorTimezone={mentorTimezone}
-                                      userTimezone={userTimezone}
-                                      date={selectedDate}
-                                      isPast={isPast}
-                                    />
-                                  );
-                                })}
-                            </div>
-                          </div>
-                        )}
-
-                        {afternoon.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              Afternoon
-                            </p>
-                            <div className="space-y-2">
-                              {afternoon
-                                .filter(slot => slot.is_available) // Only show available slots
-                                .map((slot, index) => {
-                                  const isPast = (() => {
-                                    try {
-                                      const [hours, minutes] = slot.start_time.split(":");
-                                      const slotDateTime = new Date(`${selectedDate}T${hours}:${minutes}:00`);
-                                      return slotDateTime <= new Date();
-                                    } catch {
-                                      return false;
-                                    }
-                                  })();
-                                  return (
-                                    <TimeSlotButton
-                                      key={index}
-                                      slot={slot}
-                                      isSelected={selectedTime === slot.start_time}
-                                      onSelect={() => handleTimeSelect(slot.start_time)}
-                                      mentorTimezone={mentorTimezone}
-                                      userTimezone={userTimezone}
-                                      date={selectedDate}
-                                      isPast={isPast}
-                                    />
-                                  );
-                                })}
-                            </div>
-                          </div>
-                        )}
-
-                        {evening.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              Evening
-                            </p>
-                            <div className="space-y-2">
-                              {evening
-                                .filter(slot => slot.is_available) // Only show available slots
-                                .map((slot, index) => {
-                                  const isPast = (() => {
-                                    try {
-                                      const [hours, minutes] = slot.start_time.split(":");
-                                      const slotDateTime = new Date(`${selectedDate}T${hours}:${minutes}:00`);
-                                      return slotDateTime <= new Date();
-                                    } catch {
-                                      return false;
-                                    }
-                                  })();
-                                  return (
-                                    <TimeSlotButton
-                                      key={index}
-                                      slot={slot}
-                                      isSelected={selectedTime === slot.start_time}
-                                      onSelect={() => handleTimeSelect(slot.start_time)}
-                                      mentorTimezone={mentorTimezone}
-                                      userTimezone={userTimezone}
-                                      date={selectedDate}
-                                      isPast={isPast}
-                                    />
-                                  );
-                                })}
-                            </div>
-                          </div>
-                        )}
+                        {renderPeriod("Morning", morning)}
+                        {renderPeriod("Afternoon", afternoon)}
+                        {renderPeriod("Evening", evening)}
                       </>
                     );
                   })()
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Clock className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm font-medium">No slots available</p>
-                    <p className="text-xs mt-1">Please select another date</p>
-                  </div>
+                  emptySlots("No slots available", "Please select another date")
                 )}
               </div>
             </div>
           ) : selectedDate && !selectedDayAvailability ? (
-            <div className="h-full flex flex-col items-center justify-center text-center py-8 text-muted-foreground">
-              <Clock className="w-10 h-10 mb-3 opacity-50" />
-              <p className="text-sm">No available times</p>
-              <p className="text-xs mt-1">Select another date</p>
-            </div>
+            emptySlots("No available times", "Select another date")
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center py-8 text-muted-foreground">
-              <Clock className="w-10 h-10 mb-3 opacity-50" />
-              <p className="text-sm">Select a date</p>
-              <p className="text-xs mt-1">to view available times</p>
-            </div>
+            emptySlots("Select a date", "to view available times")
           )}
         </div>
       </div>

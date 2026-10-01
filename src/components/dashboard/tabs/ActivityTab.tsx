@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import { TrendingUp, Calendar, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { startOfWeek, startOfMonth, subMonths, startOfToday } from 'date-fns';
+import { AppPageHeader } from '@/components/site';
+import { StatTile, formatUsd } from '@/components/dashboard/dashboard-ui';
 
 export function ActivityTab() {
   const { mentorProfile } = useAuth();
   const [thisWeekSessions, setThisWeekSessions] = useState(0);
   const [thisMonthEarnings, setThisMonthEarnings] = useState(0);
+  // Kept so the comparison tile can say when there is nothing to compare with.
+  const [lastMonthEarnings, setLastMonthEarnings] = useState(0);
   const [growthPercent, setGrowthPercent] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,7 +66,8 @@ export function ActivityTab() {
 
         if (lastMonthError) throw lastMonthError;
         const lastMonthTotal = lastMonthTransactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
-        
+        setLastMonthEarnings(lastMonthTotal);
+
         // Calculate growth percentage
         if (lastMonthTotal > 0) {
           const growth = ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
@@ -83,74 +87,42 @@ export function ActivityTab() {
     fetchStats();
   }, [mentorProfile?.id]);
 
+  // A percentage only means something against a month that had earnings.
+  const hasBaseline = lastMonthEarnings > 0;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Activity & Analytics</h2>
-        <p className="text-muted-foreground mt-1">Track your mentoring activity and performance</p>
+    <div className="flex flex-col gap-6">
+      <AppPageHeader
+        eyebrow="Activity"
+        title="Activity"
+        description="Sessions, messages, feedback and payments, newest first."
+      />
+
+      {/* Activity Summary Tiles */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile
+          icon={Calendar}
+          label="This week"
+          value={thisWeekSessions}
+          hint="Sessions completed"
+          loading={isLoading}
+        />
+        <StatTile
+          icon={DollarSign}
+          label="Earnings"
+          value={formatUsd(thisMonthEarnings)}
+          hint="Completed earnings this month"
+          loading={isLoading}
+        />
+        <StatTile
+          icon={TrendingUp}
+          label="Vs last month"
+          value={hasBaseline ? `${growthPercent >= 0 ? '+' : ''}${growthPercent}%` : '—'}
+          hint={hasBaseline ? `Last month: ${formatUsd(lastMonthEarnings)}` : 'No earnings last month to compare with'}
+          loading={isLoading}
+        />
       </div>
-      
-      {/* Activity Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              This Week
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-8 w-16 bg-muted rounded animate-pulse" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{thisWeekSessions}</div>
-                <p className="text-xs text-muted-foreground">Sessions completed</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              Earnings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-8 w-20 bg-muted rounded animate-pulse" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">${thisMonthEarnings.toFixed(0)}</div>
-                <p className="text-xs text-muted-foreground">This month</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Growth
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="h-8 w-16 bg-muted rounded animate-pulse" />
-            ) : (
-              <>
-                <div className={`text-2xl font-bold ${growthPercent >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {growthPercent >= 0 ? '+' : ''}{growthPercent}%
-                </div>
-                <p className="text-xs text-muted-foreground">vs last month</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      
+
       {/* Recent Activity List */}
       <RecentActivity />
     </div>

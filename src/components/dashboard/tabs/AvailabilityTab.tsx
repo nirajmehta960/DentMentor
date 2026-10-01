@@ -1,13 +1,15 @@
 import React from 'react';
 import { AvailabilityCalendar } from '@/components/dashboard/AvailabilityCalendar';
+import { AppPageHeader } from '@/components/site';
 
 export function AvailabilityTab() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Availability Management</h2>
-        <p className="text-muted-foreground mt-1">Set your available time slots for mentoring sessions</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <AppPageHeader
+        eyebrow="Availability"
+        title="When mentees can book you"
+        description="Pick a date to open time slots. Mentees see each slot in their own timezone when they book."
+      />
       <AvailabilityCalendar />
     </div>
   );

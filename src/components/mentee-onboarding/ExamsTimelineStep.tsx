@@ -11,7 +11,15 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { GraduationCap } from "lucide-react";
+import { ArrowRight, GraduationCap } from "lucide-react";
+import {
+  ChoiceCard,
+  FieldHint,
+  FormSection,
+  RequiredMark,
+  StepActions,
+  StepHeader,
+} from "@/components/onboarding/onboarding-ui";
 
 interface ExamsTimelineStepProps {
   data: any;
@@ -90,133 +98,138 @@ export const ExamsTimelineStep = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="text-center mb-6">
-        <GraduationCap className="w-12 h-12 text-primary mx-auto mb-3" />
-        <h3 className="text-2xl font-bold text-foreground mb-2">
-          Exams & Timeline
-        </h3>
-        <p className="text-muted-foreground">
-          Tell us about your exam progress and goals
-        </p>
-      </div>
+    <div>
+      <StepHeader
+        icon={GraduationCap}
+        title="Exams & timeline"
+        description="Tell us about your exam progress and the programs you're aiming for."
+      />
 
-      {/* INBDE Status */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">INBDE Status *</Label>
-        <RadioGroup
-          value={formData.inbde_status}
-          onValueChange={(value) =>
-            setFormData((prev) => ({ ...prev, inbde_status: value }))
-          }
-          className="space-y-2"
-        >
-          {inbdeStatuses.map((status) => (
-            <div key={status} className="flex items-center space-x-2">
-              <RadioGroupItem value={status} id={`inbde-${status}`} />
-              <Label
-                htmlFor={`inbde-${status}`}
-                className="font-normal cursor-pointer"
-              >
-                {status}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-      </div>
-
-      {/* English Proficiency */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label className="text-base font-medium">
-            English Proficiency Exam *
-          </Label>
-          <Select
-            value={formData.english_exam}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+        {/* INBDE Status */}
+        <FormSection title="INBDE status" titleId="inbde-status-title" required>
+          <RadioGroup
+            value={formData.inbde_status}
             onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, english_exam: value }))
+              setFormData((prev) => ({ ...prev, inbde_status: value }))
             }
+            aria-labelledby="inbde-status-title"
+            className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select English exam" />
-            </SelectTrigger>
-            <SelectContent>
-              {englishExams.map((exam) => (
-                <SelectItem key={exam} value={exam}>
-                  {exam}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Conditional Score Input */}
-        {formData.english_exam && formData.english_exam !== "Not Taken" && (
-          <div className="space-y-2">
-            <Label htmlFor="english-score">{formData.english_exam} Score</Label>
-            <Input
-              id="english-score"
-              type="number"
-              value={formData.english_score}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  english_score: parseInt(e.target.value) || "",
-                }))
-              }
-              placeholder={`Enter your ${formData.english_exam} score`}
-              min="0"
-              max={formData.english_exam === "TOEFL" ? "120" : "9"}
-            />
-            <p className="text-sm text-muted-foreground">
-              {formData.english_exam === "TOEFL"
-                ? "Score range: 0-120"
-                : "Score range: 0-9"}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Target Program Types */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">Target Program Types *</Label>
-        <p className="text-sm text-muted-foreground mb-3">
-          Select all programs you're interested in applying to
-        </p>
-        <div className="space-y-3">
-          {programTypes.map((program) => (
-            <div key={program} className="flex items-center space-x-2">
-              <Checkbox
-                id={`program-${program}`}
-                checked={selectedPrograms.includes(program)}
-                onCheckedChange={(checked) =>
-                  handleProgramChange(program, !!checked)
-                }
+            {inbdeStatuses.map((status) => (
+              <ChoiceCard
+                key={status}
+                htmlFor={`inbde-${status}`}
+                selected={formData.inbde_status === status}
+                control={<RadioGroupItem value={status} id={`inbde-${status}`} />}
+                title={status}
               />
-              <Label
-                htmlFor={`program-${program}`}
-                className="font-normal cursor-pointer"
-              >
-                {program}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </RadioGroup>
+        </FormSection>
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <Button type="button" variant="outline" onClick={onPrevious}>
-          Previous
-        </Button>
-        <Button
-          type="submit"
-          disabled={!isValid}
-          className="bg-[#FF4500] hover:bg-[#FF4500]/90 text-white px-8"
+        {/* English Proficiency */}
+        <FormSection title="English proficiency">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="english-exam">
+                English proficiency exam
+                <RequiredMark />
+              </Label>
+              <Select
+                value={formData.english_exam}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, english_exam: value }))
+                }
+              >
+                <SelectTrigger id="english-exam">
+                  <SelectValue placeholder="Select English exam" />
+                </SelectTrigger>
+                <SelectContent>
+                  {englishExams.map((exam) => (
+                    <SelectItem key={exam} value={exam}>
+                      {exam}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Conditional Score Input */}
+            {formData.english_exam && formData.english_exam !== "Not Taken" && (
+              <div className="flex min-w-0 flex-col gap-2">
+                <Label htmlFor="english-score">
+                  {formData.english_exam} score
+                </Label>
+                <Input
+                  id="english-score"
+                  type="number"
+                  inputMode="decimal"
+                  value={formData.english_score}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      english_score: parseInt(e.target.value) || "",
+                    }))
+                  }
+                  placeholder={`Enter your ${formData.english_exam} score`}
+                  min="0"
+                  max={formData.english_exam === "TOEFL" ? "120" : "9"}
+                  aria-describedby="english-score-hint"
+                  className="tabular-nums"
+                />
+                <FieldHint id="english-score-hint">
+                  <span data-numeric="">
+                    {formData.english_exam === "TOEFL"
+                      ? "Score range: 0-120"
+                      : "Score range: 0-9"}
+                  </span>
+                </FieldHint>
+              </div>
+            )}
+          </div>
+        </FormSection>
+
+        {/* Target Program Types */}
+        <FormSection
+          title="Target program types"
+          titleId="target-programs-title"
+          required
+          description="Select all programs you're interested in applying to."
         >
-          Continue
-        </Button>
-      </div>
-    </form>
+          <div
+            role="group"
+            aria-labelledby="target-programs-title"
+            className="grid grid-cols-1 gap-2.5"
+          >
+            {programTypes.map((program) => (
+              <ChoiceCard
+                key={program}
+                htmlFor={`program-${program}`}
+                selected={selectedPrograms.includes(program)}
+                control={
+                  <Checkbox
+                    id={`program-${program}`}
+                    checked={selectedPrograms.includes(program)}
+                    onCheckedChange={(checked) =>
+                      handleProgramChange(program, !!checked)
+                    }
+                  />
+                }
+                title={program}
+              />
+            ))}
+          </div>
+        </FormSection>
+
+        {/* Navigation */}
+        <StepActions onBack={onPrevious}>
+          <Button type="submit" size="lg" disabled={!isValid}>
+            Continue
+            <ArrowRight aria-hidden="true" />
+          </Button>
+        </StepActions>
+      </form>
+    </div>
   );
 };

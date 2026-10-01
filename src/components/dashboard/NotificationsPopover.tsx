@@ -7,7 +7,12 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { IconTile } from "./dashboard-ui";
 
+/*
+ * Shared with the mentee dashboard's top bar, and the panel portals to <body>,
+ * so everything here uses the app theme tokens rather than the site's band tokens.
+ */
 export function NotificationsPopover() {
     const { notifications, unreadMessageCount, totalUnreadCount, markAsRead, markAllAsRead } = useNotifications();
     const navigate = useNavigate();
@@ -41,40 +46,43 @@ export function NotificationsPopover() {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'session_booked': return <Calendar className="h-4 w-4 text-blue-500" />;
-            case 'payment_received': return <DollarSign className="h-4 w-4 text-green-500" />;
-            case 'feedback_received': return <Star className="h-4 w-4 text-yellow-500" />;
-            default: return <Info className="h-4 w-4 text-gray-500" />;
+            case 'session_booked': return Calendar;
+            case 'payment_received': return DollarSign;
+            case 'feedback_received': return Star;
+            default: return Info;
         }
     };
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 p-0"
+                <button
+                    type="button"
+                    aria-label={totalUnreadCount > 0 ? `Notifications, ${totalUnreadCount} unread` : "Notifications"}
+                    className="relative grid size-11 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                    <Bell className="w-5 h-5 text-muted-foreground" />
+                    <Bell className="size-5" strokeWidth={1.75} aria-hidden="true" />
                     {totalUnreadCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full text-[8px] sm:text-xs flex items-center justify-center text-white font-bold">
+                        <span
+                            aria-hidden="true"
+                            className="absolute right-1 top-1 inline-flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold text-white tabular-nums ring-2 ring-white"
+                        >
                             {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
                         </span>
                     )}
-                </Button>
+                </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-                <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <h4 className="font-semibold text-sm">Notifications</h4>
+            <PopoverContent className="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden p-0" align="end" collisionPadding={12}>
+                <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+                    <h4 className="font-display text-[0.9375rem] font-semibold tracking-[-0.01em] text-foreground">Notifications</h4>
                     {totalUnreadCount > 0 && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-auto text-xs px-2 text-muted-foreground hover:text-primary"
+                            className="-mr-2 h-9 px-3 text-[0.8125rem] text-muted-foreground hover:text-foreground"
                             onClick={() => markAllAsRead()}
                         >
-                            <Check className="w-3 h-3 mr-1" /> Mark all read
+                            <Check className="size-3.5" aria-hidden="true" /> Mark all read
                         </Button>
                     )}
                 </div>
@@ -82,69 +90,69 @@ export function NotificationsPopover() {
                 <ScrollArea className="h-[300px]">
                     {unreadMessageCount > 0 && (
                         <button
-                            className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex gap-3 border-b bg-primary/5"
+                            type="button"
+                            className="flex w-full gap-3 border-b bg-[rgb(15_112_93/0.04)] px-4 py-3 text-left transition-colors hover:bg-muted"
                             onClick={handleMessagesClick}
                         >
-                            <div className="mt-0.5 shrink-0">
-                                <MessageSquare className="h-4 w-4 text-primary" />
-                            </div>
-                            <div className="flex-1 space-y-1">
-                                <p className="text-xs font-semibold leading-none">
-                                    {unreadMessageCount} Unread Message{unreadMessageCount !== 1 ? 's' : ''}
+                            <IconTile icon={MessageSquare} />
+                            <div className="min-w-0 flex-1 space-y-1">
+                                <p className="text-[0.8125rem] font-semibold leading-snug text-foreground tabular-nums">
+                                    {unreadMessageCount} unread message{unreadMessageCount !== 1 ? 's' : ''}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    Check your messages inbox
+                                    Open your inbox to reply
                                 </p>
                             </div>
-                            <div className="shrink-0 mt-1.5">
-                                <div className="w-2 h-2 bg-primary rounded-full" />
-                            </div>
+                            <span aria-hidden="true" className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
                         </button>
                     )}
 
                     {notifications.length === 0 && unreadMessageCount === 0 ? (
-                        <div className="p-8 text-center text-sm text-muted-foreground h-full flex flex-col items-center justify-center">
-                            <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                            <p>No new notifications</p>
+                        <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+                            <IconTile icon={Bell} />
+                            <p className="text-sm text-muted-foreground">You're all caught up.</p>
                         </div>
                     ) : (
                         <div className="divide-y">
-                            {notifications.map((notification) => (
-                                <button
-                                    key={notification.id}
-                                    className={cn(
-                                        "w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex gap-3",
-                                        !notification.read_at && "bg-muted/20"
-                                    )}
-                                    onClick={() => handleItemClick(notification)}
-                                >
-                                    <div className="mt-0.5 shrink-0">
-                                        {getIcon(notification.type)}
-                                    </div>
-                                    <div className="flex-1 space-y-1">
-                                        <p className={cn("text-xs leading-none", !notification.read_at ? "font-semibold" : "font-medium")}>
-                                            {notification.title}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground line-clamp-2">
-                                            {notification.message}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground pt-0.5">
-                                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                                        </p>
-                                    </div>
-                                    {!notification.read_at && (
-                                        <div className="shrink-0 mt-1.5">
-                                            <div className="w-2 h-2 bg-primary rounded-full" />
+                            {notifications.map((notification) => {
+                                const Icon = getIcon(notification.type);
+                                const unread = !notification.read_at;
+                                return (
+                                    <button
+                                        type="button"
+                                        key={notification.id}
+                                        className={cn(
+                                            "flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-muted",
+                                            unread && "bg-[rgb(15_112_93/0.03)]"
+                                        )}
+                                        onClick={() => handleItemClick(notification)}
+                                    >
+                                        <IconTile icon={Icon} />
+                                        <div className="min-w-0 flex-1 space-y-1">
+                                            <p className={cn("text-[0.8125rem] leading-snug text-foreground", unread ? "font-semibold" : "font-medium")}>
+                                                {notification.title}
+                                            </p>
+                                            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                                                {notification.message}
+                                            </p>
+                                            <p className="text-[0.6875rem] text-muted-foreground">
+                                                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                            </p>
                                         </div>
-                                    )}
-                                </button>
-                            ))}
+                                        {unread && (
+                                            <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary">
+                                                <span className="sr-only">Unread</span>
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     )}
                 </ScrollArea>
                 {/* Footer link to all messages */}
-                <div className="p-2 border-t bg-muted/20">
-                    <Button variant="ghost" size="sm" className="w-full text-xs h-8" onClick={handleMessagesClick}>
+                <div className="border-t p-2">
+                    <Button variant="ghost" size="sm" className="h-10 w-full text-[0.8125rem]" onClick={handleMessagesClick}>
                         View all messages
                     </Button>
                 </div>

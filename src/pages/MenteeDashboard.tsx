@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { MenteeDashboardNavigation } from "@/components/mentee-dashboard/MenteeDashboardNavigation";
-import { MenteeDashboardSidebar } from "@/components/mentee-dashboard/MenteeDashboardSidebar";
-import { MenteeDashboardMobileNav } from "@/components/mentee-dashboard/MenteeDashboardMobileNav";
+import { AppShell } from "@/components/site";
+import { MenteeDashboardLayout } from "@/components/mentee-dashboard/MenteeDashboardLayout";
 import { OverviewTab } from "@/components/mentee-dashboard/tabs/OverviewTab";
 import { SessionsTab } from "@/components/mentee-dashboard/tabs/SessionsTab";
 import { MentorsTab } from "@/components/mentee-dashboard/tabs/MentorsTab";
@@ -40,17 +39,15 @@ export default function MenteeDashboard() {
   // Show loading while authentication or profiles are loading
   if (isLoading || isAuthLoading || (user && isProfileLoading)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-12 h-12 border-4 border-primary/20 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Loading your dashboard...
-          </p>
+      <AppShell nav={false} mainClassName="grid place-items-center">
+        <div role="status" className="flex flex-col items-center gap-4">
+          <span
+            aria-hidden="true"
+            className="size-10 rounded-full border-[3px] border-band-signal/15 border-t-band-signal motion-safe:animate-spin"
+          />
+          <p className="text-[0.9375rem] text-band-muted">Loading your dashboard...</p>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
@@ -91,24 +88,10 @@ export default function MenteeDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Subtle pattern overlay */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
-
-      <MenteeDashboardNavigation />
-
-      {/* Mobile Navigation */}
-      <MenteeDashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
-
-      <div className="relative z-10 flex">
-        {/* Sidebar - Desktop only */}
-        <MenteeDashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
-        {/* Main Content - Fixed height with overflow */}
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-y-auto">
-          {renderActiveTab()}
-        </main>
-      </div>
-    </div>
+    <AppShell nav={false}>
+      <MenteeDashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
+        {renderActiveTab()}
+      </MenteeDashboardLayout>
+    </AppShell>
   );
 }

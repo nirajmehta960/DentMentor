@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { FullPageLoader } from './FullPageLoader';
 
 interface PublicOrAuthRouteProps {
   children: React.ReactNode;
@@ -22,14 +22,7 @@ export const PublicOrAuthRoute: React.FC<PublicOrAuthRouteProps> = ({
 
   // Show loading while authentication or profiles are loading
   if (isLoading || isAuthLoading || (user && isProfileLoading)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <FullPageLoader label="Loading..." />;
   }
 
   // If user is authenticated, check user type restrictions

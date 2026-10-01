@@ -3,8 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Target, X } from 'lucide-react';
+import { Target } from 'lucide-react';
+import {
+  ChoiceCard,
+  FormSection,
+  RemovableTag,
+  RequiredMark,
+  StepActions,
+  StepHeader,
+  TagList,
+} from '@/components/onboarding/onboarding-ui';
 
 interface GoalsPreferencesStepProps {
   data: any;
@@ -113,117 +121,137 @@ export const GoalsPreferencesStep = ({ data, onNext, onPrevious }: GoalsPreferen
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="text-center mb-6">
-        <Target className="w-12 h-12 text-primary mx-auto mb-3" />
-        <h3 className="text-2xl font-bold text-foreground mb-2">Goals & Preferences</h3>
-        <p className="text-muted-foreground">Help us match you with the right mentor</p>
-      </div>
+    <div>
+      <StepHeader
+        icon={Target}
+        title="Goals & preferences"
+        description="Mentors you book can see where you want help and which schools you're aiming for, so they can prepare."
+      />
 
-      {/* What do you need help with */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">What do you need help with? *</Label>
-        <p className="text-sm text-muted-foreground mb-3">
-          Select all areas where you'd like mentorship support
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {helpOptions.map((help) => (
-            <div key={help} className="flex items-center space-x-2">
-              <Checkbox
-                id={`help-${help}`}
-                checked={selectedHelp.includes(help)}
-                onCheckedChange={(checked) => handleHelpChange(help, !!checked)}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+        {/* What do you need help with */}
+        <FormSection
+          title="What do you need help with?"
+          titleId="help-needed-title"
+          required
+          description="Select all areas where you'd like mentorship support."
+        >
+          <div
+            role="group"
+            aria-labelledby="help-needed-title"
+            className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+          >
+            {helpOptions.map((help) => (
+              <ChoiceCard
+                key={help}
+                htmlFor={`help-${help}`}
+                selected={selectedHelp.includes(help)}
+                control={
+                  <Checkbox
+                    id={`help-${help}`}
+                    checked={selectedHelp.includes(help)}
+                    onCheckedChange={(checked) => handleHelpChange(help, !!checked)}
+                  />
+                }
+                title={help}
               />
-              <Label htmlFor={`help-${help}`} className="font-normal cursor-pointer text-sm">
-                {help}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Target Dental Schools */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">Target Dental Schools *</Label>
-        <Select onValueChange={handleSchoolAdd}>
-          <SelectTrigger>
-            <SelectValue placeholder="Add schools you're interested in" />
-          </SelectTrigger>
-          <SelectContent>
-            {dentalSchools.filter(school => !selectedSchools.includes(school)).map((school) => (
-              <SelectItem key={school} value={school}>{school}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        
-        {selectedSchools.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {selectedSchools.map((school) => (
-              <Badge key={school} variant="secondary" className="flex items-center gap-1 text-xs">
-                {school}
-                <X 
-                  className="w-3 h-3 cursor-pointer hover:text-destructive" 
-                  onClick={() => handleSchoolRemove(school)}
-                />
-              </Badge>
             ))}
           </div>
-        )}
-      </div>
+        </FormSection>
 
-      {/* Preferred Session Times */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">Preferred Session Times *</Label>
-        <p className="text-sm text-muted-foreground mb-3">
-          When are you most available for mentorship sessions?
-        </p>
-        <div className="space-y-3">
-          {sessionTimes.map((time) => (
-            <div key={time} className="flex items-center space-x-2">
-              <Checkbox
-                id={`time-${time}`}
-                checked={selectedTimes.includes(time)}
-                onCheckedChange={(checked) => handleTimeChange(time, !!checked)}
+        {/* Target Dental Schools */}
+        <FormSection title="Target dental schools" required>
+          <Select onValueChange={handleSchoolAdd}>
+            <SelectTrigger aria-label="Add a target dental school">
+              <SelectValue placeholder="Add schools you're interested in" />
+            </SelectTrigger>
+            <SelectContent>
+              {dentalSchools.filter(school => !selectedSchools.includes(school)).map((school) => (
+                <SelectItem key={school} value={school}>{school}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {selectedSchools.length > 0 && (
+            <TagList label="Selected schools">
+              {selectedSchools.map((school) => (
+                <RemovableTag
+                  key={school}
+                  onRemove={() => handleSchoolRemove(school)}
+                  removeLabel={`Remove ${school}`}
+                >
+                  {school}
+                </RemovableTag>
+              ))}
+            </TagList>
+          )}
+        </FormSection>
+
+        {/* Preferred Session Times */}
+        <FormSection
+          title="Preferred session times"
+          titleId="session-times-title"
+          required
+          description="When are you most available for mentorship sessions?"
+        >
+          <div
+            role="group"
+            aria-labelledby="session-times-title"
+            className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+          >
+            {sessionTimes.map((time) => (
+              <ChoiceCard
+                key={time}
+                htmlFor={`time-${time}`}
+                selected={selectedTimes.includes(time)}
+                control={
+                  <Checkbox
+                    id={`time-${time}`}
+                    checked={selectedTimes.includes(time)}
+                    onCheckedChange={(checked) => handleTimeChange(time, !!checked)}
+                  />
+                }
+                title={time}
               />
-              <Label htmlFor={`time-${time}`} className="font-normal cursor-pointer">
-                {time}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* How did you hear about us */}
-      <div className="space-y-2">
-        <Label className="text-base font-medium">How did you hear about us? *</Label>
-        <Select 
-          value={formData.referral_source} 
-          onValueChange={(value) => setFormData(prev => ({ ...prev, referral_source: value }))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select how you found DentMentor" />
-          </SelectTrigger>
-          <SelectContent>
-            {referralSources.map((source) => (
-              <SelectItem key={source} value={source}>{source}</SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-      </div>
+          </div>
+        </FormSection>
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <Button type="button" variant="outline" onClick={onPrevious}>
-          Previous
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={!isValid}
-          className="bg-[#FF4500] hover:bg-[#FF4500]/90 text-white px-8"
-        >
-          Complete Setup
-        </Button>
-      </div>
-    </form>
+        {/* How did you hear about us */}
+        <FormSection title="One last thing">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="referral-source">
+              How did you hear about us?
+              <RequiredMark />
+            </Label>
+            <Select
+              value={formData.referral_source}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, referral_source: value }))}
+            >
+              <SelectTrigger id="referral-source">
+                <SelectValue placeholder="Select how you found DentMentor" />
+              </SelectTrigger>
+              <SelectContent>
+                {referralSources.map((source) => (
+                  <SelectItem key={source} value={source}>{source}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </FormSection>
+
+        {/* Navigation */}
+        <StepActions onBack={onPrevious}>
+          <Button
+            type="submit"
+            variant="hero"
+            size="lg"
+            disabled={!isValid}
+          >
+            Complete setup
+          </Button>
+        </StepActions>
+      </form>
+    </div>
   );
 };

@@ -1,29 +1,27 @@
 import React from 'react';
 import { RecommendedMentors } from '@/components/mentee-dashboard/RecommendedMentors';
 import { Button } from '@/components/ui/button';
-import { Users, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AppPageHeader } from '@/components/site';
 
 export function MentorsTab() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">Find Mentors</h1>
-          <p className="text-muted-foreground">
-            Discover experienced dental professionals to guide your career
-          </p>
-        </div>
-        <Button onClick={() => navigate('/mentors')}>
-          <Search className="w-4 h-4 mr-2" />
-          Browse All Mentors
-        </Button>
-      </div>
-      <div className="h-[calc(100vh-20rem)]">
-        <RecommendedMentors />
-      </div>
+    <div className="flex flex-col gap-8">
+      <AppPageHeader
+        eyebrow="Mentors"
+        title="Find mentors"
+        description="Mentors are U.S. dental students and graduates. Those who've submitted proof of admission or their degree carry a Verified badge."
+        actions={
+          <Button size="lg" onClick={() => navigate('/mentors')}>
+            <Search className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            Browse all mentors
+          </Button>
+        }
+      />
+      <RecommendedMentors />
     </div>
   );
 }

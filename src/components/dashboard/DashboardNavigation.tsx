@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,24 +20,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Bell,
   Settings,
   HelpCircle,
   LogOut,
   User,
-  GraduationCap,
   Camera,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ProfileImageCropper } from "@/components/dashboard/ProfileImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationsPopover } from "./NotificationsPopover";
 import { useToast } from "@/hooks/use-toast";
+import { DentMark, Wordmark } from "@/components/site";
 
+/**
+ * The dashboard's top bar: the site nav's frosted paper bar, with the mark and
+ * wordmark on the left and the mentor's own controls on the right. Sticky inside
+ * the AppShell rather than fixed, so the page needs no offset for it.
+ */
 export function DashboardNavigation() {
   const { user, profile, mentorProfile, signOut } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [showImageCropper, setShowImageCropper] = useState(false);
 
@@ -93,128 +95,117 @@ export function DashboardNavigation() {
     [user?.id, toast]
   );
 
+  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-r from-primary to-primary/80">
-              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <span className="text-lg sm:text-xl font-bold text-primary">
-              DentMentor
-            </span>
-          </Link>
+    <header data-band="paper" className="sticky top-0 z-40 w-full text-band-fg">
+      {/* The site nav's scrolled glass, always on: work screens have no dark band to sit over. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 border-b border-[rgb(9_67_56/0.06)] bg-white/[0.78] shadow-[0_1px_24px_rgb(9_67_56/0.05)] backdrop-blur-md"
+      />
+      <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link to="/" className="flex items-center gap-2.5 rounded-[0.375rem]" aria-label="DentMentor home">
+          <DentMark />
+          <Wordmark />
+          <span
+            className="label ml-1 hidden rounded-pill border px-2 py-1 text-band-muted sm:inline-flex"
+            style={{ borderColor: "rgb(9 67 56 / 0.12)" }}
+          >
+            Mentor
+          </span>
+        </Link>
 
-          {/* Right side - Navigation and User Menu */}
-          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-            {/* Quick Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="text-xs sm:text-sm"
+        <div className="flex items-center gap-1 sm:gap-2">
+          <nav aria-label="Site" className="hidden md:block">
+            <Link
+              to="/mentors"
+              className="inline-flex h-11 items-center rounded-pill px-3 text-[0.8125rem] text-band-muted transition-colors hover:text-band-fg"
+            >
+              Browse mentors
+            </Link>
+          </nav>
+
+          <NotificationsPopover />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Open account menu"
+                className="grid size-11 place-items-center rounded-full transition-colors hover:bg-band-fg/5"
               >
-                <Link to="/mentors">Browse Mentors</Link>
-              </Button>
-            </nav>
+                <Avatar className="size-9 ring-1 ring-[rgb(9_67_56/0.1)]">
+                  <AvatarImage src={mentorProfile?.profile_photo_url} className="object-cover" />
+                  <AvatarFallback className="bg-[rgb(15_112_93/0.1)] text-[0.8125rem] font-semibold text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col gap-1">
+                  <p className="truncate text-sm font-semibold leading-none text-foreground">
+                    {fullName || "Your account"}
+                  </p>
+                  <p className="truncate text-xs leading-none text-muted-foreground">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/onboarding?edit=1" className="cursor-pointer">
+                  <User className="mr-2 size-4" />
+                  Edit profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowImageCropper(true)}>
+                <Camera className="mr-2 size-4" />
+                Change picture
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 size-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <HelpCircle className="mr-2 size-4" />
+                Help & support
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
 
-            {/* Notifications */}
-            <NotificationsPopover />
-
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full p-0"
-                >
-                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10">
-                    <AvatarImage src={mentorProfile?.profile_photo_url} />
-                    <AvatarFallback className="font-semibold text-xs sm:text-sm">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-56 sm:w-64"
-                align="end"
-                forceMount
-              >
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-xs sm:text-sm font-medium leading-none">
-                      {profile?.first_name} {profile?.last_name}
-                    </p>
-                    <p className="text-[10px] sm:text-xs leading-none text-muted-foreground truncate">
-                      {user?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="text-xs sm:text-sm">
-                  <Link to="/onboarding?edit=1" className="cursor-pointer">
-                    <User className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    Edit Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setShowImageCropper(true)}
-                  className="text-xs sm:text-sm"
-                >
-                  <Camera className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Change Picture
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-xs sm:text-sm">
-                  <Settings className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-xs sm:text-sm">
-                  <HelpCircle className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Help & Support
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-
-                {/* Sign Out with Confirmation */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                      className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 text-xs sm:text-sm"
+              {/* Sign Out with Confirmation */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="cursor-pointer text-red-700 focus:bg-red-50 focus:text-red-700"
+                  >
+                    <LogOut className="mr-2 size-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-[calc(100vw-2rem)] rounded-2xl sm:max-w-md sm:rounded-2xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="font-display tracking-[-0.01em]">
+                      Sign out of DentMentor?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      You'll go to the sign-in page and need to sign in again to reach your dashboard.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                    <AlertDialogCancel className="mt-0 w-full rounded-full sm:w-auto">Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleSignOut}
+                      className="w-full rounded-full bg-red-700 text-white hover:bg-red-800 sm:w-auto"
                     >
-                      <LogOut className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-base sm:text-lg">
-                        Are you sure you want to sign out?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription className="text-xs sm:text-sm">
-                        You will be redirected to the login page and will need
-                        to sign in again to access your dashboard.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                      <AlertDialogCancel className="text-xs sm:text-sm w-full sm:w-auto">
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleSignOut}
-                        className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm w-full sm:w-auto"
-                      >
-                        Sign Out
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                      Sign out
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
