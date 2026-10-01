@@ -1,24 +1,35 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ShieldCheck,
-  ArrowLeft,
   Upload,
-  FileText,
-  CheckCircle,
+  FileCheck2,
+  CheckCircle2,
   Loader2,
-  AlertCircle,
-  SkipForward,
-  Award,
-  Star,
-  Eye,
-  Zap,
+  Info,
+  BadgeCheck,
+  ListFilter,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { HAIRLINE } from "@/components/site";
+import { cn } from "@/lib/utils";
+import {
+  DASHED_EDGE,
+  FormSection,
+  IconTile,
+  SELECTED_EDGE,
+  StepActions,
+  StepHeader,
+} from "./onboarding-ui";
+
+/** ".pdf,.jpg,.png" -> "PDF, JPG, PNG", for the zone's helper line. */
+const formatAcceptedTypes = (acceptedTypes: string) =>
+  acceptedTypes
+    .split(",")
+    .map((type) => type.trim().replace(/^\./, "").toUpperCase())
+    .join(", ");
 
 interface UploadedFile {
   name: string;
@@ -100,96 +111,82 @@ const FileUploadCard = ({
   };
 
   return (
-    <Card
-      className={`transition-all hover:shadow-lg ${
-        uploadedFile
-          ? "border-emerald-500/50 bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 dark:from-emerald-950/20 dark:to-emerald-900/10"
-          : "border-border/50 hover:border-primary/50"
-      }`}
+    <div
+      className={cn(
+        "flex flex-col gap-4 rounded-xl border-[1.5px] bg-white p-5 transition-colors duration-200 ease-dm sm:flex-row sm:items-center sm:gap-5",
+        uploadedFile ? "border-solid bg-[rgb(15_112_93/0.03)]" : "border-dashed"
+      )}
+      style={{ borderColor: uploadedFile ? SELECTED_EDGE : DASHED_EDGE }}
     >
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          {uploadedFile ? (
-            <div className="p-1.5 rounded-full bg-emerald-500/20">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-            </div>
-          ) : (
-            <div className="p-1.5 rounded-full bg-muted">
-              <FileText className="w-4 h-4 text-muted-foreground" />
-            </div>
-          )}
+      <IconTile icon={uploadedFile ? FileCheck2 : Upload} />
+
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <h3 className="text-[0.9375rem] font-semibold leading-snug text-band-fg">
           {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">{description}</p>
+        </h3>
+        <p className="text-[0.8125rem] leading-relaxed text-band-muted">
+          {description}
+        </p>
+
+        {uploadedFile ? (
+          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-[0.8125rem] font-medium text-band-signal">
+            <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{uploadedFile.name}</span>
+            <span className="shrink-0">uploaded</span>
+          </p>
+        ) : (
+          <p className="stat mt-1 text-band-faint">
+            {formatAcceptedTypes(acceptedTypes)} · Max 10MB
+          </p>
+        )}
 
         {isUploading && (
-          <div className="space-y-2">
-            <Progress value={uploadProgress} className="h-2" />
-            <p className="text-xs text-muted-foreground">
+          <div className="mt-2 flex flex-col gap-1.5">
+            <Progress value={uploadProgress} className="h-1.5 bg-muted" />
+            <p className="text-[0.75rem] text-band-muted" data-numeric="">
               Uploading... {uploadProgress}%
             </p>
           </div>
         )}
+      </div>
 
-        {uploadedFile && (
-          <div className="flex items-center gap-2 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-            <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="text-sm font-medium text-foreground truncate">
-              {uploadedFile.name}
-            </span>
-            <CheckCircle className="w-4 h-4 text-emerald-600 ml-auto shrink-0" />
-          </div>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+        className="h-11 shrink-0 self-start sm:self-center"
+      >
+        {isUploading ? (
+          <Loader2 className="animate-spin" aria-hidden="true" />
+        ) : (
+          <Upload aria-hidden="true" />
         )}
+        {uploadedFile ? "Replace file" : "Upload file"}
+        <span className="sr-only">: {title}</span>
+      </Button>
 
-        <div className="flex flex-col gap-2">
-          <Button
-            type="button"
-            variant={uploadedFile ? "outline" : "default"}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className={`w-full ${
-              !uploadedFile
-                ? "bg-primary hover:bg-primary/90"
-                : "border-border/50"
-            }`}
-          >
-            {isUploading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4 mr-2" />
-            )}
-            {uploadedFile ? "Replace File" : "Upload File"}
-          </Button>
-
-          <p className="text-xs text-muted-foreground text-center">
-            {acceptedTypes} • Max 10MB
-          </p>
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={acceptedTypes}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              if (file.size > 10 * 1024 * 1024) {
-                toast({
-                  title: "File too large",
-                  description: "Please select a file smaller than 10MB.",
-                  variant: "destructive",
-                });
-                return;
-              }
-              handleFileUpload(file);
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={acceptedTypes}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+              toast({
+                title: "File too large",
+                description: "Please select a file smaller than 10MB.",
+                variant: "destructive",
+              });
+              return;
             }
-          }}
-          className="hidden"
-        />
-      </CardContent>
-    </Card>
+            handleFileUpload(file);
+          }
+        }}
+        className="hidden"
+      />
+    </div>
   );
 };
 
@@ -239,195 +236,141 @@ export const VerificationStep = ({
   const completionPercentage = (completedUploads / totalUploads) * 100;
 
   return (
-    <div className="space-y-8">
-      {/* Step Header */}
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mb-4">
-          <ShieldCheck className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Document Verification
-        </h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Upload your credentials to build trust with students (optional for
-          now)
+    <div>
+      <StepHeader
+        icon={ShieldCheck}
+        title="Verification"
+        description="Upload your credentials to build trust with students. Verified documents earn a Verified badge on your profile."
+      />
+
+      {/* Skip Notice */}
+      <div
+        className="mb-8 flex items-start gap-3 rounded-xl border bg-[rgb(15_112_93/0.04)] p-4 text-[0.875rem] leading-relaxed text-band-fg"
+        style={{ borderColor: HAIRLINE }}
+      >
+        <Info className="mt-0.5 size-4 shrink-0 text-band-signal" aria-hidden="true" />
+        <p>
+          <strong className="font-semibold">This step is optional.</strong> You
+          can complete verification later from your dashboard.
         </p>
       </div>
 
-      {/* Skip Notice */}
-      <Alert className="border-amber-500/30 bg-amber-500/5">
-        <AlertCircle className="h-4 w-4 text-amber-500" />
-        <AlertDescription className="text-sm">
-          <strong>This step is optional.</strong> You can complete verification
-          later from your dashboard. However, verified mentors typically receive
-          more bookings and can charge higher rates.
-        </AlertDescription>
-      </Alert>
-
-      {/* Progress Overview */}
-      <Card className="border-border/50 bg-gradient-to-br from-muted/30 to-muted/10">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground">
-                Verification Progress
-              </h3>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+        <FormSection title="Documents">
+          {/* Progress Overview */}
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-baseline justify-between gap-4">
+              <p className="label text-band-muted">Verification progress</p>
+              <p className="text-[0.8125rem] font-medium text-band-fg" data-numeric="">
+                {completedUploads} of {totalUploads} documents
+              </p>
             </div>
-            <span className="text-sm font-medium text-primary">
-              {completedUploads} of {totalUploads} documents
-            </span>
+            <Progress
+              value={completionPercentage}
+              className="h-1.5 bg-muted"
+              aria-label="Verification documents uploaded"
+            />
           </div>
-          <Progress value={completionPercentage} className="h-3 mb-2" />
-          <p className="text-sm text-muted-foreground">
-            Complete all uploads to get a verified badge on your profile
-          </p>
-        </CardContent>
-      </Card>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* File Upload Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <FileUploadCard
-            title="Degree Certificate"
-            description="Upload your bachelor's degree certificate or transcript"
-            acceptedTypes=".pdf,.jpg,.jpeg,.png"
-            field="degree_certificate_url"
-            uploadedFile={
-              uploads.degree_certificate_url
-                ? {
-                    name: "Degree Certificate",
-                    url: uploads.degree_certificate_url,
-                    type: "application/pdf",
-                  }
-                : null
-            }
-            onUpload={handleFileUpload}
-            isUploading={uploadingFiles.has("degree_certificate_url")}
-            uploadProgress={uploadProgress.degree_certificate_url || 0}
-          />
+          {/* File Upload Zones */}
+          <ul className="flex flex-col gap-3">
+            <li>
+              <FileUploadCard
+                title="Degree Certificate"
+                description="Upload your bachelor's degree certificate or transcript"
+                acceptedTypes=".pdf,.jpg,.jpeg,.png"
+                field="degree_certificate_url"
+                uploadedFile={
+                  uploads.degree_certificate_url
+                    ? {
+                        name: "Degree Certificate",
+                        url: uploads.degree_certificate_url,
+                        type: "application/pdf",
+                      }
+                    : null
+                }
+                onUpload={handleFileUpload}
+                isUploading={uploadingFiles.has("degree_certificate_url")}
+                uploadProgress={uploadProgress.degree_certificate_url || 0}
+              />
+            </li>
+            <li>
+              <FileUploadCard
+                title="Dental School Admission Letter"
+                description="Upload your US dental school admission/acceptance letter"
+                acceptedTypes=".pdf,.jpg,.jpeg,.png"
+                field="admission_letter_url"
+                uploadedFile={
+                  uploads.admission_letter_url
+                    ? {
+                        name: "Admission Letter",
+                        url: uploads.admission_letter_url,
+                        type: "application/pdf",
+                      }
+                    : null
+                }
+                onUpload={handleFileUpload}
+                isUploading={uploadingFiles.has("admission_letter_url")}
+                uploadProgress={uploadProgress.admission_letter_url || 0}
+              />
+            </li>
+            <li>
+              <FileUploadCard
+                title="Student ID or Diploma"
+                description="Upload your current student ID or graduation diploma"
+                acceptedTypes=".pdf,.jpg,.jpeg,.png"
+                field="student_id_url"
+                uploadedFile={
+                  uploads.student_id_url
+                    ? {
+                        name: "Student ID",
+                        url: uploads.student_id_url,
+                        type: "application/pdf",
+                      }
+                    : null
+                }
+                onUpload={handleFileUpload}
+                isUploading={uploadingFiles.has("student_id_url")}
+                uploadProgress={uploadProgress.student_id_url || 0}
+              />
+            </li>
+          </ul>
+        </FormSection>
 
-          <FileUploadCard
-            title="Dental School Admission Letter"
-            description="Upload your US dental school admission/acceptance letter"
-            acceptedTypes=".pdf,.jpg,.jpeg,.png"
-            field="admission_letter_url"
-            uploadedFile={
-              uploads.admission_letter_url
-                ? {
-                    name: "Admission Letter",
-                    url: uploads.admission_letter_url,
-                    type: "application/pdf",
-                  }
-                : null
-            }
-            onUpload={handleFileUpload}
-            isUploading={uploadingFiles.has("admission_letter_url")}
-            uploadProgress={uploadProgress.admission_letter_url || 0}
-          />
+        {/* What verification adds */}
+        <FormSection title="What verification adds">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <li className="flex items-start gap-3">
+              <IconTile icon={BadgeCheck} className="size-10" />
+              <span className="pt-2 text-[0.875rem] leading-relaxed text-band-fg">
+                A Verified badge on your profile and mentor card
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <IconTile icon={ListFilter} className="size-10" />
+              <span className="pt-2 text-[0.875rem] leading-relaxed text-band-fg">
+                You're included when students filter for verified mentors
+              </span>
+            </li>
+          </ul>
+        </FormSection>
 
-          <FileUploadCard
-            title="Student ID or Diploma"
-            description="Upload your current student ID or graduation diploma"
-            acceptedTypes=".pdf,.jpg,.jpeg,.png"
-            field="student_id_url"
-            uploadedFile={
-              uploads.student_id_url
-                ? {
-                    name: "Student ID",
-                    url: uploads.student_id_url,
-                    type: "application/pdf",
-                  }
-                : null
-            }
-            onUpload={handleFileUpload}
-            isUploading={uploadingFiles.has("student_id_url")}
-            uploadProgress={uploadProgress.student_id_url || 0}
-          />
-        </div>
-
-        {/* Benefits of Verification */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2 text-primary">
-              <Star className="w-5 h-5" />
-              Benefits of Verification
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-full bg-emerald-500/20 shrink-0">
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
-                </div>
-                <span className="text-sm text-foreground">
-                  Verified badge on your profile builds trust
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-full bg-emerald-500/20 shrink-0">
-                  <Eye className="w-4 h-4 text-emerald-600" />
-                </div>
-                <span className="text-sm text-foreground">
-                  Higher visibility in search results
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-full bg-emerald-500/20 shrink-0">
-                  <Zap className="w-4 h-4 text-emerald-600" />
-                </div>
-                <span className="text-sm text-foreground">
-                  Ability to charge premium rates
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-full bg-emerald-500/20 shrink-0">
-                  <Award className="w-4 h-4 text-emerald-600" />
-                </div>
-                <span className="text-sm text-foreground">
-                  Access to exclusive mentor features
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Navigation */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t border-border/50">
+        <StepActions onBack={onPrevious}>
           <Button
             type="button"
-            variant="outline"
-            onClick={onPrevious}
+            variant="ghost"
+            onClick={onSkip}
             size="lg"
-            className="px-6"
+            className="px-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
+            Skip for now
           </Button>
-
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onSkip}
-              size="lg"
-              className="px-6"
-            >
-              <SkipForward className="w-4 h-4 mr-2" />
-              Skip For Now
-            </Button>
-
-            <Button
-              type="submit"
-              size="lg"
-              className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
-            >
-              {completedUploads === totalUploads
-                ? "Complete Verification"
-                : "Save Progress"}
-            </Button>
-          </div>
-        </div>
+          <Button type="submit" variant="hero" size="lg">
+            {completedUploads === totalUploads
+              ? "Complete verification"
+              : "Save progress"}
+          </Button>
+        </StepActions>
       </form>
     </div>
   );

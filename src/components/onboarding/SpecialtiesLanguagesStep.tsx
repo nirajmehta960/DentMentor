@@ -9,19 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Languages,
-  ArrowRight,
-  ArrowLeft,
-  X,
-  Plus,
-  DollarSign,
-  Clock,
-  Sparkles,
-  Globe,
-} from "lucide-react";
+import { Languages, ArrowRight, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AddChip,
+  FieldHint,
+  FormSection,
+  RemovableTag,
+  RequiredMark,
+  StepActions,
+  StepHeader,
+  TagList,
+} from "./onboarding-ui";
 
 interface SpecialtiesLanguagesStepProps {
   data: any;
@@ -246,153 +245,127 @@ export const SpecialtiesLanguagesStep = ({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Step Header */}
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mb-4">
-          <Languages className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Specialties & Languages
-        </h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Define your areas of expertise and the languages you can mentor in
-        </p>
-      </div>
+    <div>
+      <StepHeader
+        icon={Languages}
+        title="Specialties & languages"
+        description="Define your areas of expertise and the languages you can mentor in."
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         {/* Primary Dental Specialty */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="specialty"
-            className="flex items-center gap-2 text-sm font-medium"
-          >
-            <Sparkles className="w-4 h-4 text-primary" />
-            Primary Dental Specialty *
-          </Label>
-          <Select
-            value={formData.speciality}
-            onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, speciality: value }))
-            }
-          >
-            <SelectTrigger className="h-12 border-border/50">
-              <SelectValue placeholder="Select your primary dental specialty" />
-            </SelectTrigger>
-            <SelectContent>
-              {dentalSpecialtyOptions.map((specialty) => (
-                <SelectItem key={specialty} value={specialty}>
-                  {specialty}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Specialties Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <Label className="text-base font-semibold">
-              Areas of Expertise *
+        <FormSection title="Specialty">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="specialty">
+              Primary dental specialty
+              <RequiredMark />
             </Label>
+            <Select
+              value={formData.speciality}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, speciality: value }))
+              }
+            >
+              <SelectTrigger id="specialty">
+                <SelectValue placeholder="Select your primary dental specialty" />
+              </SelectTrigger>
+              <SelectContent>
+                {dentalSpecialtyOptions.map((specialty) => (
+                  <SelectItem key={specialty} value={specialty}>
+                    {specialty}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        </FormSection>
 
-          {/* Selected Specialties */}
+        {/* Areas of Expertise */}
+        <FormSection
+          title="Areas of expertise"
+          required
+          description="Choose the kinds of help you offer, or add your own."
+        >
           {formData.areas_of_expertise.length > 0 && (
-            <div className="flex flex-wrap gap-2 p-4 bg-primary/5 rounded-xl border border-primary/20">
+            <TagList label="Selected areas of expertise">
               {formData.areas_of_expertise.map((specialty: string) => (
-                <Badge
+                <RemovableTag
                   key={specialty}
-                  className="px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-default"
+                  onRemove={() => removeSpecialty(specialty)}
+                  removeLabel={`Remove ${specialty}`}
                 >
                   {specialty}
-                  <button
-                    type="button"
-                    onClick={() => removeSpecialty(specialty)}
-                    className="ml-2 hover:text-primary-foreground/80"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
+                </RemovableTag>
               ))}
-            </div>
+            </TagList>
           )}
 
-          {/* Specialty Selection Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {specialtyOptions
-              .filter((option) => !formData.areas_of_expertise.includes(option))
-              .map((specialty) => (
-                <Button
-                  key={specialty}
-                  type="button"
-                  variant="outline"
-                  onClick={() => addSpecialty(specialty)}
-                  className="justify-start h-auto py-3 border-border/50 hover:border-primary hover:bg-primary/5"
-                >
-                  <Plus className="w-4 h-4 mr-2 text-primary" />
-                  {specialty}
-                </Button>
-              ))}
-          </div>
+          {specialtyOptions.some(
+            (option) => !formData.areas_of_expertise.includes(option)
+          ) && (
+            <div className="flex flex-wrap gap-2">
+              {specialtyOptions
+                .filter(
+                  (option) => !formData.areas_of_expertise.includes(option)
+                )
+                .map((specialty) => (
+                  <AddChip
+                    key={specialty}
+                    onClick={() => addSpecialty(specialty)}
+                  >
+                    {specialty}
+                  </AddChip>
+                ))}
+            </div>
+          )}
 
           {/* Custom Specialty */}
           <div className="flex gap-2">
             <Input
+              aria-label="Custom area of expertise"
               placeholder="Add custom specialty..."
               value={customSpecialty}
               onChange={(e) => setCustomSpecialty(e.target.value)}
               onKeyPress={(e) =>
                 e.key === "Enter" && (e.preventDefault(), addCustomSpecialty())
               }
-              className="h-12 border-border/50 focus:border-primary"
             />
             <Button
               type="button"
               onClick={addCustomSpecialty}
-              size="lg"
               variant="outline"
-              className="px-4 border-primary text-primary hover:bg-primary/10"
+              size="icon"
+              aria-label="Add custom specialty"
+              className="size-11 shrink-0"
             >
-              <Plus className="w-5 h-5" />
+              <Plus aria-hidden="true" />
             </Button>
           </div>
-        </div>
+        </FormSection>
 
         {/* Languages Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-primary" />
-            <Label className="text-base font-semibold">
-              Languages Spoken *
-            </Label>
-          </div>
-
-          {/* Selected Languages */}
+        <FormSection
+          title="Languages spoken"
+          required
+          description="The languages you can hold a session in."
+        >
           {formData.languages_spoken.length > 0 && (
-            <div className="flex flex-wrap gap-2 p-4 bg-blue-500/5 rounded-xl border border-blue-500/20">
+            <TagList label="Selected languages">
               {formData.languages_spoken.map((language: string) => (
-                <Badge
+                <RemovableTag
                   key={language}
-                  className="px-3 py-1.5 bg-blue-500 text-white hover:bg-blue-500/90 cursor-default"
+                  onRemove={() => removeLanguage(language)}
+                  removeLabel={`Remove ${language}`}
                 >
                   {language}
-                  <button
-                    type="button"
-                    onClick={() => removeLanguage(language)}
-                    className="ml-2 hover:text-white/80"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
+                </RemovableTag>
               ))}
-            </div>
+            </TagList>
           )}
 
           {/* Language Selection Dropdown */}
           <Select onValueChange={addLanguage}>
-            <SelectTrigger className="h-12 border-border/50">
+            <SelectTrigger aria-label="Add a language">
               <SelectValue placeholder="Select languages you speak..." />
             </SelectTrigger>
             <SelectContent className="max-h-60">
@@ -409,115 +382,107 @@ export const SpecialtiesLanguagesStep = ({
           {/* Custom Language */}
           <div className="flex gap-2">
             <Input
+              aria-label="Custom language"
               placeholder="Add custom language..."
               value={customLanguage}
               onChange={(e) => setCustomLanguage(e.target.value)}
               onKeyPress={(e) =>
                 e.key === "Enter" && (e.preventDefault(), addCustomLanguage())
               }
-              className="h-12 border-border/50 focus:border-primary"
             />
             <Button
               type="button"
               onClick={addCustomLanguage}
-              size="lg"
               variant="outline"
-              className="px-4 border-blue-500 text-blue-500 hover:bg-blue-500/10"
+              size="icon"
+              aria-label="Add custom language"
+              className="size-11 shrink-0"
             >
-              <Plus className="w-5 h-5" />
+              <Plus aria-hidden="true" />
             </Button>
           </div>
-        </div>
+        </FormSection>
 
-        {/* Hourly Rate */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-primary" />
-            <Label className="text-base font-semibold">
-              Hourly Rate (USD) *
-            </Label>
-          </div>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-semibold text-muted-foreground">
-              $
-            </span>
-            <Input
-              type="number"
-              placeholder="50"
-              min="25"
-              max="100"
-              step="5"
-              value={formData.hourly_rate}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  hourly_rate: e.target.value,
-                }))
-              }
-              className="h-14 pl-10 text-lg font-semibold border-border/50 focus:border-primary"
-            />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Range: $25 - $100 per hour. Most mentors charge between $40-$60.
-          </p>
-        </div>
+        {/* Rate & Availability */}
+        <FormSection title="Rate & availability">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="hourly-rate">
+                Hourly rate (USD)
+                <RequiredMark />
+              </Label>
+              <div className="relative">
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[0.9375rem] font-medium text-band-muted"
+                >
+                  $
+                </span>
+                <Input
+                  id="hourly-rate"
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="50"
+                  min="25"
+                  max="100"
+                  step="5"
+                  value={formData.hourly_rate}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hourly_rate: e.target.value,
+                    }))
+                  }
+                  aria-describedby="hourly-rate-hint"
+                  className="pl-8 font-medium tabular-nums"
+                />
+              </div>
+              <FieldHint id="hourly-rate-hint">
+                Between <span data-numeric="">$25</span> and{" "}
+                <span data-numeric="">$100</span> per hour.
+              </FieldHint>
+            </div>
 
-        {/* Availability Preference */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            <Label className="text-base font-semibold">
-              Availability Preference *
-            </Label>
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="availability">
+                Availability preference
+                <RequiredMark />
+              </Label>
+              <Select
+                value={formData.availability_preference}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    availability_preference: value,
+                  }))
+                }
+              >
+                <SelectTrigger id="availability">
+                  <SelectValue placeholder="Select your preferred availability" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availabilityOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{option.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({option.description})
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Select
-            value={formData.availability_preference}
-            onValueChange={(value) =>
-              setFormData((prev) => ({
-                ...prev,
-                availability_preference: value,
-              }))
-            }
-          >
-            <SelectTrigger className="h-12 border-border/50">
-              <SelectValue placeholder="Select your preferred availability" />
-            </SelectTrigger>
-            <SelectContent>
-              {availabilityOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{option.label}</span>
-                    <span className="text-muted-foreground text-xs">
-                      ({option.description})
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        </FormSection>
 
-        {/* Navigation */}
-        <div className="flex justify-between pt-6 border-t border-border/50">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onPrevious}
-            size="lg"
-            className="px-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
-          </Button>
-          <Button
-            type="submit"
-            size="lg"
-            className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
-          >
+        <StepActions onBack={onPrevious}>
+          <Button type="submit" size="lg">
             Continue
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight aria-hidden="true" />
           </Button>
-        </div>
+        </StepActions>
       </form>
     </div>
   );

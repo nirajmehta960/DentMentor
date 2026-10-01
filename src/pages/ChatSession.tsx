@@ -2,14 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Send, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Navigation from "@/components/Navigation";
-import { Card } from "@/components/ui/card";
+import { AppShell } from "@/components/site";
+import { ChatComposer, ChatHeader, ChatPanel, MessageThread, displayName } from "@/components/chat/chat-parts";
+import { ConversationList } from "@/components/chat/conversation-list";
+import { InboxFrame, InboxHeader, useIsDesktop } from "@/components/chat/inbox-frame";
+import { useConversations } from "@/components/chat/use-conversations";
 
 interface Message {
     id: string;
@@ -27,7 +25,45 @@ interface Participant {
     avatar_url: string | null;
 }
 
+/**
+ * The chat route. At lg the inbox list sits beside the thread (the list only
+ * mounts there, so phones make no extra request); below lg the thread has the
+ * whole viewport. The thread is keyed by session, so picking another
+ * conversation from the list starts it fresh, exactly like opening the route.
+ */
 const ChatSession = () => {
+    const { sessionId } = useParams<{ sessionId: string }>();
+    const navigate = useNavigate();
+    const isDesktop = useIsDesktop();
+    const { conversations, loading, getOtherUser } = useConversations({
+        channel: "messages_list_session",
+        enabled: isDesktop,
+    });
+
+    return (
+        <AppShell>
+            <InboxFrame
+                view="thread"
+                header={<InboxHeader />}
+                list={
+                    isDesktop ? (
+                        <ConversationList
+                            conversations={conversations}
+                            getOtherUser={getOtherUser}
+                            loading={loading}
+                            activeSessionId={sessionId}
+                            onSelect={(id) => navigate(`/messages/session/${id}`)}
+                        />
+                    ) : null
+                }
+            >
+                <ChatSessionThread key={sessionId} />
+            </InboxFrame>
+        </AppShell>
+    );
+};
+
+const ChatSessionThread = () => {
     const { sessionId } = useParams<{ sessionId: string }>();
     const { user, session: authSession } = useAuth(); // Need authSession for token
     const navigate = useNavigate();
@@ -36,6 +72,8 @@ const ChatSession = () => {
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [otherUser, setOtherUser] = useState<Participant | null>(null);
+    // Which side of the session the other person is on, for the header's context line.
+    const [otherRole, setOtherRole] = useState<"mentor" | "mentee" | null>(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [newMessage, setNewMessage] = useState("");
@@ -78,8 +116,10 @@ const ChatSession = () => {
                 let otherUserId: string | null = null;
                 if (user.id === mentorUserId) {
                     otherUserId = menteeUserId;
+                    setOtherRole("mentee");
                 } else if (user.id === menteeUserId) {
                     otherUserId = mentorUserId;
+                    setOtherRole("mentor");
                 } else {
                     // Not a participant
                     toast({
@@ -269,108 +309,34 @@ const ChatSession = () => {
         }
     }, [loading]);
 
+    const name = otherUser ? displayName(otherUser, "") : "";
+
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            <Navigation />
+        <ChatPanel variant="panel" label={name ? `Conversation with ${name}` : "Conversation"}>
+            <ChatHeader
+                person={otherUser}
+                context={otherRole ? `Your ${otherRole} · Session chat` : "Session chat"}
+                onBack={() => navigate("/messages")}
+            />
 
-            <div className="flex-1 container mx-auto px-4 pt-24 pb-6 flex flex-col max-w-4xl h-[calc(100vh-2rem)]">
-                {/* Header */}
-                <div className="bg-white border-b p-4 flex items-center gap-4 rounded-t-xl shadow-sm">
-                    <Button variant="ghost" size="icon" onClick={() => navigate("/messages")}>
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
+            <MessageThread
+                messages={messages}
+                currentUserId={user?.id}
+                otherName={name}
+                loading={loading}
+                hasMore={hasMore}
+                loadingMore={loadingMore}
+                onLoadMore={loadMore}
+                endRef={scrollRef}
+            />
 
-                    {otherUser ? (
-                        <div className="flex items-center gap-3">
-                            <Avatar>
-                                <AvatarImage src={otherUser.avatar_url || ""} />
-                                <AvatarFallback>{otherUser.first_name?.[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h2 className="font-semibold text-gray-900">
-                                    {otherUser.first_name} {otherUser.last_name}
-                                </h2>
-                                <span className="text-xs text-green-600 flex items-center gap-1">
-                                    ● Active in session
-                                </span>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="h-10 w-32 bg-gray-200 animate-pulse rounded" />
-                    )}
-                </div>
-
-                {/* Chat Area */}
-                <ScrollArea className="flex-1 bg-white p-4 shadow-sm border-x">
-                    {loading ? (
-                        <div className="flex h-full items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-4">
-                            {hasMore && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={loadMore}
-                                    disabled={loadingMore}
-                                    className="self-center text-xs text-muted-foreground"
-                                >
-                                    {loadingMore ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
-                                    Load older messages
-                                </Button>
-                            )}
-
-                            {messages.length === 0 ? (
-                                <div className="text-center text-gray-500 my-10">
-                                    No messages yet. Start the conversation!
-                                </div>
-                            ) : (
-                                messages.map((msg) => {
-                                    const isMe = msg.sender_id === user?.id;
-                                    return (
-                                        <div
-                                            key={msg.id}
-                                            className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-                                        >
-                                            <div
-                                                className={`
-                                        max-w-[75%] px-4 py-2 rounded-2xl text-sm 
-                                        ${isMe
-                                                        ? "bg-primary text-white rounded-br-none"
-                                                        : "bg-gray-100 text-gray-900 rounded-bl-none"
-                                                    }
-                                    `}
-                                            >
-                                                {msg.message_text}
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                            <div ref={scrollRef} />
-                        </div>
-                    )}
-                </ScrollArea>
-
-                {/* Composer */}
-                <div className="bg-white p-4 border-t rounded-b-xl shadow-sm">
-                    <form onSubmit={handleSendMessage} className="flex gap-2">
-                        <Input
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Type a message..."
-                            className="flex-1"
-                            disabled={sending}
-                        />
-                        <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
-                            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                        </Button>
-                    </form>
-                </div>
-
-            </div>
-        </div>
+            <ChatComposer
+                value={newMessage}
+                onValueChange={setNewMessage}
+                onSubmit={handleSendMessage}
+                sending={sending}
+            />
+        </ChatPanel>
     );
 };
 

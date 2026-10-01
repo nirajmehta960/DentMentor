@@ -1,23 +1,24 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  DollarSign,
   ArrowRight,
-  ArrowLeft,
-  Plus,
-  Edit,
-  Trash2,
+  BriefcaseBusiness,
   Clock,
-  FileText,
-  Sparkles,
-  CheckCircle2,
+  Pencil,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { HAIRLINE } from "@/components/site";
+import {
+  FormSection,
+  RequiredMark,
+  StepActions,
+  StepHeader,
+} from "./onboarding-ui";
 
 interface Service {
   id: string;
@@ -264,144 +265,152 @@ export const ServicesOfferedStep = ({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Step Header */}
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mb-4">
-          <DollarSign className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Services Offered
-        </h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Define the services you offer to help students on their dental journey
-        </p>
-      </div>
+    <div>
+      <StepHeader
+        icon={BriefcaseBusiness}
+        title="Services"
+        description="Define the services you offer. You set the price and length of each one."
+      />
 
-      {/* Popular Service Templates */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold text-foreground">
-            Popular Service Templates
-          </h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {serviceTemplates.map((template, index) => (
-            <Card
-              key={index}
-              className="border-2 border-dashed border-border/50 hover:border-primary/50 hover:shadow-md transition-all bg-gradient-to-br from-background to-muted/20"
-            >
-              <CardContent className="p-5">
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-semibold text-foreground">
-                      {template.title}
-                    </h4>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {template.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      <span>{template.duration} min</span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => addTemplateService(template)}
-                      className="border-primary/50 text-primary hover:bg-primary/10"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Create Custom Service Button */}
-      <div className="text-center">
-        <Button
-          variant="outline"
-          onClick={() => setIsCreating(true)}
-          className="border-primary/50 text-primary hover:bg-primary/10"
+      <div className="flex flex-col gap-8">
+        {/* Service Templates */}
+        <FormSection
+          title="Start from a template"
+          description="Add a common session type, then edit it to set your price."
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Custom Service
-        </Button>
-      </div>
-
-      {/* Service Creation/Edit Form */}
-      {isCreating && (
-        <Card className="border-primary/30 bg-primary/5 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              {editingId ? "Edit Service" : "Create New Service"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Service Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., Personal Statement Review"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  className="h-12 border-border/50 focus:border-primary"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price (USD) *</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                      $
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {serviceTemplates.map((template, index) => (
+              <li
+                key={index}
+                className="flex flex-col gap-4 rounded-xl border bg-white p-5"
+                style={{ borderColor: HAIRLINE }}
+              >
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-[0.9375rem] font-semibold leading-snug text-band-fg">
+                      {template.title}
+                    </h3>
+                    <span className="stat shrink-0 text-band-signal">
+                      {template.duration} min
                     </span>
-                    <Input
-                      id="price"
-                      type="number"
-                      placeholder="50"
-                      value={formData.price}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          price: e.target.value,
-                        }))
-                      }
-                      className="h-12 pl-8 border-border/50 focus:border-primary"
-                    />
                   </div>
+                  <p className="line-clamp-2 text-[0.8125rem] leading-relaxed text-band-muted">
+                    {template.description}
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (min) *</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => addTemplateService(template)}
+                  className="mt-auto h-11 self-start"
+                  aria-label={`Add ${template.title}`}
+                >
+                  <Plus aria-hidden="true" />
+                  Add
+                </Button>
+              </li>
+            ))}
+          </ul>
+
+          {/* Create Custom Service Button */}
+          {!isCreating && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreating(true)}
+              className="h-11 self-start"
+            >
+              <Plus aria-hidden="true" />
+              Create custom service
+            </Button>
+          )}
+        </FormSection>
+
+        {/* Service Creation/Edit Form */}
+        {isCreating && (
+          <section
+            aria-labelledby="service-editor-title"
+            className="flex flex-col gap-5 rounded-xl border bg-band-ground p-5 sm:p-6"
+            style={{ borderColor: HAIRLINE }}
+          >
+            <h2
+              id="service-editor-title"
+              className="text-[1.0625rem] font-semibold tracking-[-0.01em] text-band-fg"
+            >
+              {editingId ? "Edit service" : "Create new service"}
+            </h2>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="title">
+                Service title
+                <RequiredMark />
+              </Label>
+              <Input
+                id="title"
+                placeholder="e.g., Personal Statement Review"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex min-w-0 flex-col gap-2">
+                <Label htmlFor="price">
+                  Price (USD)
+                  <RequiredMark />
+                </Label>
+                <div className="relative">
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-band-muted"
+                  >
+                    $
+                  </span>
                   <Input
-                    id="duration"
+                    id="price"
                     type="number"
-                    placeholder="60"
-                    value={formData.duration}
+                    inputMode="decimal"
+                    placeholder="50"
+                    value={formData.price}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        duration: e.target.value,
+                        price: e.target.value,
                       }))
                     }
-                    className="h-12 border-border/50 focus:border-primary"
+                    className="pl-8 tabular-nums"
                   />
                 </div>
               </div>
+              <div className="flex min-w-0 flex-col gap-2">
+                <Label htmlFor="duration">
+                  Duration (min)
+                  <RequiredMark />
+                </Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="60"
+                  value={formData.duration}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      duration: e.target.value,
+                    }))
+                  }
+                  className="tabular-nums"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="description">
+                Description
+                <RequiredMark />
+              </Label>
               <Textarea
                 id="description"
                 placeholder="Describe what this service includes and how it helps students..."
@@ -413,23 +422,15 @@ export const ServicesOfferedStep = ({
                   }))
                 }
                 rows={3}
-                className="resize-none border-border/50 focus:border-primary"
+                className="resize-none"
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button
-                onClick={
-                  editingId
-                    ? () => handleUpdateService(editingId)
-                    : handleCreateService
-                }
-                className="flex-1 bg-primary hover:bg-primary/90"
-              >
-                {editingId ? "Update Service" : "Create Service"}
-              </Button>
-              <Button
+                type="button"
                 variant="outline"
+                className="h-11"
                 onClick={() => {
                   setIsCreating(false);
                   setEditingId(null);
@@ -443,92 +444,95 @@ export const ServicesOfferedStep = ({
               >
                 Cancel
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Current Services */}
-      {services.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <h3 className="font-semibold text-foreground">
-              Your Services ({services.length})
-            </h3>
-          </div>
-          <div className="space-y-3">
-            {services.map((service) => (
-              <Card
-                key={service.id}
-                className="border-border/50 hover:border-primary/30 transition-colors"
+              <Button
+                type="button"
+                className="h-11"
+                onClick={
+                  editingId
+                    ? () => handleUpdateService(editingId)
+                    : handleCreateService
+                }
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h4 className="font-semibold text-foreground">
-                          {service.title}
-                        </h4>
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-0">
-                          ${service.price}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {service.duration} min
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {service.description}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditService(service)}
-                        className="h-9 w-9 p-0"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteService(service.id)}
-                        className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
+                {editingId ? "Update service" : "Create service"}
+              </Button>
+            </div>
+          </section>
+        )}
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-6 border-t border-border/50">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onPrevious}
-          size="lg"
-          className="px-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Previous
-        </Button>
-        <Button
-          type="submit"
-          onClick={handleSubmit}
-          size="lg"
-          className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
-        >
-          Continue
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+        {/* Current Services */}
+        {services.length > 0 && (
+          <FormSection title="Your services">
+            <ul className="flex flex-col gap-3">
+              {services.map((service) => (
+                <li
+                  key={service.id}
+                  className="flex items-start justify-between gap-4 rounded-xl border bg-white p-5 shadow-soft"
+                  style={{ borderColor: HAIRLINE }}
+                >
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <h3 className="text-[0.9375rem] font-semibold leading-snug text-band-fg">
+                      {service.title}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-band-muted">
+                      {service.price > 0 ? (
+                        <span
+                          className="font-semibold text-band-fg"
+                          data-numeric=""
+                        >
+                          ${service.price}
+                        </span>
+                      ) : (
+                        <span>
+                          <span className="font-semibold text-band-fg" data-numeric="">
+                            ${service.price}
+                          </span>{" "}
+                          · edit to set a price
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1" data-numeric="">
+                        <Clock className="size-3.5" aria-hidden="true" />
+                        {service.duration} min
+                      </span>
+                    </div>
+                    <p className="line-clamp-2 text-[0.8125rem] leading-relaxed text-band-muted">
+                      {service.description}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditService(service)}
+                      aria-label={`Edit ${service.title}`}
+                      className="size-11"
+                    >
+                      <Pencil aria-hidden="true" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteService(service.id)}
+                      aria-label={`Remove ${service.title}`}
+                      className="size-11 text-red-700 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <Trash2 aria-hidden="true" />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </FormSection>
+        )}
       </div>
+
+      <StepActions onBack={onPrevious}>
+        <Button type="submit" onClick={handleSubmit} size="lg">
+          Continue
+          <ArrowRight aria-hidden="true" />
+        </Button>
+      </StepActions>
     </div>
   );
 };

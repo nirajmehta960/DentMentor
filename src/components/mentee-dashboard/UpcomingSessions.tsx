@@ -1,19 +1,35 @@
 import React from "react";
 import { useMenteeUpcomingSessions } from "@/hooks/useMenteeUpcomingSessions";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Calendar,
-  Clock,
-  Video,
-  MessageSquare,
-  ExternalLink,
-  Star,
-  ChevronRight,
-} from "lucide-react";
+import { Calendar, Clock, Video, MessageSquare, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import {
+  DashboardPanel,
+  EmptyState,
+  LIST_ROW,
+  ListSkeleton,
+  PanelHeader,
+  PersonAvatar,
+  ROW_RULE,
+  StatusPill,
+  TAP,
+  plainName,
+} from "./parts";
+
+/** `sessions.status` and `payment_status`, as the soft pills read them. */
+function statusLabel(status?: string) {
+  if (status === "confirmed") return "Confirmed";
+  if (status === "scheduled") return "Scheduled";
+  return status ? status.charAt(0).toUpperCase() + status.slice(1) : null;
+}
+
+function paymentLabel(paymentStatus?: string) {
+  if (!paymentStatus || paymentStatus === "paid") return null;
+  if (paymentStatus === "pending" || paymentStatus === "unpaid") return "Awaiting payment";
+  return paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+}
 
 export function UpcomingSessions() {
   const { upcomingSessions, isLoading } = useMenteeUpcomingSessions();
@@ -30,120 +46,70 @@ export function UpcomingSessions() {
     return format(date, "h:mm a");
   };
 
-  if (isLoading) {
-    return (
-      <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl p-6">
-        <div className="h-8 bg-muted/50 rounded animate-pulse mb-4" />
-        <div className="space-y-4">
-          {[...Array(2)].map((_, i) => (
-            <div
-              key={i}
-              className="h-24 bg-muted/50 rounded-xl animate-pulse"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg rounded-xl overflow-hidden flex flex-col h-full">
-      <div className="p-4 sm:p-6 border-b border-border/50 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <Calendar className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Upcoming Sessions</h3>
-              <p className="text-sm text-muted-foreground">
-                Your scheduled mentorship sessions
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-primary hover:text-primary/80"
-          >
-            View All
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      <div className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto">
-        {upcomingSessions.length === 0 ? (
-          <div className="text-center py-8">
-            <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-            <p className="text-muted-foreground mb-4">No upcoming sessions</p>
-            <Button
-              variant="outline"
-              className="border-primary/30 text-primary hover:bg-primary/10"
-            >
-              Book a Session
+    <DashboardPanel aria-labelledby="sessions-upcoming">
+      <PanelHeader
+        id="sessions-upcoming"
+        title="Upcoming sessions"
+        description="Your meeting link is shared 24 hours before each session."
+      />
+
+      {isLoading ? (
+        <ListSkeleton rows={2} />
+      ) : upcomingSessions.length === 0 ? (
+        <EmptyState
+          icon={Calendar}
+          message="You have no upcoming sessions."
+          action={
+            <Button asChild size="sm" className={TAP}>
+              <Link to="/mentors">Find a mentor</Link>
             </Button>
-          </div>
-        ) : (
-          upcomingSessions.map((session) => (
-            <div
-              key={session.id}
-              className="group relative p-4 rounded-xl border border-border/50 bg-background/50 hover:border-primary/30 hover:shadow-md transition-all duration-300"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {/* Mentor info */}
-                <div className="flex items-center gap-3 flex-1">
-                  <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                    <AvatarImage src={session.mentor?.avatar || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
-                      {session.mentor?.name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("") || "M"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-foreground truncate">
-                        {session.service?.title ||
-                          session.session_type ||
-                          "Mentorship Session"}
-                      </h4>
-                      {session.mentor?.rating && (
-                        <div className="flex items-center gap-1 text-amber-500">
-                          <Star className="h-3 w-3 fill-current" />
-                          <span className="text-xs font-medium">
-                            {session.mentor.rating}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
-                      {session.duration_minutes} minutes session
-                    </p>
+          }
+        />
+      ) : (
+        <ul>
+          {upcomingSessions.map((session) => {
+            const mentorName = plainName(session.mentor?.name);
+            const status = statusLabel(session.status);
+            const payment = paymentLabel(session.payment_status);
+
+            return (
+              <li
+                key={session.id}
+                className={cn(LIST_ROW, "flex flex-col gap-4 md:flex-row md:items-center")}
+                style={ROW_RULE}
+              >
+                {/* Mentor and service */}
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <PersonAvatar name={mentorName || "Mentor"} src={session.mentor?.avatar} className="size-11" />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-[0.9375rem] font-semibold text-band-fg">
+                      {session.service?.title ||
+                        session.session_type ||
+                        "Mentorship Session"}
+                    </h3>
                     {session.service?.title && session.mentor?.name && (
-                      <p className="text-xs text-muted-foreground">
-                        with {session.mentor.name}
-                      </p>
+                      <p className="truncate text-[0.8125rem] text-band-muted">with {mentorName}</p>
                     )}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      {status ? <StatusPill>{status}</StatusPill> : null}
+                      {payment ? <StatusPill tone="neutral">{payment}</StatusPill> : null}
+                    </div>
                   </div>
                 </div>
 
-                {/* Session details */}
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{formatDate(session.session_date)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{formatTime(session.session_date)}</span>
-                  </div>
-                  <Badge
-                    variant="secondary"
-                    className="bg-emerald-500/10 text-emerald-600 border-0"
-                  >
-                    {session.duration_minutes} min
-                  </Badge>
+                {/* When */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-band-muted tabular-nums md:w-56 md:flex-col md:items-start">
+                  <p className="flex items-center gap-1.5">
+                    <Calendar className="size-4 shrink-0 text-band-faint" strokeWidth={1.75} aria-hidden="true" />
+                    <span className="text-band-fg">{formatDate(session.session_date)}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <Clock className="size-4 shrink-0 text-band-faint" strokeWidth={1.75} aria-hidden="true" />
+                    <span>
+                      {formatTime(session.session_date)} · {session.duration_minutes} min
+                    </span>
+                  </p>
                 </div>
 
                 {/* Actions */}
@@ -151,27 +117,24 @@ export function UpcomingSessions() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-border/50 hover:border-primary/30"
+                    className={cn("flex-1 md:flex-none", TAP)}
                     onClick={() => navigate('?tab=messages')}
                     disabled={session.payment_status !== 'paid'}
                   >
-                    <MessageSquare className="h-4 w-4 mr-1.5" />
+                    <MessageSquare className="size-4" strokeWidth={1.75} aria-hidden="true" />
                     Message
                   </Button>
-                  <Button
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
-                  >
-                    <Video className="h-4 w-4 mr-1.5" />
+                  <Button size="sm" className={cn("flex-1 md:flex-none", TAP)}>
+                    <Video className="size-4" strokeWidth={1.75} aria-hidden="true" />
                     Join
-                    <ExternalLink className="h-3 w-3 ml-1.5" />
+                    <ExternalLink className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
                   </Button>
                 </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </DashboardPanel>
   );
 }

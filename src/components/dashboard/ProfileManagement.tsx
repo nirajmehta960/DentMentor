@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Edit,
-  User,
   DollarSign,
   Camera,
   BadgeCheck,
@@ -24,7 +22,32 @@ import { ServiceManagementModal } from "./ServiceManagementModal";
 import { ProfileImageCropper } from "./ProfileImageCropper";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { AppPageHeader } from "@/components/site";
+import { DIVIDED, IconTile, PanelHeader, StatusPill, WorkPanel, formatUsd, hairline } from "./dashboard-ui";
+
+/** One labelled figure in the profile's numbers panel. */
+function Figure({ icon, label, value, hint }: { icon: typeof Users; label: string; value: React.ReactNode; hint?: string }) {
+  return (
+    <li className="flex items-center gap-4 px-5 py-4 sm:px-6">
+      <IconTile icon={icon} />
+      <div className="min-w-0 flex-1">
+        <p className="label text-band-muted">{label}</p>
+        {hint ? <p className="text-[0.8125rem] text-band-muted">{hint}</p> : null}
+      </div>
+      <p className="font-display text-[1.375rem] font-semibold tracking-[-0.02em] text-band-fg tabular-nums">{value}</p>
+    </li>
+  );
+}
+
+/** One contact line: icon, then text. */
+function ContactLine({ icon: Icon, children }: { icon: typeof Users; children: React.ReactNode }) {
+  return (
+    <li className="flex min-w-0 items-center gap-3 text-[0.875rem] text-band-muted">
+      <Icon className="size-4 shrink-0 text-band-signal" aria-hidden="true" />
+      <span className="min-w-0 truncate">{children}</span>
+    </li>
+  );
+}
 
 export function ProfileManagement() {
   const { profile, mentorProfile, isLoading } = useAuth();
@@ -84,26 +107,42 @@ export function ProfileManagement() {
     }
   };
 
+  const header = (
+    <AppPageHeader
+      eyebrow="Profile"
+      title="Your mentor profile"
+      description="What mentees see before they book with you."
+      actions={
+        isLoading ? null : (
+          <>
+            <Button variant="outline" onClick={() => setShowServiceModal(true)}>
+              <DollarSign className="size-4" aria-hidden="true" />
+              Manage services
+            </Button>
+            <Button onClick={handleEditProfile}>
+              <Edit className="size-4" aria-hidden="true" />
+              Edit profile
+            </Button>
+          </>
+        )
+      }
+    />
+  );
+
   if (isLoading) {
     return (
-      <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
-        <div className="p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 animate-pulse"></div>
-            <div className="h-6 w-40 bg-muted rounded animate-pulse"></div>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-muted rounded-2xl"></div>
-              <div className="space-y-2 flex-1">
-                <div className="h-5 bg-muted rounded w-3/4"></div>
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-              </div>
+      <div className="flex flex-col gap-6">
+        {header}
+        <WorkPanel aria-hidden="true" className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="size-20 rounded-full bg-band-fg/[0.05] motion-safe:animate-pulse"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-5 w-3/4 rounded bg-band-fg/[0.06] motion-safe:animate-pulse"></div>
+              <div className="h-4 w-1/2 rounded bg-band-fg/[0.04] motion-safe:animate-pulse"></div>
             </div>
           </div>
-        </div>
+        </WorkPanel>
+        <span className="sr-only" role="status">Loading profile</span>
       </div>
     );
   }
@@ -122,231 +161,166 @@ export function ProfileManagement() {
     mentorProfile?.areas_of_expertise || mentorProfile?.specializations
   );
 
-  return (
-    <div className="rounded-xl sm:rounded-2xl bg-card border border-border/50 overflow-hidden shadow-sm">
-      {/* Header */}
-      <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-              Profile Management
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Manage your public profile
-            </p>
-          </div>
-        </div>
-      </div>
+  const averageRating = Number((mentorProfile as any)?.average_rating) || 0;
 
-      <div className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-6">
-        {/* Profile Card */}
-        <div className="relative p-4 sm:p-5 rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/5 via-background to-accent/5 border border-border/50">
-          <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 md:gap-5">
-            {/* Avatar with camera overlay */}
-            <div className="relative group flex-shrink-0">
-              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 ring-2 sm:ring-4 ring-background shadow-xl">
+  return (
+    <div className="flex flex-col gap-6">
+      {header}
+
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        {/* Identity and about */}
+        <WorkPanel>
+          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:p-6">
+            {/* Avatar with a change-photo control (visible on hover/focus, and always on touch) */}
+            <div className="relative shrink-0 self-start">
+              <Avatar className="size-24 ring-1 ring-[rgb(9_67_56/0.08)]">
                 <AvatarImage
                   src={mentorProfile?.profile_photo_url}
                   className="object-cover"
                 />
-                <AvatarFallback className="text-xl sm:text-2xl font-bold bg-primary/10 text-primary">
+                <AvatarFallback className="bg-[rgb(15_112_93/0.1)] text-2xl font-semibold text-band-signal">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <button
+                type="button"
                 onClick={() => setShowImageCropper(true)}
-                className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                aria-label="Change profile picture"
+                className="absolute -bottom-1 -right-1 grid size-11 place-items-center rounded-full border bg-white text-band-fg shadow-[var(--card-shadow)] transition-colors hover:bg-band-fg/[0.04]"
+                style={hairline}
               >
-                <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <Camera className="size-[18px]" strokeWidth={1.75} aria-hidden="true" />
               </button>
-              {mentorProfile?.is_verified && (
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 bg-primary rounded-full flex items-center justify-center ring-2 ring-background">
-                  <BadgeCheck className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
-                </div>
-              )}
             </div>
 
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg sm:text-xl font-bold text-foreground">
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-display text-[1.375rem] font-semibold tracking-[-0.02em] text-band-fg">
                   {profile?.first_name} {profile?.last_name}
-                </h3>
+                </h2>
                 {mentorProfile?.is_verified && (
-                  <Badge className="bg-primary/10 text-primary border-0 text-xs sm:text-sm">
-                    <BadgeCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+                  <StatusPill tone="teal" className="gap-1 normal-case">
+                    <BadgeCheck className="size-3.5" aria-hidden="true" />
                     Verified
-                  </Badge>
+                  </StatusPill>
                 )}
               </div>
 
-              <p className="text-sm sm:text-base text-primary font-medium">
+              <p className="text-[0.9375rem] font-medium text-band-signal">
                 {mentorProfile?.professional_headline || "Dental Mentor"}
               </p>
 
               {mentorProfile?.us_dental_school && (
-                <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5">
-                  <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                <p className="flex items-center gap-1.5 text-[0.875rem] text-band-muted">
+                  <GraduationCap className="size-4 shrink-0 text-band-signal" aria-hidden="true" />
                   {mentorProfile.us_dental_school}
                 </p>
               )}
 
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
-                <Badge
-                  variant="outline"
-                  className="font-medium text-xs sm:text-sm"
-                >
-                  <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <StatusPill tone="muted" className="gap-1 normal-case tabular-nums">
+                  <Briefcase className="size-3.5" aria-hidden="true" />
                   {mentorProfile?.years_experience || 0} years exp.
-                </Badge>
+                </StatusPill>
                 {mentorProfile?.country_of_origin && (
-                  <Badge
-                    variant="outline"
-                    className="font-medium text-xs sm:text-sm"
-                  >
-                    <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+                  <StatusPill tone="muted" className="gap-1 normal-case">
+                    <MapPin className="size-3.5" aria-hidden="true" />
                     {mentorProfile.country_of_origin}
-                  </Badge>
+                  </StatusPill>
+                )}
+              </div>
+
+              {!mentorProfile?.is_verified && (
+                <p className="pt-1 text-[0.8125rem] leading-relaxed text-band-muted">
+                  Document verification is optional and earns a Verified badge on your profile.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Specializations */}
+          {specializations && specializations.length > 0 && (
+            <div className="flex flex-col gap-2.5 border-t px-5 py-5 sm:px-6" style={hairline}>
+              <p className="label text-band-muted">Specializations</p>
+              <div className="flex flex-wrap gap-1.5">
+                {specializations.slice(0, 4).map((spec, idx) => (
+                  <StatusPill key={idx} tone="teal" className="normal-case">
+                    {spec}
+                  </StatusPill>
+                ))}
+                {specializations.length > 4 && (
+                  <StatusPill tone="muted" className="normal-case tabular-nums">
+                    +{specializations.length - 4} more
+                  </StatusPill>
                 )}
               </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-          <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/30 border border-border/50 text-center group hover:bg-muted/50 transition-colors">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1.5 sm:mb-2 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              {(mentorProfile as any)?.total_sessions || 0}
-            </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-              Sessions
-            </div>
-          </div>
-          <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/30 border border-border/50 text-center group hover:bg-muted/50 transition-colors">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1.5 sm:mb-2 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-foreground flex items-center justify-center gap-1">
-              {(mentorProfile as any)?.average_rating || 0}
-              {((mentorProfile as any)?.average_rating || 0) > 0 && (
-                <span className="text-xs sm:text-sm">⭐</span>
-              )}
-            </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-              Rating
-            </div>
-          </div>
-          <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/30 border border-border/50 text-center group hover:bg-muted/50 transition-colors">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1.5 sm:mb-2 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              ${mentorProfile?.hourly_rate || 0}
-            </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-              Hourly Rate
-            </div>
-          </div>
-        </div>
-
-        {/* Specializations */}
-        {specializations && specializations.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-foreground">
-              Specializations
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {specializations.slice(0, 4).map((spec, idx) => (
-                <Badge
-                  key={idx}
-                  variant="secondary"
-                  className="bg-primary/5 text-primary border-0"
-                >
-                  {spec}
-                </Badge>
-              ))}
-              {specializations.length > 4 && (
-                <Badge variant="outline" className="text-muted-foreground">
-                  +{specializations.length - 4} more
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button onClick={handleEditProfile} className="flex-1 shadow-sm">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Profile
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowServiceModal(true)}
-            className="flex-1 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-          >
-            <DollarSign className="w-4 h-4 mr-2" />
-            Manage Services
-          </Button>
-        </div>
-
-        {/* Bio Preview */}
-        {mentorProfile?.professional_bio && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-foreground">About</h4>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {mentorProfile.professional_bio.length > 200
-                ? `${mentorProfile.professional_bio.substring(0, 200)}...`
-                : mentorProfile.professional_bio}
-            </p>
-          </div>
-        )}
-
-        {/* Contact Info */}
-        <div className="space-y-3 pt-4 border-t border-border/50">
-          <h4 className="text-sm font-semibold text-foreground">
-            Contact Information
-          </h4>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Mail className="w-4 h-4 text-primary" />
-              <span>{mentorProfile?.email || profile?.user_id}</span>
-            </div>
-            {mentorProfile?.linkedin_url && (
-              <div className="flex items-center gap-2 text-sm">
-                <Linkedin className="w-4 h-4 text-primary" />
-                <a
-                  href={mentorProfile.linkedin_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  View LinkedIn Profile
-                </a>
-              </div>
-            )}
-          </div>
-
-          {mentorProfile?.languages_spoken &&
-            mentorProfile.languages_spoken.length > 0 && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Globe className="w-4 h-4 text-primary" />
-                <span>{mentorProfile.languages_spoken.join(", ")}</span>
-              </div>
-            )}
-
-          {mentorProfile?.availability_preference && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="w-4 h-4 text-primary" />
-              <span>Available: {mentorProfile.availability_preference}</span>
+          {/* Bio Preview */}
+          {mentorProfile?.professional_bio && (
+            <div className="flex flex-col gap-2.5 border-t px-5 py-5 sm:px-6" style={hairline}>
+              <p className="label text-band-muted">About</p>
+              <p className="max-w-[44rem] text-[0.9375rem] leading-relaxed text-band-muted">
+                {mentorProfile.professional_bio.length > 200
+                  ? `${mentorProfile.professional_bio.substring(0, 200)}...`
+                  : mentorProfile.professional_bio}
+              </p>
             </div>
           )}
+        </WorkPanel>
+
+        <div className="flex flex-col gap-6">
+          {/* Numbers */}
+          <WorkPanel>
+            <PanelHeader title="At a glance" />
+            <ul className={DIVIDED}>
+              <Figure
+                icon={Users}
+                label="Sessions"
+                value={(mentorProfile as any)?.total_sessions || 0}
+              />
+              <Figure
+                icon={Star}
+                label="Rating"
+                value={averageRating > 0 ? (mentorProfile as any)?.average_rating : "—"}
+                hint={averageRating > 0 ? undefined : "No ratings yet"}
+              />
+              <Figure
+                icon={DollarSign}
+                label="Hourly rate"
+                value={formatUsd(mentorProfile?.hourly_rate || 0)}
+              />
+            </ul>
+          </WorkPanel>
+
+          {/* Contact Info */}
+          <WorkPanel>
+            <PanelHeader title="Contact" />
+            <ul className="flex flex-col gap-3 px-5 py-5 sm:px-6">
+              <ContactLine icon={Mail}>{mentorProfile?.email || profile?.user_id}</ContactLine>
+              {mentorProfile?.linkedin_url && (
+                <li className="flex items-center gap-3 text-[0.875rem]">
+                  <Linkedin className="size-4 shrink-0 text-band-signal" aria-hidden="true" />
+                  <a
+                    href={mentorProfile.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-band-signal underline-offset-4 hover:underline"
+                  >
+                    View LinkedIn profile
+                  </a>
+                </li>
+              )}
+              {mentorProfile?.languages_spoken &&
+                mentorProfile.languages_spoken.length > 0 && (
+                  <ContactLine icon={Globe}>{mentorProfile.languages_spoken.join(", ")}</ContactLine>
+                )}
+              {mentorProfile?.availability_preference && (
+                <ContactLine icon={Clock}>Available: {mentorProfile.availability_preference}</ContactLine>
+              )}
+            </ul>
+          </WorkPanel>
         </div>
       </div>
 

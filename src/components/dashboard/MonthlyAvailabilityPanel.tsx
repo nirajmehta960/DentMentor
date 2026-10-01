@@ -6,17 +6,50 @@ import {
   addMonths,
   subMonths,
 } from "date-fns";
-import { Calendar, ChevronLeft, ChevronRight, Clock, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Calendar, CalendarCheck, ChevronLeft, ChevronRight, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAvailability } from "@/hooks/useAvailability";
 import { useBookedSessions } from "@/hooks/useBookedSessions";
 import { useAuth } from "@/hooks/useAuth";
 import { formatTime, cn } from "@/lib/utils";
+import { DateLeaf, EmptyState, Segmented, StatusPill, hairline } from "./dashboard-ui";
 
 interface MonthlyAvailabilityPanelProps {
   currentMonth: Date;
   onMonthChange: (month: Date) => void;
+}
+
+/** The rows `useAvailability` returns (its query result is typed `unknown`). */
+type AvailabilityRow = { id: string; date: string; time_slots: any; is_available: boolean };
+
+const FILTERS = [
+  { value: "all", label: "All" },
+  { value: "available", label: "Available" },
+  { value: "booked", label: "Booked" },
+] as const;
+
+/** One date's group: a leaf, the weekday, a status, then its rows. */
+function DayGroup({
+  date,
+  status,
+  children,
+}: {
+  date: Date;
+  status: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex gap-4 py-4 first:pt-0 last:pb-0">
+      <DateLeaf date={date} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[0.9375rem] font-medium text-band-fg">{format(date, "EEEE")}</p>
+          {status}
+        </div>
+        {children}
+      </div>
+    </li>
+  );
 }
 
 export function MonthlyAvailabilityPanel({
@@ -26,11 +59,12 @@ export function MonthlyAvailabilityPanel({
   const [filterType, setFilterType] = useState<"all" | "available" | "booked">(
     "all"
   );
-  const { availability, isLoading, refetch } = useAvailability();
+  const { availability: availabilityData, isLoading, refetch } = useAvailability();
+  const availability = availabilityData as AvailabilityRow[] | undefined;
   const { bookedSessions, isLoading: isLoadingSessions } =
     useBookedSessions(currentMonth);
   const { mentorProfile } = useAuth();
-  
+
   // Get mentor timezone (default to user's browser timezone or UTC)
   const mentorTimezone = mentorProfile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
@@ -136,26 +170,13 @@ export function MonthlyAvailabilityPanel({
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "available":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "booked":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "partial":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   // Group booked sessions by date
   // Parse session_date (UTC timestamptz) and convert to mentor's timezone date
   const bookedSessionsByDate = bookedSessions.reduce((acc, session) => {
     // Parse UTC timestamp and convert to mentor's timezone for date grouping
     const sessionDate = new Date(session.session_date);
     // Format date in mentor's timezone
-    const dateKey = sessionDate.toLocaleDateString('en-CA', { 
+    const dateKey = sessionDate.toLocaleDateString('en-CA', {
       timeZone: mentorTimezone,
       year: 'numeric',
       month: '2-digit',
@@ -182,7 +203,7 @@ export function MonthlyAvailabilityPanel({
   bookedSessions.forEach((session) => {
     const sessionDate = new Date(session.session_date);
     // Convert to mentor's timezone for date grouping
-    const dateKey = sessionDate.toLocaleDateString('en-CA', { 
+    const dateKey = sessionDate.toLocaleDateString('en-CA', {
       timeZone: mentorTimezone,
       year: 'numeric',
       month: '2-digit',
@@ -191,96 +212,49 @@ export function MonthlyAvailabilityPanel({
     allDates.add(dateKey);
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "scheduled":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
-            Scheduled
-          </Badge>
-        );
-      case "confirmed":
-        return (
-          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
-            Confirmed
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge className="bg-gray-100 text-gray-800 border-gray-200 text-xs">
-            Completed
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary" className="text-xs">
-            {status}
-          </Badge>
-        );
-    }
-  };
-
   if (isLoading || isLoadingSessions) {
     return (
-      <div className="animate-pulse space-y-3">
+      <div aria-hidden="true" className="flex flex-col gap-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-16 bg-muted rounded"></div>
+          <div key={i} className="h-16 rounded-xl bg-band-fg/[0.04] motion-safe:animate-pulse"></div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      {/* Month Navigation Header */}
-      <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+    <div className="flex flex-col gap-5">
+      {/* Month navigation and filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Segmented<"all" | "available" | "booked">
+          label="Show"
+          options={FILTERS}
+          value={filterType}
+          onChange={setFilterType}
+        />
+        <div className="flex items-center justify-between gap-1 sm:justify-end">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => onMonthChange(subMonths(currentMonth, 1))}
-            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+            aria-label="Previous month"
+            className="size-11"
           >
-            <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <ChevronLeft className="size-4" aria-hidden="true" />
           </Button>
-          <span className="text-xs sm:text-sm font-medium min-w-[100px] sm:min-w-[120px] text-center">
+          <span className="min-w-[8.5rem] text-center text-[0.875rem] font-medium text-band-fg" aria-live="polite">
             {format(currentMonth, "MMMM yyyy")}
           </span>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => onMonthChange(addMonths(currentMonth, 1))}
-            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+            aria-label="Next month"
+            className="size-11"
           >
-            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <ChevronRight className="size-4" aria-hidden="true" />
           </Button>
         </div>
-
-      {/* Filter Buttons */}
-      <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-        <Button
-          variant={filterType === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("all")}
-          className="rounded-md sm:rounded-lg text-xs sm:text-sm flex-1 sm:flex-initial"
-        >
-          All
-        </Button>
-        <Button
-          variant={filterType === "available" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("available")}
-          className="rounded-md sm:rounded-lg text-xs sm:text-sm flex-1 sm:flex-initial"
-        >
-          Available
-        </Button>
-        <Button
-          variant={filterType === "booked" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setFilterType("booked")}
-          className="rounded-md sm:rounded-lg text-xs sm:text-sm flex-1 sm:flex-initial"
-        >
-          Booked
-        </Button>
       </div>
 
       {/* Content */}
@@ -290,46 +264,24 @@ export function MonthlyAvailabilityPanel({
           if (filterType === "booked") {
             if (bookedSessions.length === 0) {
               return (
-                <div className="text-center text-muted-foreground py-6 sm:py-8">
-                  <Calendar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 opacity-50" />
-                  <p className="text-sm sm:text-base">
-                    No booked sessions for this month
-                  </p>
-                  <p className="text-xs sm:text-sm">
-                    Your booked sessions will appear here
-                  </p>
-                </div>
+                <EmptyState icon={CalendarCheck} className="py-10">
+                  No booked sessions this month. Bookings appear here once mentees pick a slot.
+                </EmptyState>
               );
             }
             return (
-              <div className="space-y-2 sm:space-y-3">
+              <ul className="divide-y divide-[#E3ECEA]">
                 {Object.entries(bookedSessionsByDate)
                   .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
                   .map(([dateKey, sessions]) => {
                     const itemDate = parseDateString(dateKey);
                     return (
-                      <div
+                      <DayGroup
                         key={dateKey}
-                        className="border rounded-md sm:rounded-lg p-2.5 sm:p-3 space-y-2"
+                        date={itemDate}
+                        status={<StatusPill tone="ink">Booked</StatusPill>}
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                            <Badge
-                              variant="outline"
-                              className="font-medium text-xs sm:text-sm"
-                            >
-                              {format(itemDate, "MMM d")}
-                            </Badge>
-                            <span className="text-xs sm:text-sm text-muted-foreground">
-                              {format(itemDate, "EEEE")}
-                            </span>
-                          </div>
-                          <Badge className="bg-red-100 text-red-800 border-red-200 text-xs sm:text-sm">
-                            Booked
-                          </Badge>
-                        </div>
-
-                        <div className="space-y-1.5 sm:space-y-2">
+                        <ul className="flex flex-col gap-2">
                           {sessions.map((session) => {
                             // Format session time in mentor's timezone
                             const sessionDate = new Date(session.session_date);
@@ -339,125 +291,99 @@ export function MonthlyAvailabilityPanel({
                               minute: '2-digit',
                               hour12: true
                             });
-                            
+
                             return (
-                            <div
+                            <li
                               key={session.id}
-                              className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5 sm:gap-2 p-2 bg-muted/30 rounded-md sm:rounded-lg"
+                              className="flex flex-col gap-2 rounded-tile border px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between"
+                              style={hairline}
                             >
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
-                                  <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground flex-shrink-0" />
-                                  <span className="text-xs sm:text-sm font-medium text-foreground">
-                                    {sessionTimeStr}
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <p className="flex flex-wrap items-center gap-1.5 text-[0.875rem] font-medium text-band-fg tabular-nums">
+                                  <Clock className="size-3.5 shrink-0 text-band-faint" aria-hidden="true" />
+                                  {sessionTimeStr}
+                                  <span className="text-[0.8125rem] font-normal text-band-muted">
+                                    · {session.duration_minutes} min
                                   </span>
-                                  <span className="text-[10px] sm:text-xs text-muted-foreground">
-                                    ({session.duration_minutes} min)
-                                  </span>
-                                </div>
+                                </p>
                                 {session.mentee_name && (
-                                  <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                                    <User className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+                                  <p className="flex items-center gap-1.5 text-[0.8125rem] text-band-muted">
+                                    <User className="size-3.5 shrink-0" aria-hidden="true" />
                                     <span className="truncate">
                                       {session.mentee_name}
                                     </span>
-                                  </div>
+                                  </p>
                                 )}
                                 {session.session_type && (
-                                  <div className="text-xs text-muted-foreground mt-1">
+                                  <p className="text-[0.8125rem] text-band-muted">
                                     {session.session_type}
-                                  </div>
+                                  </p>
                                 )}
                               </div>
-                              <div className="flex-shrink-0">
-                                {getStatusBadge(session.status)}
-                              </div>
-                            </div>
+                              <StatusPill status={session.status} />
+                            </li>
                             );
                           })}
-                        </div>
-                      </div>
+                        </ul>
+                      </DayGroup>
                     );
                   })}
-              </div>
+              </ul>
             );
           }
 
           // Show availability slots for "all" or "available"
           if (filteredAvailability.length === 0) {
             return (
-              <div className="text-center text-muted-foreground py-6 sm:py-8">
-                <Calendar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 opacity-50" />
-                <p className="text-sm sm:text-base">
-                  No availability set for this month
-                </p>
-                <p className="text-xs sm:text-sm">
-                  Click on calendar dates to add availability
-                </p>
-              </div>
+              <EmptyState icon={Calendar} className="py-10">
+                No availability set for this month. Pick a date on the calendar to add slots.
+              </EmptyState>
             );
           }
 
           return (
-            <div className="space-y-2 sm:space-y-3">
+            <ul className="divide-y divide-[#E3ECEA]">
               {filteredAvailability.map((item) => {
                 const timeSlots = formatTimeSlots(item.time_slots);
                 const itemDate = parseDateString(item.date);
 
                 return (
-                  <div
+                  <DayGroup
                     key={item.id}
-                    className="border rounded-md sm:rounded-lg p-2.5 sm:p-3 space-y-2"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2">
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <Badge
-                          variant="outline"
-                          className="font-medium text-xs sm:text-sm"
-                        >
-                          {format(itemDate, "MMM d")}
-                        </Badge>
-                        <span className="text-xs sm:text-sm text-muted-foreground">
-                          {format(itemDate, "EEEE")}
-                        </span>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          getStatusColor(
-                            item.is_available ? "available" : "booked"
-                          ),
-                          "text-xs sm:text-sm"
-                        )}
-                      >
+                    date={itemDate}
+                    status={
+                      <StatusPill tone={item.is_available ? "teal" : "ink"}>
                         {item.is_available ? "Available" : "Booked"}
-                      </Badge>
-                    </div>
-
-                    <div className="text-xs sm:text-sm text-foreground">
-                      {timeSlots.length > 0 ? (
-                        <div className="break-words">
-                          {timeSlots.map((slot, index) => {
-                            const startTime12 = to12(slot.startTime);
-                            const endTime12 = to12(slot.endTime);
-                            return (
-                              <span key={index} className="text-xs sm:text-sm">
-                                {startTime12} to {endTime12}
-                                {index < timeSlots.length - 1 && ", "}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-[10px] sm:text-xs">
-                          No time slots
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                      </StatusPill>
+                    }
+                  >
+                    {timeSlots.length > 0 ? (
+                      <ul className="flex flex-wrap gap-1.5" aria-label="Time slots">
+                        {timeSlots.map((slot, index) => {
+                          const startTime12 = to12(slot.startTime);
+                          const endTime12 = to12(slot.endTime);
+                          return (
+                            <li
+                              key={index}
+                              className={cn(
+                                "inline-flex h-7 items-center rounded-pill border bg-white px-2.5 text-[0.8125rem] text-band-fg tabular-nums"
+                              )}
+                              style={hairline}
+                            >
+                              {startTime12} – {endTime12}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="text-[0.8125rem] text-band-muted">
+                        No time slots
+                      </p>
+                    )}
+                  </DayGroup>
                 );
               })}
-            </div>
+            </ul>
           );
         })()}
       </div>

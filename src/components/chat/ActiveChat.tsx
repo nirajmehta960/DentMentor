@@ -1,12 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ChatComposer, ChatHeader, ChatPanel, MessageThread, displayName } from "./chat-parts";
 
 interface Message {
     id: string;
@@ -38,6 +34,9 @@ export function ActiveChat({ sessionId, initialOtherUser, onRead }: ActiveChatPr
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [otherUser, setOtherUser] = useState<Participant | null>(initialOtherUser || null);
+    // Known only when this component looked the session up itself; the header
+    // falls back to a plain context line when the host passed the participant in.
+    const [otherRole, setOtherRole] = useState<"mentor" | "mentee" | null>(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [newMessage, setNewMessage] = useState("");
@@ -85,8 +84,10 @@ export function ActiveChat({ sessionId, initialOtherUser, onRead }: ActiveChatPr
                 let otherUserId: string | null = null;
                 if (user.id === mentorUserId) {
                     otherUserId = menteeUserId;
+                    setOtherRole("mentee");
                 } else if (user.id === menteeUserId) {
                     otherUserId = mentorUserId;
+                    setOtherRole("mentor");
                 }
 
                 if (otherUserId) {
@@ -256,98 +257,37 @@ export function ActiveChat({ sessionId, initialOtherUser, onRead }: ActiveChatPr
         }
     }, [loading]);
 
+    const name = otherUser ? displayName(otherUser, "") : "";
+
+    // Its own site scope (`display: contents`, so the host's flex layout is
+    // untouched): the dashboards embed this, and its band colours must resolve
+    // whether or not the host renders inside an AppShell.
     return (
-        <div className="flex flex-col h-full bg-background">
-            {/* Header */}
-            <div className="bg-card border-b p-4 flex items-center gap-4 shadow-sm flex-shrink-0">
-                {otherUser ? (
-                    <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={otherUser.avatar_url || ""} />
-                            <AvatarFallback>{otherUser.first_name?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <h2 className="font-semibold text-foreground">
-                                {otherUser.first_name} {otherUser.last_name}
-                            </h2>
-                            <span className="text-xs text-green-600 flex items-center gap-1">
-                                ● Online
-                            </span>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="h-10 w-32 bg-muted animate-pulse rounded" />
-                )}
-            </div>
+        <div data-dm-site="" className="contents">
+            <ChatPanel variant="flush" label={name ? `Conversation with ${name}` : "Conversation"}>
+                <ChatHeader
+                    person={otherUser}
+                    context={otherRole ? `Your ${otherRole} · Session chat` : "Session chat"}
+                />
 
-            {/* Chat Area */}
-            <ScrollArea className="flex-1 p-4">
-                {loading ? (
-                    <div className="flex h-full items-center justify-center py-10">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-4">
-                        {hasMore && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={loadMore}
-                                disabled={loadingMore}
-                                className="self-center text-xs text-muted-foreground"
-                            >
-                                {loadingMore ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
-                                Load older messages
-                            </Button>
-                        )}
+                <MessageThread
+                    messages={messages}
+                    currentUserId={user?.id}
+                    otherName={name}
+                    loading={loading}
+                    hasMore={hasMore}
+                    loadingMore={loadingMore}
+                    onLoadMore={loadMore}
+                    endRef={scrollRef}
+                />
 
-                        {messages.length === 0 ? (
-                            <div className="text-center text-muted-foreground my-10">
-                                No messages yet. Start the conversation!
-                            </div>
-                        ) : (
-                            messages.map((msg) => {
-                                const isMe = msg.sender_id === user?.id;
-                                return (
-                                    <div
-                                        key={msg.id}
-                                        className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-                                    >
-                                        <div
-                                            className={`
-                                        max-w-[75%] px-4 py-2 rounded-2xl text-sm 
-                                        ${isMe
-                                                    ? "bg-primary text-primary-foreground rounded-br-none"
-                                                    : "bg-muted text-foreground rounded-bl-none"
-                                                }
-                                    `}
-                                        >
-                                            {msg.message_text}
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                        <div ref={scrollRef} />
-                    </div>
-                )}
-            </ScrollArea>
-
-            {/* Composer */}
-            <div className="p-4 border-t bg-card mt-auto">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                    <Input
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className="flex-1"
-                        disabled={sending}
-                    />
-                    <Button type="submit" size="icon" disabled={sending || !newMessage.trim()}>
-                        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    </Button>
-                </form>
-            </div>
+                <ChatComposer
+                    value={newMessage}
+                    onValueChange={setNewMessage}
+                    onSubmit={handleSendMessage}
+                    sending={sending}
+                />
+            </ChatPanel>
         </div>
     );
 }

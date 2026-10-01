@@ -7,8 +7,6 @@ import {
   User,
   Activity,
   MessageSquare,
-  Settings,
-  HelpCircle
 } from 'lucide-react';
 
 interface DashboardMobileNavProps {
@@ -26,10 +24,19 @@ const navItems = [
   { id: 'activity', label: 'Activity', icon: Activity },
 ];
 
+/**
+ * Below lg the rail becomes a sticky strip of pills under the top bar. It
+ * scrolls sideways inside itself; the page never does.
+ */
 export function DashboardMobileNav({ activeTab, onTabChange }: DashboardMobileNavProps) {
   return (
-    <div className="lg:hidden sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b">
-      <div className="flex overflow-x-auto scrollbar-hide px-4 py-2 gap-2">
+    <nav
+      aria-label="Dashboard sections"
+      data-band="paper"
+      className="sticky top-16 z-30 border-b bg-white/[0.86] backdrop-blur-md lg:hidden"
+      style={{ borderColor: 'rgb(9 67 56 / 0.06)' }}
+    >
+      <div className="flex gap-1 overflow-x-auto px-3 py-2 scrollbar-hide sm:px-5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -37,20 +44,22 @@ export function DashboardMobileNav({ activeTab, onTabChange }: DashboardMobileNa
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onTabChange(item.id)}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200",
+                "inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-pill px-4 text-[0.875rem] transition-colors",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-[rgb(15_112_93/0.08)] font-medium text-band-signal"
+                  : "text-band-muted hover:bg-band-fg/[0.04] hover:text-band-fg"
               )}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="size-[18px]" strokeWidth={isActive ? 2 : 1.75} aria-hidden="true" />
               {item.label}
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

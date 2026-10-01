@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Calendar, Clock, DollarSign, CheckCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +28,8 @@ import {
   type AlternativeSuggestion
 } from '@/lib/utils/booking';
 import { useQueryClient } from '@tanstack/react-query';
+import { PersonAvatar, formatPrice } from '@/components/mentors/mentor-display';
+import { IconTile } from './booking-ui';
 
 import { supabase } from '@/integrations/supabase/client';
 
@@ -350,32 +352,36 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   if (isBookingComplete && bookingResult) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              Booking Confirmed!
-            </DialogTitle>
+        <DialogContent data-lenis-prevent="" className="sm:max-w-md">
+          <DialogHeader className="items-center gap-4 space-y-0 text-center sm:text-center">
+            <IconTile icon={CheckCircle} />
+            <DialogTitle className="font-display text-xl tracking-[-0.02em]">Booking confirmed</DialogTitle>
+            <DialogDescription>
+              Your session with {mentorName} has been successfully booked.
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 text-center">
-            <p className="text-muted-foreground">
-              Your session with {mentorName} has been successfully booked.
-            </p>
+          <div className="flex flex-col gap-4 pt-2">
+            <dl className="divide-y divide-border overflow-hidden rounded-xl border border-border text-sm">
+              <div className="flex justify-between gap-4 px-4 py-3">
+                <dt className="text-muted-foreground">Service</dt>
+                <dd className="text-right font-medium text-foreground">{selectedService?.service_title || 'Service'}</dd>
+              </div>
+              <div className="flex justify-between gap-4 px-4 py-3">
+                <dt className="text-muted-foreground">Duration</dt>
+                <dd className="font-medium tabular-nums text-foreground">{bookingResult.duration_minutes || selectedService?.duration_minutes || 60} minutes</dd>
+              </div>
+              <div className="flex justify-between gap-4 px-4 py-3">
+                <dt className="text-muted-foreground">Price</dt>
+                <dd className="font-semibold tabular-nums text-foreground">{formatPrice(Number(bookingResult.price_paid || selectedService?.price || 0))}</dd>
+              </div>
+            </dl>
 
-            <div className="bg-muted/30 rounded-lg p-4 space-y-2 text-sm">
-              <div><strong>Service:</strong> {selectedService?.service_title || 'Service'}</div>
-              <div><strong>Duration:</strong> {bookingResult.duration_minutes || selectedService?.duration_minutes || 60} minutes</div>
-              <div><strong>Price:</strong> ${bookingResult.price_paid || selectedService?.price || 0}</div>
-            </div>
-
-            <p className="text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               You’ll receive a confirmation email and calendar invite after payment is confirmed.
             </p>
 
-            <Button onClick={onClose} className="w-full">
+            <Button onClick={onClose} size="lg" className="w-full">
               Done
             </Button>
           </div>
@@ -386,26 +392,23 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            {mentorAvatar && (
-              <img
-                src={mentorAvatar}
-                alt={mentorName}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            )}
-            <div>
-              <div className="text-lg font-semibold">Book Session</div>
-              <div className="text-sm text-muted-foreground font-normal">
-                with {mentorName}
-              </div>
-            </div>
-          </DialogTitle>
+      <DialogContent
+        data-lenis-prevent=""
+        className="flex max-h-[90vh] flex-col gap-0 overflow-y-auto p-0 sm:max-w-4xl [&>button:last-child]:hidden"
+      >
+        <DialogHeader className="relative flex-row items-center gap-3 space-y-0 border-b border-border px-5 py-4 text-left sm:px-8 sm:py-5">
+          <PersonAvatar name={mentorName} src={mentorAvatar} className="size-11 text-sm" />
+          <div className="min-w-0 flex-1 pr-10">
+            <DialogTitle className="font-display text-lg tracking-[-0.02em] text-foreground">Book a session</DialogTitle>
+            <DialogDescription className="truncate">with {mentorName}</DialogDescription>
+          </div>
+          <DialogClose className="absolute right-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:right-5">
+            <X className="size-5" aria-hidden="true" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="flex flex-col gap-6 px-5 py-6 sm:px-8 sm:py-7">
           {/* Progress Indicator */}
           <ProgressIndicator
             currentStep={currentStep}
@@ -415,12 +418,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Error Display */}
           {bookingError && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+            <div role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 p-4">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                <AlertCircle className="mt-0.5 size-5 shrink-0 text-destructive" aria-hidden="true" />
                 <div className="flex-1">
-                  <h4 className="font-medium text-destructive">{bookingError.title}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">{bookingError.message}</p>
+                  <h4 className="font-semibold text-foreground">{bookingError.title}</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">{bookingError.message}</p>
 
                   {bookingError.action && (
                     <div className="mt-3 flex gap-2">
@@ -430,7 +433,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         onClick={() => setBookingError(null)}
                         disabled={bookingState === 'booking'}
                       >
-                        <RefreshCw className={`w-4 h-4 mr-2 ${bookingState === 'booking' ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={bookingState === 'booking' ? 'animate-spin' : ''} aria-hidden="true" />
                         {bookingError.action}
                       </Button>
                     </div>
@@ -442,8 +445,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Alternative Suggestions */}
           {alternativeSuggestions.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-3">Alternative Time Slots</h4>
+            <div className="rounded-xl border border-border bg-muted/50 p-4">
+              <h4 className="mb-3 font-semibold text-foreground">Alternative time slots</h4>
               <div className="grid grid-cols-2 gap-2">
                 {alternativeSuggestions.slice(0, 6).map((suggestion, index) => (
                   <Button
@@ -451,12 +454,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => handleSelectAlternative(suggestion)}
-                    className="text-left justify-start h-auto p-3"
+                    className="h-auto flex-col items-start rounded-xl p-3 text-left"
                   >
-                    <div>
-                      <div className="font-medium">{suggestion.displayDate}</div>
-                      <div className="text-sm text-muted-foreground">{suggestion.displayTime}</div>
-                    </div>
+                    <span className="font-medium">{suggestion.displayDate}</span>
+                    <span className="text-sm tabular-nums text-muted-foreground">{suggestion.displayTime}</span>
                   </Button>
                 ))}
               </div>
@@ -465,12 +466,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Validation Errors */}
           {validationErrors.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="rounded-xl border border-secondary/25 bg-secondary-light p-4">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <AlertCircle className="mt-0.5 size-5 shrink-0 text-secondary" aria-hidden="true" />
                 <div>
-                  <h4 className="font-medium text-yellow-800">Please fix the following issues:</h4>
-                  <ul className="text-sm text-yellow-700 mt-1 list-disc list-inside">
+                  <h4 className="font-semibold text-foreground">Please fix the following issues:</h4>
+                  <ul className="mt-1 list-inside list-disc text-sm text-muted-foreground">
                     {validationErrors.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
@@ -481,7 +482,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           )}
 
           {/* Step Content */}
-          <div className="min-h-[400px]">
+          <div className="min-h-[360px]">
             {currentStep === 'service' && (
               <ServiceSelection
                 mentorId={mentorId}
@@ -515,29 +516,29 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               />
             )}
           </div>
-
-
-
-          {/* Navigation Buttons */}
-          {currentStep !== 'confirmation' && (
-            <div className="flex gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={currentStep === 'service' ? onClose : handleBack}
-                className="flex-1"
-              >
-                {currentStep === 'service' ? 'Cancel' : 'Back'}
-              </Button>
-              <Button
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="flex-1"
-              >
-                {currentStep === 'service' ? 'Continue' : 'Next'}
-              </Button>
-            </div>
-          )}
         </div>
+
+        {/* Navigation Buttons */}
+        {currentStep !== 'confirmation' && (
+          <div className="sticky bottom-0 mt-auto flex gap-3 border-t border-border bg-white/95 px-5 py-4 backdrop-blur sm:px-8">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={currentStep === 'service' ? onClose : handleBack}
+              className="flex-1"
+            >
+              {currentStep === 'service' ? 'Cancel' : 'Back'}
+            </Button>
+            <Button
+              size="lg"
+              onClick={handleNext}
+              disabled={!canProceed()}
+              className="flex-1"
+            >
+              {currentStep === 'service' ? 'Continue' : 'Next'}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

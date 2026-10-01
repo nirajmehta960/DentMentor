@@ -8,7 +8,7 @@ import { EducationBackgroundStep } from "@/components/onboarding/EducationBackgr
 import { SpecialtiesLanguagesStep } from "@/components/onboarding/SpecialtiesLanguagesStep";
 import { ServicesOfferedStep } from "@/components/onboarding/ServicesOfferedStep";
 import { VerificationStep } from "@/components/onboarding/VerificationStep";
-import { Loader2 } from "lucide-react";
+import { FullPageLoader } from "@/components/auth/FullPageLoader";
 import { useToast } from "@/hooks/use-toast";
 
 const Onboarding = () => {
@@ -214,14 +214,7 @@ const Onboarding = () => {
   // Don't wait for profile loading - allow user to start onboarding immediately
   // Profile will load in background
   if (isLoading || isAuthLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <FullPageLoader label="Loading..." />;
   }
 
   const renderStep = () => {

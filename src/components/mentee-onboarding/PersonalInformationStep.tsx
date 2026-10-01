@@ -3,8 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { X, Upload, User } from 'lucide-react';
+import { ArrowRight, Upload, User } from 'lucide-react';
+import {
+  FormSection,
+  RemovableTag,
+  RequiredMark,
+  StepActions,
+  StepHeader,
+  TagList,
+} from '@/components/onboarding/onboarding-ui';
 
 interface PersonalInformationStepProps {
   data: any;
@@ -159,121 +166,149 @@ export const PersonalInformationStep = ({ data, onNext }: PersonalInformationSte
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <User className="w-12 h-12 text-primary mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
-        <p className="text-muted-foreground">
-          Let's start with some basic information about you
-        </p>
-      </div>
+    <div>
+      <StepHeader
+        icon={User}
+        title="Personal information"
+        description="Let's start with some basic information about you. Mentors you book can see these details, so they can prepare for your session."
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         {/* Profile Photo */}
-        <div className="flex flex-col items-center space-y-4">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-              <User className="w-12 h-12 text-muted-foreground" />
+        <FormSection>
+          <div className="flex items-center gap-4">
+            <div className="relative shrink-0">
+              <div className="grid size-20 place-items-center rounded-full bg-[rgb(15_112_93/0.08)]">
+                <User className="size-9 text-band-signal" strokeWidth={1.5} aria-hidden="true" />
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                aria-label="Profile photo"
+                className="absolute -bottom-1 -right-1 size-10 rounded-full"
+              >
+                <Upload aria-hidden="true" />
+              </Button>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
+            <div className="flex flex-col gap-1">
+              <p className="text-[0.9375rem] font-medium text-band-fg">Profile photo</p>
+              <p className="label text-band-faint">Optional</p>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">Profile Photo (Optional)</p>
-        </div>
+        </FormSection>
 
-        {/* Citizenship Country */}
-        <div className="space-y-2">
-          <Label htmlFor="citizenship">Citizenship Country *</Label>
-          <Select
-            value={formData.citizenship_country}
-            onValueChange={(value) => {
-              setFormData(prev => ({ ...prev, citizenship_country: value }));
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select your citizenship country" />
-            </SelectTrigger>
-            <SelectContent>
-              {countries.map((country) => (
-                <SelectItem key={country.code} value={country.name}>
-                  <span className="flex items-center gap-2">
-                    <span>{country.flag}</span>
-                    <span>{country.name}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FormSection title="Where you're from">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {/* Citizenship Country */}
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="citizenship">
+                Citizenship country
+                <RequiredMark />
+              </Label>
+              <Select
+                value={formData.citizenship_country}
+                onValueChange={(value) => {
+                  setFormData(prev => ({ ...prev, citizenship_country: value }));
+                }}
+              >
+                <SelectTrigger id="citizenship">
+                  <SelectValue placeholder="Select your citizenship country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.code} value={country.name}>
+                      <span className="flex items-center gap-2">
+                        <span>{country.flag}</span>
+                        <span>{country.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        {/* Current Location */}
-        <div className="space-y-2">
-          <Label htmlFor="location">Current Location *</Label>
-          <Input
-            id="location"
-            placeholder="City, Country or State"
-            value={formData.current_location}
-            onChange={(e) => setFormData(prev => ({ ...prev, current_location: e.target.value }))}
-            required
-          />
-        </div>
+            {/* Current Location */}
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="location">
+                Current location
+                <RequiredMark />
+              </Label>
+              <Input
+                id="location"
+                placeholder="City, Country or State"
+                value={formData.current_location}
+                onChange={(e) => setFormData(prev => ({ ...prev, current_location: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+        </FormSection>
 
-        {/* Highest Degree */}
-        <div className="space-y-2">
-          <Label htmlFor="degree">Highest Degree Completed *</Label>
-          <Select
-            value={formData.highest_degree}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, highest_degree: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select degree" />
-            </SelectTrigger>
-            <SelectContent>
-              {degrees.map((degree) => (
-                <SelectItem key={degree} value={degree}>
-                  {degree}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FormSection title="Education">
+          {/* Highest Degree */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="degree">
+              Highest degree completed
+              <RequiredMark />
+            </Label>
+            <Select
+              value={formData.highest_degree}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, highest_degree: value }))}
+            >
+              <SelectTrigger id="degree">
+                <SelectValue placeholder="Select degree" />
+              </SelectTrigger>
+              <SelectContent>
+                {degrees.map((degree) => (
+                  <SelectItem key={degree} value={degree}>
+                    {degree}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Graduation Year */}
-        <div className="space-y-2">
-          <Label htmlFor="graduation">Graduation Year *</Label>
-          <Input
-            id="graduation"
-            type="number"
-            placeholder="2025"
-            value={formData.graduation_year}
-            onChange={(e) => setFormData(prev => ({ ...prev, graduation_year: parseInt(e.target.value) || new Date().getFullYear() }))}
-            min="1950"
-            max={new Date().getFullYear() + 10}
-            required
-          />
-        </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_10rem]">
+            {/* University Name */}
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="university">
+                University / institution name
+                <RequiredMark />
+              </Label>
+              <Input
+                id="university"
+                placeholder="Enter your university name"
+                value={formData.university_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, university_name: e.target.value }))}
+                required
+              />
+            </div>
 
-        {/* University Name */}
-        <div className="space-y-2">
-          <Label htmlFor="university">University/Institution Name *</Label>
-          <Input
-            id="university"
-            placeholder="Enter your university name"
-            value={formData.university_name}
-            onChange={(e) => setFormData(prev => ({ ...prev, university_name: e.target.value }))}
-            required
-          />
-        </div>
+            {/* Graduation Year */}
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="graduation">
+                Graduation year
+                <RequiredMark />
+              </Label>
+              <Input
+                id="graduation"
+                type="number"
+                inputMode="numeric"
+                placeholder="2025"
+                value={formData.graduation_year}
+                onChange={(e) => setFormData(prev => ({ ...prev, graduation_year: parseInt(e.target.value) || new Date().getFullYear() }))}
+                min="1950"
+                max={new Date().getFullYear() + 10}
+                required
+                className="tabular-nums"
+              />
+            </div>
+          </div>
+        </FormSection>
 
         {/* Languages */}
-        <div className="space-y-2">
-          <Label>Languages Spoken *</Label>
+        <FormSection title="Languages spoken" required>
           <Select
             value={languageInput}
             onValueChange={(value) => {
@@ -284,7 +319,7 @@ export const PersonalInformationStep = ({ data, onNext }: PersonalInformationSte
               }
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger aria-label="Add a language">
               <SelectValue placeholder="Select languages you speak" />
             </SelectTrigger>
             <SelectContent>
@@ -295,32 +330,33 @@ export const PersonalInformationStep = ({ data, onNext }: PersonalInformationSte
               ))}
             </SelectContent>
           </Select>
-          
+
           {selectedLanguages.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <TagList label="Selected languages">
               {selectedLanguages.map((language) => (
-                <Badge key={language} variant="secondary" className="flex items-center gap-1">
+                <RemovableTag
+                  key={language}
+                  onRemove={() => handleLanguageRemove(language)}
+                  removeLabel={`Remove ${language}`}
+                >
                   {language}
-                  <X 
-                    className="w-3 h-3 cursor-pointer hover:text-destructive" 
-                    onClick={() => handleLanguageRemove(language)}
-                  />
-                </Badge>
+                </RemovableTag>
               ))}
-            </div>
+            </TagList>
           )}
-        </div>
+        </FormSection>
 
         {/* Submit Button */}
-        <div className="flex justify-end pt-6">
-          <Button 
-            type="submit" 
+        <StepActions>
+          <Button
+            type="submit"
+            size="lg"
             disabled={!isFormValid()}
-            className="bg-primary hover:bg-primary/90"
           >
             Continue
+            <ArrowRight aria-hidden="true" />
           </Button>
-        </div>
+        </StepActions>
       </form>
     </div>
   );

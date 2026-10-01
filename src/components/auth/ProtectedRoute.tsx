@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
+import { FullPageLoader } from "./FullPageLoader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -39,14 +39,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const shouldWaitForProfile = user && isProfileLoading && !isEmailConfirmed;
 
   if (isLoading || isAuthLoading || shouldWaitForProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <FullPageLoader label="Loading..." />;
   }
 
   // Redirect to auth if authentication is required but user is not signed in
@@ -121,14 +114,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (window.location.pathname !== onboardingPath) {
       // Use replace to avoid adding to history
       window.location.replace(onboardingPath);
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Redirecting...</p>
-          </div>
-        </div>
-      );
+      return <FullPageLoader label="Redirecting..." />;
     }
 
     return <Navigate to={onboardingPath} replace />;

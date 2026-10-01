@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from '@/hooks/use-toast';
 import { Camera, Upload, X } from 'lucide-react';
 import heic2any from 'heic2any';
+import { IconTile, MetaLabel } from './dashboard-ui';
 
 interface ProfileImageCropperProps {
   open: boolean;
@@ -303,39 +304,38 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            Update Profile Picture
+      {/* Portals to <body> and is shared with onboarding and the mentee bar:
+          app theme tokens only, no site band tokens. */}
+      <DialogContent className="w-[calc(100vw-1.5rem)] rounded-2xl p-5 sm:max-w-lg sm:p-7">
+        <DialogHeader className="pr-8 text-left">
+          <DialogTitle className="font-display text-[1.375rem] font-semibold tracking-[-0.02em]">
+            Update profile picture
           </DialogTitle>
           <DialogDescription>
-            Upload and position your profile picture. Drag to adjust the position.
+            Upload a photo, then drag it to position it in the circle.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">
           {!selectedImage ? (
             <div
-              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
+              className={`rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors duration-200 sm:py-12 ${
                 isDragging 
-                  ? 'border-primary bg-primary/5 scale-105' 
-                  : 'border-muted-foreground/25 hover:border-primary/50'
+                  ? 'border-primary bg-[rgb(15_112_93/0.04)]' 
+                  : 'border-border hover:border-[rgb(15_112_93/0.4)]'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <div className="flex flex-col items-center space-y-4">
-                <div className="p-4 rounded-full bg-primary/10">
-                  <Upload className="h-8 w-8 text-primary" />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">
+              <div className="flex flex-col items-center gap-4">
+                <IconTile icon={Upload} size="lg" />
+                <div className="space-y-1.5">
+                  <p className="text-[1rem] font-semibold text-foreground">
                     {isDragging ? 'Drop your image here' : 'Upload your photo'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Drag and drop an image, or click to browse
+                    Drag and drop an image, or browse. JPG, PNG, WebP or HEIC, up to 10MB.
                   </p>
                 </div>
                 <input
@@ -352,8 +352,8 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isProcessing}
                 >
-                  <Camera className="mr-2 h-4 w-4" />
-                  {isProcessing ? 'Processing...' : 'Select Image'}
+                  <Camera className="size-4" aria-hidden="true" />
+                  {isProcessing ? 'Processing...' : 'Select image'}
                 </Button>
               </div>
             </div>
@@ -361,9 +361,11 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
             <div className="space-y-6">
               {/* Main Crop Interface */}
               <div className="flex flex-col items-center gap-6">
-                {/* Crop Area */}
+                {/* Crop Area. The crop maths works in a 300px frame, so narrow
+                    screens scale the frame visually rather than resizing it. */}
                 <div className="relative">
-                  <div className="relative w-[300px] h-[300px] rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-2xl">
+                  <div className="max-[364px]:size-[246px]">
+                  <div className="relative h-[300px] w-[300px] origin-top-left overflow-hidden rounded-full bg-muted shadow-large ring-1 ring-border max-[364px]:scale-[0.82]">
                     {imageLoaded && (
                       <div
                         className={`absolute inset-0 cursor-move select-none ${isDraggingImage ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -405,46 +407,42 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
                       </div>
                     )}
                   </div>
+                  </div>
                   
                   {/* Instructions */}
-                  <p className="text-center text-sm text-muted-foreground mt-4">
+                  <p className="mt-4 text-center text-sm text-muted-foreground">
                     Drag to reposition your photo
                   </p>
                 </div>
 
                 {/* Real-time Preview */}
-                <div className="space-y-3">
-                  <h3 className="font-medium text-sm text-center">Preview</h3>
-                  <div className="flex justify-center">
-                    <div className="relative">
-                      <canvas
-                        ref={previewCanvasRef}
-                        width={100}
-                        height={100}
-                        className="w-20 h-20 rounded-full border-2 border-gray-200 shadow-lg"
-                      />
-                      <div className="absolute inset-0 rounded-full border-2 border-primary/20 pointer-events-none" />
-                    </div>
-                  </div>
+                <div className="flex flex-col items-center gap-2.5">
+                  <MetaLabel>Preview</MetaLabel>
+                  <canvas
+                    ref={previewCanvasRef}
+                    width={100}
+                    height={100}
+                    className="size-20 rounded-full shadow-soft ring-1 ring-border"
+                  />
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 w-full max-w-xs">
+                <div className="flex w-full max-w-xs gap-3">
                   <Button
                     variant="outline"
                     onClick={handleReset}
                     disabled={isProcessing}
                     className="flex-1"
                   >
-                    <X className="mr-2 h-4 w-4" />
-                    New Photo
+                    <X className="size-4" aria-hidden="true" />
+                    New photo
                   </Button>
                   <Button
                     onClick={handleCrop}
                     disabled={isProcessing}
-                    className="flex-1 bg-primary hover:bg-primary/90"
+                    className="flex-1"
                   >
-                    <Camera className="mr-2 h-4 w-4" />
+                    <Camera className="size-4" aria-hidden="true" />
                     {isProcessing ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
@@ -453,7 +451,7 @@ export function ProfileImageCropper({ open, onOpenChange, onImageSaved }: Profil
           )}
         </div>
         
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 border-t pt-4">
           <Button variant="outline" onClick={handleClose} disabled={isProcessing}>
             Cancel
           </Button>

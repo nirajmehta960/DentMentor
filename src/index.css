@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* DentMentor Design System - Professional mentorship platform */
+/* DentMentor design system — the app-wide theme.
+   Values match the site kit (src/components/site/site.css): deep teal ink,
+   brand teal, one accessible orange, hairline borders, teal-tinted shadows.
+   Contrast on white: foreground 11:1, muted-foreground 6.7:1, secondary
+   (orange) with white text 5.0:1. The old muted-foreground (168 20% 45%) was
+   3.6:1 and failed AA for body text. */
 
 @layer base {
   :root {
@@ -22,11 +27,12 @@
     --primary-hover: 168 76% 20%;
     --primary-light: 168 76% 85%;
 
-    /* Secondary - Warm Orange */
-    --secondary: 20 91% 48%;
-    --secondary-foreground: 0 0% 98%;
-    --secondary-hover: 20 91% 40%;
-    --secondary-light: 20 91% 90%;
+    /* Secondary - Warm Orange, at the lightness that carries white text at AA.
+       Reserved for the actions that ask for a commitment. */
+    --secondary: 20 91% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 20 91% 36%;
+    --secondary-light: 20 91% 94%;
 
     /* Accent - Soft Blue */
     --accent: 199 89% 48%;
@@ -35,13 +41,13 @@
     --accent-light: 199 89% 90%;
 
     --muted: 168 20% 96%;
-    --muted-foreground: 168 20% 45%;
+    --muted-foreground: 168 20% 32%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 168 20% 90%;
-    --input: 168 20% 90%;
+    --border: 167 19% 91%;
+    --input: 167 19% 88%;
     --ring: 168 76% 25%;
 
     --radius: 0.75rem;
@@ -53,15 +59,18 @@
     --gradient-hero: linear-gradient(135deg, hsl(168, 76%, 25%) 0%, hsl(199, 89%, 48%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(168, 20%, 98%) 100%);
 
-    /* Shadows & Effects */
-    --shadow-soft: 0 4px 20px -2px hsl(168, 76%, 25% / 0.1);
-    --shadow-medium: 0 8px 25px -5px hsl(168, 76%, 25% / 0.15);
-    --shadow-large: 0 20px 60px -10px hsl(168, 76%, 25% / 0.2);
-    --shadow-glow: 0 0 30px hsl(199, 89%, 48% / 0.3);
-    --shadow-orange-glow: 0 0 30px hsl(20, 91%, 48% / 0.3);
+    /* Shadows: teal-tinted, layered. (These were written as
+       `hsl(168, 76%, 25% / 0.1)` — mixed comma and slash syntax, which is invalid,
+       so every shadow-* utility silently rendered nothing.) */
+    --shadow-soft: 0 1px 2px rgb(9 67 56 / 0.04), 0 8px 24px -12px rgb(9 67 56 / 0.1);
+    --shadow-medium: 0 4px 14px rgb(9 67 56 / 0.06), 0 16px 44px rgb(9 67 56 / 0.07);
+    --shadow-large: 0 6px 18px rgb(9 67 56 / 0.07), 0 24px 64px -16px rgb(9 67 56 / 0.18);
+    --shadow-glow: 0 0 0 4px rgb(21 157 130 / 0.12);
+    --shadow-orange-glow: 0 0 0 4px rgb(195 71 9 / 0.14);
 
     /* Animation Timings */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-dm: cubic-bezier(0.22, 1, 0.36, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     /* Sidebar Variables */
@@ -103,8 +112,18 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     scroll-behavior: smooth;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(13 162 231);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: rgb(105 211 190);
+    color: rgb(5 36 30);
   }
 }
 
@@ -116,13 +135,14 @@
   .elevate-lg:hover { box-shadow: var(--shadow-large); transform: translateY(-4px); }
 
   /* Gradient button helpers */
-  .btn-primary-gradient { background: var(--gradient-primary); color: white; box-shadow: var(--shadow-medium); transition: var(--transition-smooth); }
+  /* Legacy helpers, re-toned to the site kit so any remaining use matches it. */
+  .btn-primary-gradient { background: hsl(var(--foreground)); color: white; border-radius: 999px; box-shadow: var(--shadow-medium); transition: var(--transition-smooth); }
   .btn-primary-gradient:hover { transform: translateY(-2px); box-shadow: var(--shadow-large); }
 
-  .card-hover { background: var(--gradient-card); box-shadow: var(--shadow-soft); transition: var(--transition-smooth); }
-  .card-hover:hover { transform: translateY(-6px); box-shadow: var(--shadow-large); }
+  .card-hover { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); box-shadow: var(--shadow-soft); transition: var(--transition-smooth); }
+  .card-hover:hover { transform: translateY(-2px); box-shadow: var(--shadow-large); }
 
-  .gradient-text { background: var(--gradient-hero); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .gradient-text { background: linear-gradient(90deg, hsl(var(--foreground)) 8%, hsl(var(--primary)) 88%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 
   /* Existing animations retained */
   .scroll-animate { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }

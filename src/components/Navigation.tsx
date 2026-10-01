@@ -29,7 +29,6 @@ const Navigation = () => {
   const baseNavItems = [
     { label: "How It Works", href: "/how-it-works" },
     { label: "Find Mentors", href: "/mentors" },
-    { label: "Success Stories", href: "#testimonials" },
   ];
 
   // Add "Become a Mentor" only if user is not a mentee

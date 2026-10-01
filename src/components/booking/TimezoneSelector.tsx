@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { LABEL } from '@/components/mentors/mentor-display';
 
 interface TimezoneSelectorProps {
   selectedTimezone: string;
@@ -116,53 +117,47 @@ export const TimezoneSelector: React.FC<TimezoneSelectorProps> = ({
   const currentTime = getCurrentTimeInTimezone(selectedTimezone);
 
   return (
-    <div className={showLabel ? "space-y-2" : ""}>
-      {showLabel && <label className="text-sm font-medium text-foreground">Time zone</label>}
+    <div className={showLabel ? "flex flex-col gap-2" : ""}>
+      {showLabel && <label className={cn(LABEL, "text-muted-foreground")}>Time zone</label>}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <button
+            type="button"
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border",
-              "bg-card hover:bg-accent/50 transition-colors text-left",
-              "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              "flex h-11 w-full items-center gap-3 rounded-[10px] border border-input bg-background px-3.5 text-left",
+              "transition-colors hover:bg-muted/60",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             )}
           >
-            <Globe className="w-4 h-4 text-primary flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <span className="text-sm text-foreground truncate block">
-                {selectedTimezoneInfo.label}
-              </span>
-            </div>
+            <Globe className="size-4 shrink-0 text-primary" aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+              {selectedTimezoneInfo.label}
+            </span>
             {currentTime && (
-              <span className="text-sm text-muted-foreground flex-shrink-0">
-                ({currentTime})
+              <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                {currentTime}
               </span>
             )}
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[380px] p-0 bg-popover border-border shadow-xl"
+          data-lenis-prevent=""
+          className="w-[min(380px,calc(100vw-2rem))] overflow-hidden p-0"
           align="start"
-          sideOffset={4}
+          sideOffset={6}
         >
           {/* Search */}
-          <div className="p-3 border-b border-border">
+          <div className="border-b border-border p-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Search..."
+                aria-label="Search time zones"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-muted/50 border-0 focus-visible:ring-1"
+                className="pl-10"
               />
             </div>
-          </div>
-
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Time Zone
-            </span>
           </div>
 
           {/* Timezone List */}
@@ -170,7 +165,7 @@ export const TimezoneSelector: React.FC<TimezoneSelectorProps> = ({
             <div className="p-2">
               {Object.entries(filteredTimezones).map(([region, zones]) => (
                 <div key={region} className="mb-2">
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div className={cn(LABEL, "px-3 pb-1.5 pt-2 text-muted-foreground")}>
                     {region}
                   </div>
                   {zones.map((zone) => {
@@ -179,24 +174,28 @@ export const TimezoneSelector: React.FC<TimezoneSelectorProps> = ({
 
                     return (
                       <button
+                        type="button"
                         key={zone.id}
                         onClick={() => handleSelect(zone.id)}
+                        aria-pressed={isSelected}
                         className={cn(
-                          "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
+                          "flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-sm transition-colors",
                           isSelected
                             ? "bg-primary text-primary-foreground"
-                            : "hover:bg-accent text-foreground"
+                            : "text-foreground hover:bg-muted"
                         )}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          {isSelected && <Check className="w-4 h-4 flex-shrink-0" />}
-                          <span className={cn("truncate", !isSelected && "ml-6")}>
-                            {zone.label}
-                          </span>
-                        </div>
+                        <span className="flex min-w-0 items-center gap-2">
+                          {isSelected ? (
+                            <Check className="size-4 shrink-0" aria-hidden="true" />
+                          ) : (
+                            <span className="size-4 shrink-0" aria-hidden="true" />
+                          )}
+                          <span className="truncate">{zone.label}</span>
+                        </span>
                         <span
                           className={cn(
-                            "text-sm flex-shrink-0 ml-2",
+                            "shrink-0 text-sm tabular-nums",
                             isSelected ? "text-primary-foreground/80" : "text-muted-foreground"
                           )}
                         >
@@ -209,7 +208,7 @@ export const TimezoneSelector: React.FC<TimezoneSelectorProps> = ({
               ))}
 
               {Object.keys(filteredTimezones).length === 0 && (
-                <div className="text-center py-8 text-muted-foreground text-sm">
+                <div className="py-8 text-center text-sm text-muted-foreground">
                   No timezones found
                 </div>
               )}

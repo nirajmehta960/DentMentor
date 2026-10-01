@@ -1,0 +1,518 @@
+/* ═══ DENTMENTOR LANDING ═══════════════════════════════════════════════
+   Everything the landing needs that is not a Tailwind utility.
+
+   Every rule is nested under `[data-dm-site]`, which only the landing root
+   (and the nav's portalled sheet) sets, so nothing here reaches the rest of
+   the app. `Band` sets `data-band`; every `band-*` utility resolves from the
+   custom properties below. Re-toning a section is a change to this file, not
+   to its component.
+
+   Colours are DentMentor's own (src/index.css), stored as RGB triplets.
+   Contrast, measured against the darkest light ground (tint, 243 247 246):
+
+     fg      9 67 56 ........ 10.4:1  AAA
+     muted   65 98 91 ........ 6.2:1  AA   (168 20% 32% — the app's 45% fails)
+     faint   73 110 103 ...... 5.2:1  AA   the floor
+     signal  15 112 93 ....... 5.6:1  AA   brand teal
+     accent  195 71 9 + white  5.0:1  AA   brand orange at --secondary-hover;
+                                           the 48% orange is only 3.6:1 */
+
+[data-dm-site] {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: rgb(var(--band-fg));
+  --ease-dm: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-damped: cubic-bezier(0.321, 0.664, 0.14, 1);
+  --reveal-dur: 0.56s;
+  --enter-dur: 0.72s;
+}
+
+/* A critically damped step response, which is what the scroll itself draws,
+   so entrances and scrolling read as one motion. The bezier above is the
+   closest fit for browsers without `linear()`. */
+@supports (animation-timing-function: linear(0, 1)) {
+  [data-dm-site] {
+    --ease-damped: linear(
+      0,
+      0.1098 6.3%,
+      0.3105 12.5%,
+      0.5035 18.8%,
+      0.6583 25%,
+      0.772 31.3%,
+      0.8513 37.5%,
+      0.9049 43.8%,
+      0.9401 50%,
+      0.9628 56.3%,
+      0.9773 62.5%,
+      0.9864 68.8%,
+      0.9922 75%,
+      0.9957 81.3%,
+      0.9979 87.5%,
+      0.9992 93.8%,
+      1
+    );
+  }
+}
+
+/* index.css applies `* { border-color: hsl(var(--border)) }` app-wide. This
+   (0,2,0) beats it so a bare `border` here takes the band's rule. */
+[data-dm-site] *,
+[data-dm-site] *::before,
+[data-dm-site] *::after {
+  border-color: var(--band-rule);
+}
+
+/* ── BANDS ─────────────────────────────────────────────────────────── */
+
+[data-dm-site] [data-band] {
+  --band-fg: 9 67 56;
+  --band-muted: 65 98 91;
+  --band-faint: 73 110 103;
+  --band-signal: 15 112 93;
+  --band-rule: rgb(9 67 56 / 0.12);
+  --band-rule-faint: rgb(9 67 56 / 0.06);
+  --band-rule-strong: rgb(9 67 56 / 0.16);
+
+  /* One orange, reserved for the two actions that ask for a commitment. */
+  --band-accent: 195 71 9;
+  --band-accent-hover: 176 63 8;
+  --band-on-accent: 255 255 255;
+
+  /* Teal-tinted: a neutral grey shadow on a mint ground reads as dirt. */
+  --btn-shadow:
+    0 4px 14px rgb(9 67 56 / 0.06),
+    0 16px 44px rgb(9 67 56 / 0.07),
+    0 32px 80px rgb(9 67 56 / 0.09);
+  --btn-shadow-hover:
+    0 6px 18px rgb(9 67 56 / 0.07),
+    0 20px 56px rgb(9 67 56 / 0.08),
+    0 40px 96px rgb(9 67 56 / 0.1);
+  --btn-shadow-secondary: 0 2px 8px rgb(9 67 56 / 0.03), 0 10px 28px rgb(9 67 56 / 0.03);
+  --btn-shadow-secondary-hover: 0 3px 10px rgb(9 67 56 / 0.035), 0 12px 34px rgb(9 67 56 / 0.045);
+  --card-shadow: 0 1px 2px rgb(9 67 56 / 0.04), 0 8px 24px -12px rgb(9 67 56 / 0.1);
+  --sheet-shadow: 0 24px 64px -16px rgb(9 67 56 / 0.3);
+}
+
+[data-dm-site] [data-band="paper"] {
+  --band-ground: 255 255 255;
+  --band-raised: 255 255 255;
+}
+
+[data-dm-site] [data-band="mist"] {
+  --band-ground: 249 251 251;
+  --band-raised: 255 255 255;
+}
+
+[data-dm-site] [data-band="tint"] {
+  --band-ground: 243 247 246;
+  --band-raised: 255 255 255;
+}
+
+/* Must stay BELOW the shared block above: same specificity, so source order
+   decides which shadow set the hero gets.
+
+   The hero's deep teal (the app's dark-mode ground). On ink:
+     fg 15.6:1 · muted 10.8:1 · faint 6.8:1 · signal 9.1:1 */
+[data-dm-site] [data-band="ink"] {
+  --band-ground: 5 36 30;
+  --band-raised: 12 52 45;
+  --band-fg: 245 250 249;
+  --band-muted: 195 213 210;
+  --band-faint: 145 172 166;
+  --band-signal: 105 211 190;
+  --band-rule: rgb(245 250 249 / 0.12);
+  --band-rule-faint: rgb(245 250 249 / 0.06);
+  --band-rule-strong: rgb(245 250 249 / 0.22);
+  --card-shadow: 0 0 #0000;
+  --btn-shadow:
+    0 4px 14px rgb(0 0 0 / 0.1),
+    0 18px 48px rgb(0 0 0 / 0.08),
+    0 32px 72px rgb(0 0 0 / 0.1);
+  --btn-shadow-hover:
+    0 6px 18px rgb(0 0 0 / 0.11),
+    0 22px 58px rgb(0 0 0 / 0.09),
+    0 40px 88px rgb(0 0 0 / 0.11);
+  --btn-shadow-secondary: 0 4px 16px rgb(0 0 0 / 0.08), 0 20px 52px rgb(0 0 0 / 0.09);
+  --btn-shadow-secondary-hover: 0 6px 20px rgb(0 0 0 / 0.09), 0 24px 64px rgb(0 0 0 / 0.1);
+}
+
+/* Multi-layer shadows live here: Tailwind's arbitrary-value parser can
+   truncate comma-separated box-shadows. */
+[data-dm-site] .landing-cta-primary {
+  box-shadow: var(--btn-shadow);
+}
+[data-dm-site] .landing-cta-primary:hover {
+  box-shadow: var(--btn-shadow-hover);
+}
+[data-dm-site] .landing-cta-primary:active {
+  box-shadow: var(--btn-shadow);
+}
+[data-dm-site] .landing-cta-secondary {
+  box-shadow: var(--btn-shadow-secondary, none);
+}
+[data-dm-site] .landing-cta-secondary:hover {
+  box-shadow: var(--btn-shadow-secondary-hover, var(--btn-shadow-secondary, none));
+}
+/* Beats the :hover rules above on specificity, for buttons on a coloured panel. */
+[data-dm-site] .landing-cta-flat,
+[data-dm-site] .landing-cta-flat:hover,
+[data-dm-site] .landing-cta-flat:active {
+  box-shadow: none;
+}
+
+[data-dm-site] ::selection {
+  background-color: rgb(105 211 190);
+  color: rgb(5 36 30);
+}
+
+[data-dm-site] :focus-visible {
+  outline: 2px solid rgb(13 162 231);
+  outline-offset: 2px;
+}
+
+/* ── HERO ──────────────────────────────────────────────────────────────
+   The ground fades itself to white, so no mask is needed and whatever the
+   ground stops covering is the white of the band below. The dark holds to
+   40% so the glass secondary button always sits on deep teal. */
+[data-dm-site] .dm-hero-ground {
+  background-color: #fff;
+  background-image:
+    radial-gradient(
+      58% 34% at 50% 60%,
+      rgb(45 196 170 / 0.5) 0%,
+      rgb(45 196 170 / 0.38) 18%,
+      rgb(45 196 170 / 0.26) 34%,
+      rgb(45 196 170 / 0.15) 50%,
+      rgb(45 196 170 / 0.07) 66%,
+      rgb(45 196 170 / 0.02) 82%,
+      rgb(45 196 170 / 0) 100%
+    ),
+    radial-gradient(
+      36% 26% at 72% 56%,
+      rgb(13 162 231 / 0.34) 0%,
+      rgb(13 162 231 / 0.26) 18%,
+      rgb(13 162 231 / 0.17) 34%,
+      rgb(13 162 231 / 0.1) 50%,
+      rgb(13 162 231 / 0.04) 66%,
+      rgb(13 162 231 / 0.01) 82%,
+      rgb(13 162 231 / 0) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgb(5 36 30) 0%,
+      rgb(5 36 30) 40%,
+      rgb(7 52 45) 50%,
+      rgb(16 88 76) 58%,
+      rgb(70 150 138) 66%,
+      rgb(170 212 205) 74%,
+      rgb(232 244 242) 82%,
+      rgb(255 255 255) 88%
+    );
+}
+
+/* An interior page's opening band: the hero's ink and glow, without the long
+   fade to white — a `PageHero` ends on a hard edge into the band below, so the
+   glow sits low and the foot stays deep enough for white type above it. */
+[data-dm-site] .dm-page-ground {
+  background-color: rgb(5 36 30);
+  background-image:
+    radial-gradient(
+      60% 70% at 50% 115%,
+      rgb(45 196 170 / 0.4) 0%,
+      rgb(45 196 170 / 0.3) 18%,
+      rgb(45 196 170 / 0.2) 34%,
+      rgb(45 196 170 / 0.12) 50%,
+      rgb(45 196 170 / 0.05) 66%,
+      rgb(45 196 170 / 0.015) 82%,
+      rgb(45 196 170 / 0) 100%
+    ),
+    radial-gradient(
+      38% 60% at 82% 100%,
+      rgb(13 162 231 / 0.28) 0%,
+      rgb(13 162 231 / 0.21) 18%,
+      rgb(13 162 231 / 0.14) 34%,
+      rgb(13 162 231 / 0.08) 50%,
+      rgb(13 162 231 / 0.03) 66%,
+      rgb(13 162 231 / 0.01) 82%,
+      rgb(13 162 231 / 0) 100%
+    );
+}
+
+/* The static screenshot shares a compositing group with two moving cards;
+   its own layer keeps it from re-rasterising every scroll frame. */
+[data-dm-site] .hero-shot-still {
+  will-change: transform;
+}
+
+/* box-shadow, never filter: drop-shadow on these moving cards inside a masked
+   group is a per-frame blur pass. The ancestor mask still fades the shadow. */
+[data-dm-site] .hero-shot-card {
+  box-shadow:
+    0 2px 6px rgb(9 67 56 / 0.06),
+    0 10px 26px rgb(9 67 56 / 0.08),
+    0 22px 52px rgb(9 67 56 / 0.06);
+}
+
+/* ── HEADER COLOUR CROSS-FADE ──────────────────────────────────────────
+   The nav swaps `data-band` on scroll. Custom properties can't animate, but
+   the computed `color` they feed can. The primary CTA is excluded so its own
+   transform/background transition survives. */
+[data-dm-site] header,
+[data-dm-site] header a:not(.landing-cta-primary),
+[data-dm-site] header span,
+[data-dm-site] header button,
+[data-dm-site] header svg {
+  transition: color 0.5s var(--ease-dm);
+}
+
+/* ── LABELS ────────────────────────────────────────────────────────── */
+[data-dm-site] .label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+[data-dm-site] .stat {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-dm-site] [data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── REVEAL ────────────────────────────────────────────────────────────
+   Visible by default; JS opts into hiding by adding `dm-js` to the root.
+   Every failure — no observer, no JS, reduced motion — leaves the page
+   readable rather than blank. */
+[data-dm-site] [data-reveal] {
+  transition:
+    opacity var(--reveal-dur) var(--ease-damped),
+    transform var(--reveal-dur) var(--ease-damped);
+  transition-delay: var(--reveal-delay, 0s);
+}
+
+[data-dm-site].dm-js [data-reveal]:not([data-revealed]) {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+/* The load sequence. Hidden by `dm-enter`, released by `dm-entered`, both set
+   during render so the hidden state is in the first committed DOM. */
+[data-dm-site] [data-enter] {
+  transition:
+    opacity var(--enter-dur) var(--ease-damped),
+    transform var(--enter-dur) var(--ease-damped);
+  transition-delay: var(--enter-delay, 0s);
+}
+
+[data-dm-site].dm-enter:not(.dm-entered) [data-enter] {
+  opacity: 0;
+  transform: translateY(var(--enter-rise, 22px));
+}
+
+/* ── FAQ PANEL ─────────────────────────────────────────────────────────
+   `0fr -> 1fr` animates to the real height with no measuring. `visibility`
+   is delayed on close so a closed answer leaves the tab order and the
+   accessibility tree, without blanking the text before it collapses.
+   Keep the two 0.32s values in step. */
+[data-dm-site] .dm-faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.32s var(--ease-dm),
+    visibility 0s linear 0.32s;
+}
+
+[data-dm-site] .dm-faq-panel[data-open] {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows 0.32s var(--ease-dm),
+    visibility 0s;
+}
+
+/* ── FLUID GRADIENT (closing panel) ────────────────────────────────────
+   Three soft blobs anchored in the corners over a deep teal ground. Each
+   carries a seven-stop eased falloff — a pre-blurred gaussian — so only
+   `transform` animates. The static core darkener sits above them, which
+   keeps the centred white type at ~17:1 wherever the blobs drift. */
+@keyframes dm-fluid-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(7%, -5%, 0) scale(1.14);
+  }
+  66% {
+    transform: translate3d(-4%, 4%, 0) scale(0.94);
+  }
+}
+
+@keyframes dm-fluid-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.06);
+  }
+  40% {
+    transform: translate3d(-6%, -7%, 0) scale(0.92);
+  }
+  70% {
+    transform: translate3d(5%, 3%, 0) scale(1.12);
+  }
+}
+
+@keyframes dm-fluid-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-8%, 6%, 0) scale(1.18);
+  }
+}
+
+[data-dm-site] .dm-fluid {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+[data-dm-site] .dm-fluid > span {
+  position: absolute;
+  display: block;
+  animation-play-state: paused;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+/* Brand teal, lower left, the largest. */
+[data-dm-site] .dm-fluid-b {
+  left: -28%;
+  bottom: -34%;
+  width: 92%;
+  height: 118%;
+  animation-name: dm-fluid-b;
+  animation-duration: 34s;
+  background: radial-gradient(
+    closest-side circle,
+    rgb(21 157 130 / 0.88) 0%,
+    rgb(21 157 130 / 0.7) 18%,
+    rgb(21 157 130 / 0.49) 34%,
+    rgb(21 157 130 / 0.29) 50%,
+    rgb(21 157 130 / 0.14) 66%,
+    rgb(21 157 130 / 0.04) 82%,
+    rgb(21 157 130 / 0) 100%
+  );
+}
+
+/* Mint — the light. Kept small and in the corner furthest from the type. */
+[data-dm-site] .dm-fluid-a {
+  left: -14%;
+  bottom: -20%;
+  width: 54%;
+  height: 74%;
+  animation-name: dm-fluid-a;
+  animation-duration: 26s;
+  background: radial-gradient(
+    closest-side circle,
+    rgb(105 211 190 / 0.6) 0%,
+    rgb(105 211 190 / 0.45) 18%,
+    rgb(105 211 190 / 0.29) 34%,
+    rgb(105 211 190 / 0.16) 50%,
+    rgb(105 211 190 / 0.07) 66%,
+    rgb(105 211 190 / 0.02) 82%,
+    rgb(105 211 190 / 0) 100%
+  );
+}
+
+/* Sky, upper right, a step back in strength so the light keeps a direction. */
+[data-dm-site] .dm-fluid-c {
+  right: -18%;
+  top: -30%;
+  width: 84%;
+  height: 116%;
+  animation-name: dm-fluid-c;
+  animation-duration: 41s;
+  background: radial-gradient(
+    closest-side circle,
+    rgb(13 162 231 / 0.62) 0%,
+    rgb(13 162 231 / 0.48) 18%,
+    rgb(13 162 231 / 0.32) 34%,
+    rgb(13 162 231 / 0.18) 50%,
+    rgb(13 162 231 / 0.08) 66%,
+    rgb(13 162 231 / 0.02) 82%,
+    rgb(13 162 231 / 0) 100%
+  );
+}
+
+/* Promoted and running only while near the viewport — see `reveal.tsx`. If
+   the observer never runs the panel is simply still. */
+[data-dm-site] .dm-fluid[data-animate-live] > span {
+  animation-play-state: running;
+  will-change: transform;
+}
+
+[data-dm-site] .dm-fluid-core {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    52% 58% at 50% 44%,
+    rgb(2 20 17 / 0.5) 0%,
+    rgb(2 20 17 / 0.28) 45%,
+    rgb(2 20 17 / 0.08) 75%,
+    rgb(2 20 17 / 0) 100%
+  );
+}
+
+/* Dithers the gradients so wide flat areas don't band. Lossless webp on
+   purpose: lossy compression smooths away exactly what this texture is. */
+[data-dm-site] .dm-grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/landing/grain.webp");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  /* Speckle reads louder than the banding it hides on a dark ground; keep it low. */
+  opacity: 0.14;
+}
+
+[data-dm-site] .dm-grain.dm-grain-faint {
+  opacity: 0.06;
+}
+
+/* ── REDUCED MOTION ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  [data-dm-site] *,
+  [data-dm-site] *::before,
+  [data-dm-site] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  [data-dm-site] [data-reveal],
+  [data-dm-site] [data-enter] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* A delay is not a duration; without this a closing answer stays readable
+     for 320ms after collapsing. */
+  [data-dm-site] .dm-faq-panel,
+  [data-dm-site] .dm-faq-panel[data-open] {
+    transition-delay: 0s !important;
+  }
+
+  [data-dm-site] .dm-fluid > span {
+    animation: none;
+  }
+}
