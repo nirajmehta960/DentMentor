@@ -138,7 +138,7 @@ export function TimeSlotModal({
                 <MetaLabel>
                   Selected <span className="tabular-nums">({selectedSlots.length})</span>
                 </MetaLabel>
-                <Button variant="ghost" size="sm" onClick={handleClear}>
+                <Button variant="ghost" size="sm" className="relative after:absolute after:-inset-1 after:content-['']" onClick={handleClear}>
                   Clear all
                 </Button>
               </div>

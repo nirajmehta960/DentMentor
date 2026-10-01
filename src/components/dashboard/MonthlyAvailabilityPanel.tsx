@@ -43,7 +43,11 @@ function DayGroup({
       <DateLeaf date={date} />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[0.9375rem] font-medium text-band-fg">{format(date, "EEEE")}</p>
+          <p className="text-[0.9375rem] font-medium text-band-fg">
+            {format(date, "EEEE")}
+            {/* The date itself is only drawn in the aria-hidden DateLeaf. */}
+            <span className="sr-only">, {format(date, "MMMM d")}</span>
+          </p>
           {status}
         </div>
         {children}

@@ -25,7 +25,7 @@ interface ServiceCardProps {
 }
 
 /**
- * One service as a radio row. Only what the mentor entered is shown — title,
+ * One service as a selectable row (a toggle button, like the time slots). Only what the mentor entered is shown — title,
  * description, duration, price and their own "premium" type.
  */
 const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect }) => {
@@ -34,8 +34,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, isSelected, onSelect
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={isSelected}
+      aria-pressed={isSelected}
       onClick={onSelect}
       className={cn(
         'flex w-full flex-col gap-4 rounded-xl border bg-white p-4 text-left transition-[border-color,box-shadow,background-color] duration-200 ease-dm sm:flex-row sm:items-start sm:justify-between sm:p-5',
@@ -229,16 +228,17 @@ export const ServiceSelection: React.FC<ServiceSelectionProps> = ({
       {heading}
 
       {/* Services */}
-      <div role="radiogroup" aria-label="Services" className="flex flex-col gap-3">
+      <ul aria-label="Services" className="flex flex-col gap-3">
         {services.map((service) => (
-          <ServiceCard
-            key={service.id}
-            service={service}
-            isSelected={selectedService?.id === service.id}
-            onSelect={() => onServiceSelect(service)}
-          />
+          <li key={service.id}>
+            <ServiceCard
+              service={service}
+              isSelected={selectedService?.id === service.id}
+              onSelect={() => onServiceSelect(service)}
+            />
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* Service Count Info */}
       {services.length > 1 && (

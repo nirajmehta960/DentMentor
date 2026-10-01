@@ -15,6 +15,9 @@
 
 export const SIGNED_IN_LABEL = "Go to dashboard";
 
+/** Sign-up with the mentor role preselected (/auth reads `role=mentor`). */
+export const MENTOR_SIGN_UP = "/auth?tab=signup&role=mentor";
+
 export const APPLY_HERO = {
   eyebrow: "Become a mentor",
   title: ["Help the next international dentist", "get where you are."],
@@ -72,7 +75,7 @@ export const WHO_QUALIFIES = {
   verification: {
     label: "Optional",
     title: "Verification earns the Verified badge",
-    body: "Upload your documents during onboarding, or skip the step and finish it later from your dashboard. Verified profiles carry a badge mentees can see.",
+    body: "Submit your documents for verification during onboarding, or skip the step and finish it later from your dashboard. Mentors whose documents have been verified carry a badge mentees can see.",
     documentsLabel: "The three uploads",
     documents: ["Degree certificate or transcript", "U.S. dental school admission letter", "Student ID or diploma"],
   },
@@ -85,7 +88,7 @@ export const MENTOR_JOURNEY = {
   steps: [
     {
       title: "Sign up as a mentor",
-      body: "Create your account and choose “Become a Mentor”.",
+      body: "Create your mentor account. The sign-up form opens with the mentor role selected.",
     },
     {
       title: "Build your profile",
@@ -103,7 +106,7 @@ export const MENTOR_JOURNEY = {
     },
     {
       title: "Verify, if you want the badge",
-      body: "Upload your documents to earn the Verified badge. It's optional, and you can do it later from your dashboard.",
+      body: "Document verification is optional and earns the Verified badge. Submit your documents during onboarding, or later from your dashboard.",
     },
     {
       title: "Set your availability",
@@ -114,7 +117,7 @@ export const MENTOR_JOURNEY = {
       body: "Mentees choose one of your services and a time, then pay through Stripe checkout. The slot is held while they pay.",
     },
     {
-      title: "Meet and get paid",
+      title: "Meet and follow up",
       body: "Meet with the session link, follow up in the session's thread, and track each paid session in your dashboard earnings.",
     },
   ],
@@ -128,8 +131,8 @@ export const MENTOR_JOURNEY = {
  */
 export const EARNINGS = {
   eyebrow: "Example",
-  heading: "See what your prices could add up to",
-  lead: "An illustration, not a forecast. You choose the price and the number of sessions; what you actually earn depends on the prices you set and how many sessions mentees book.",
+  heading: "See what your session prices add up to",
+  lead: "An illustration, not a forecast. You choose the price and the number of sessions; the real totals depend on the prices you set and how many sessions mentees book.",
   panelTitle: "Try your own numbers",
   price: { label: "Your price per session", min: 10, max: 300, step: 5, initial: 50 },
   sessions: { label: "Sessions booked per week", min: 1, max: 10, step: 1, initial: 3 },
@@ -140,12 +143,12 @@ export const EARNINGS = {
     { key: "year", label: "Per year", caption: "52 weeks" },
   ],
   footnote:
-    "Example only. These figures assume every session you enter is booked and paid, and are before taxes. DentMentor doesn't set your prices; you do.",
+    "Example only. These are totals of session prices, assuming every session you enter is booked and paid, before taxes and fees. They are not a payout statement. DentMentor doesn't set your prices; you do.",
 } as const;
 
 export const APPLY_CLOSE = {
   heading: ["Your experience is", "someone's next step."],
-  supporting: "Sign up as a mentor, set your services and prices, and open your calendar.",
+  supporting: "Create your mentor account, set your services and prices, and open your calendar.",
   primary: "Sign up as a mentor",
-  secondary: "How it works",
+  secondary: "How DentMentor works",
 } as const;

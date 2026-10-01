@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,10 @@ export interface ConversationProfile {
  * the chat route's side list passes its own, because supabase-js hands back an
  * existing channel by topic, and the one Messages is still leaving on unmount
  * would swallow the new subscription. `enabled: false` mounts nothing at all.
+ *
+ * `refetch` reloads the list on demand. The channel only fires for messages
+ * sent TO this user, so the chat route calls it after marking a thread read and
+ * after the user sends, to keep the side list's counts and previews current.
  */
 export function useConversations({ channel: channelName, enabled = true }: { channel: string; enabled?: boolean }) {
     const { user } = useAuth();
@@ -38,52 +42,53 @@ export function useConversations({ channel: channelName, enabled = true }: { cha
     const [profiles, setProfiles] = useState<Record<string, ConversationProfile>>({});
     const [loading, setLoading] = useState(true);
 
+    const fetchConversations = useCallback(async () => {
+        if (!user) return;
+        try {
+            setLoading(true);
+            // Fetch conversations
+            const { data: convs, error: convError } = await supabase
+                .from("chat_conversations_v")
+                .select("*")
+                .order("last_message_at", { ascending: false });
+
+            if (convError) throw convError;
+            const typedConvs = convs as unknown as Conversation[];
+            setConversations(typedConvs);
+
+            // Collect other user IDs
+            const otherUserIds = new Set<string>();
+            typedConvs.forEach((conv) => {
+                const otherId =
+                    user.id === conv.mentor_user_id
+                        ? conv.mentee_user_id
+                        : conv.mentor_user_id;
+                otherUserIds.add(otherId);
+            });
+
+            if (otherUserIds.size > 0) {
+                const { data: profs, error: profError } = await supabase
+                    .from("profiles")
+                    .select("user_id, first_name, last_name, avatar_url")
+                    .in("user_id", Array.from(otherUserIds) as any);
+
+                if (profError) throw profError;
+
+                const profMap: Record<string, ConversationProfile> = {};
+                (profs as unknown as ConversationProfile[]).forEach((p) => {
+                    profMap[p.user_id] = p;
+                });
+                setProfiles(profMap);
+            }
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
     useEffect(() => {
         if (!user || !enabled) return;
-
-        const fetchConversations = async () => {
-            try {
-                setLoading(true);
-                // Fetch conversations
-                const { data: convs, error: convError } = await supabase
-                    .from("chat_conversations_v")
-                    .select("*")
-                    .order("last_message_at", { ascending: false });
-
-                if (convError) throw convError;
-                const typedConvs = convs as unknown as Conversation[];
-                setConversations(typedConvs);
-
-                // Collect other user IDs
-                const otherUserIds = new Set<string>();
-                typedConvs.forEach((conv) => {
-                    const otherId =
-                        user.id === conv.mentor_user_id
-                            ? conv.mentee_user_id
-                            : conv.mentor_user_id;
-                    otherUserIds.add(otherId);
-                });
-
-                if (otherUserIds.size > 0) {
-                    const { data: profs, error: profError } = await supabase
-                        .from("profiles")
-                        .select("user_id, first_name, last_name, avatar_url")
-                        .in("user_id", Array.from(otherUserIds) as any);
-
-                    if (profError) throw profError;
-
-                    const profMap: Record<string, ConversationProfile> = {};
-                    (profs as unknown as ConversationProfile[]).forEach((p) => {
-                        profMap[p.user_id] = p;
-                    });
-                    setProfiles(profMap);
-                }
-            } catch (error) {
-                console.error("Error fetching messages:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
 
         fetchConversations();
 
@@ -107,7 +112,7 @@ export function useConversations({ channel: channelName, enabled = true }: { cha
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user, enabled, channelName]);
+    }, [user, enabled, channelName, fetchConversations]);
 
     const getOtherUser = (conv: Conversation) => {
         if (!user) return null;
@@ -118,5 +123,5 @@ export function useConversations({ channel: channelName, enabled = true }: { cha
         return profiles[otherId];
     };
 
-    return { conversations, loading, getOtherUser };
+    return { conversations, loading, getOtherUser, refetch: fetchConversations };
 }

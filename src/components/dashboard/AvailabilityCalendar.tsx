@@ -360,7 +360,7 @@ export function AvailabilityCalendar() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-10"
+              className="h-11"
               onClick={async () => {
                 await refetch();
               }}

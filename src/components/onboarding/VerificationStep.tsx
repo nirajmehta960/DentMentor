@@ -17,6 +17,7 @@ import { HAIRLINE } from "@/components/site";
 import { cn } from "@/lib/utils";
 import {
   DASHED_EDGE,
+  FieldHint,
   FormSection,
   IconTile,
   SELECTED_EDGE,
@@ -135,9 +136,9 @@ const FileUploadCard = ({
             <span className="shrink-0">uploaded</span>
           </p>
         ) : (
-          <p className="stat mt-1 text-band-faint">
-            {formatAcceptedTypes(acceptedTypes)} · Max 10MB
-          </p>
+          <FieldHint className="mt-1">
+            {formatAcceptedTypes(acceptedTypes)} · Max <span data-numeric>10MB</span>
+          </FieldHint>
         )}
 
         {isUploading && (

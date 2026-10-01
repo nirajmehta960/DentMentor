@@ -58,7 +58,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
             title="Upcoming sessions"
             description="Your next three bookings"
             actions={
-              <Button variant="ghost" size="sm" onClick={() => onNavigate('sessions')}>
+              <Button variant="ghost" size="sm" className="relative after:absolute after:-inset-1 after:content-['']" onClick={() => onNavigate('sessions')}>
                 View all
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Button>
@@ -87,7 +87,10 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
                       {session.service?.title || session.mentee?.name || session.session_type}
                     </p>
                     <p className="text-[0.8125rem] text-band-muted tabular-nums">
-                      {format(new Date(session.session_date), 'EEE, h:mm a')} · {session.duration_minutes} min
+                      {format(new Date(session.session_date), 'EEE')}
+                      {/* The month and day are only drawn in the aria-hidden DateLeaf. */}
+                      <span className="sr-only"> {format(new Date(session.session_date), 'MMMM d')}</span>
+                      , {format(new Date(session.session_date), 'h:mm a')} · {session.duration_minutes} min
                     </p>
                     {session.service?.title && session.mentee?.name && (
                       <p className="truncate text-[0.8125rem] text-band-muted">
@@ -109,7 +112,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
             title="Your availability"
             description="Open dates in the next 30 days"
             actions={
-              <Button variant="ghost" size="sm" onClick={() => onNavigate('availability')}>
+              <Button variant="ghost" size="sm" className="relative after:absolute after:-inset-1 after:content-['']" onClick={() => onNavigate('availability')}>
                 Manage
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Button>
@@ -170,7 +173,7 @@ export function OverviewTab({ onNavigate }: OverviewTabProps) {
                     variant="ghost"
                     size="sm"
                     onClick={() => onNavigate('availability')}
-                    className="w-full"
+                    className="h-11 w-full"
                   >
                     View all availability
                     <ArrowRight className="size-4" aria-hidden="true" />

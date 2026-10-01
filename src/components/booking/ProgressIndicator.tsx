@@ -88,7 +88,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                 onClick={() => handleStepClick(step)}
                 disabled={!isClickable}
                 aria-current={status === 'current' ? 'step' : undefined}
-                className="flex min-h-11 shrink-0 items-center gap-3 rounded-full pr-1 text-left disabled:cursor-default"
+                className="flex min-h-11 min-w-11 shrink-0 items-center gap-3 rounded-full pr-1 text-left disabled:cursor-default"
               >
                 <span
                   className={cn(

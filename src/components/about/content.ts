@@ -92,7 +92,7 @@ export const VALUES = {
     },
     {
       title: "Trust and integrity",
-      body: "We say exactly what we can stand behind. The Verified badge means one thing: the mentor submitted proof of admission or their degree.",
+      body: "We say exactly what we can stand behind. The Verified badge means one thing: the mentor's proof of admission or degree has been verified.",
     },
     {
       title: "Pay for what you need",
@@ -104,7 +104,7 @@ export const VALUES = {
     },
     {
       title: "A global perspective",
-      body: "Applicants come from everywhere, so availability is shown in your own timezone and booking across continents takes one click.",
+      body: "Applicants come from everywhere, so availability is shown in your own timezone and there's nothing to convert.",
     },
   ],
 } as const;

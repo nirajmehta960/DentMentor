@@ -23,6 +23,7 @@ import { Enter } from "@/components/site";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { GoogleMark } from "@/components/auth/GoogleMark";
 import { cn } from "@/lib/utils";
+import { CONTROL_EDGE } from "@/components/onboarding/onboarding-ui";
 
 /* Inside the kit scope a border colour needs `!` to beat the band rule. The
    theme's --destructive is 3.8:1 on white, so field errors use red-700 (6.5:1). */
@@ -36,14 +37,16 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Presentation only: surfaces the (unchanged) silent terms check below.
+  const [showTermsError, setShowTermsError] = useState(false);
 
   // Determine initial tab from URL parameter, default to signin
   const initialTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Role selection state
+  // Role selection state. `?role=mentor` (from /apply-mentor) preselects mentor.
   const [selectedRole, setSelectedRole] = useState<"student" | "mentor">(
-    "student"
+    searchParams.get("role") === "mentor" ? "mentor" : "student"
   );
 
   // Sign up form with persistence
@@ -122,6 +125,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
+    setShowTermsError(!signUpData.agreedToTerms);
 
     // Form validation
     if (!validateEmail(signUpData.email)) {
@@ -432,10 +436,16 @@ const Auth = () => {
                 <Checkbox
                   id="terms"
                   checked={signUpData.agreedToTerms}
-                  onCheckedChange={(checked) =>
-                    updateField("agreedToTerms", !!checked)
-                  }
-                  className="mt-0.5 size-5 rounded-[5px]"
+                  onCheckedChange={(checked) => {
+                    updateField("agreedToTerms", !!checked);
+                    if (checked) setShowTermsError(false);
+                  }}
+                  aria-invalid={showTermsError || undefined}
+                  aria-describedby={showTermsError ? "terms-error" : undefined}
+                  className={cn(
+                    "mt-0.5 size-5 rounded-[5px]",
+                    showTermsError ? "!border-red-600" : CONTROL_EDGE
+                  )}
                 />
                 <label
                   htmlFor="terms"
@@ -451,6 +461,12 @@ const Auth = () => {
                   </Link>
                 </label>
               </div>
+              {showTermsError && (
+                <p id="terms-error" role="alert" className={cn(FIELD_ERROR, "-mt-1 pl-8")}>
+                  Please agree to the Terms of Service and Privacy Policy to
+                  create your account.
+                </p>
+              )}
 
               <Button
                 type="submit"

@@ -21,8 +21,8 @@ export default function BookingCancel() {
                         <>
                             <p>You haven't been charged. The booking process was cancelled or the payment failed.</p>
                             <p className="mt-3">
-                                Nothing was booked. The hold on the time you picked is released automatically, so
-                                you can choose it again or pick another.
+                                Nothing was booked. The time you picked stays held for a short while, then is
+                                released automatically. You can pick another time now.
                             </p>
                         </>
                     }

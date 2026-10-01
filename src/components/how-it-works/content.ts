@@ -39,7 +39,7 @@ export const MENTEE_SIDE = {
     {
       title: "Find the right mentor",
       body: "Browse U.S. dental students and graduates. Filter by specialty, experience, rating, price and availability, then read a mentor's profile and services before you choose.",
-      points: ["A Verified badge marks mentors who've submitted proof of admission or their degree"],
+      points: ["A Verified badge marks mentors whose documents have been verified"],
     },
     {
       title: "Book a session",
@@ -80,14 +80,14 @@ export const MENTOR_SIDE = {
     },
     {
       title: "Verify, if you choose",
-      body: "Upload your documents to earn the Verified badge. It's optional, and you can finish it later from your dashboard.",
+      body: "Document verification is optional and earns the Verified badge. Submit your documents during onboarding, or later from your dashboard.",
     },
     {
       title: "Open your calendar",
       body: "Add the times you're available. Mentees see them in their own timezone.",
     },
     {
-      title: "Meet, follow up, get paid",
+      title: "Meet and follow up",
       body: "Mentees pay when they book. Meet with the session link, follow up in its thread, and see each paid session in your dashboard earnings.",
     },
   ],
@@ -203,7 +203,7 @@ export const HOW_FAQ = {
     {
       slug: "verified",
       question: "What does the Verified badge mean?",
-      answer: "A Verified mentor has submitted documents such as proof of admission to a U.S. dental school or their degree. Verification is optional, so not every mentor has the badge yet.",
+      answer: "A Verified mentor's documents, such as proof of admission to a U.S. dental school or their degree, have been verified. Verification is optional, so not every mentor has the badge yet.",
     },
     {
       slug: "messaging",

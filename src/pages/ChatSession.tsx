@@ -30,12 +30,16 @@ interface Participant {
  * mounts there, so phones make no extra request); below lg the thread has the
  * whole viewport. The thread is keyed by session, so picking another
  * conversation from the list starts it fresh, exactly like opening the route.
+ *
+ * The side list's channel only fires for messages sent to this user, so the
+ * thread tells it (via `onListStale`) when it has marked messages read or the
+ * user has sent one; otherwise its unread pills and previews would go stale.
  */
 const ChatSession = () => {
     const { sessionId } = useParams<{ sessionId: string }>();
     const navigate = useNavigate();
     const isDesktop = useIsDesktop();
-    const { conversations, loading, getOtherUser } = useConversations({
+    const { conversations, loading, getOtherUser, refetch } = useConversations({
         channel: "messages_list_session",
         enabled: isDesktop,
     });
@@ -57,13 +61,13 @@ const ChatSession = () => {
                     ) : null
                 }
             >
-                <ChatSessionThread key={sessionId} />
+                <ChatSessionThread key={sessionId} onListStale={isDesktop ? refetch : undefined} />
             </InboxFrame>
         </AppShell>
     );
 };
 
-const ChatSessionThread = () => {
+const ChatSessionThread = ({ onListStale }: { onListStale?: () => void }) => {
     const { sessionId } = useParams<{ sessionId: string }>();
     const { user, session: authSession } = useAuth(); // Need authSession for token
     const navigate = useNavigate();
@@ -81,6 +85,9 @@ const ChatSessionThread = () => {
     const [hasMore, setHasMore] = useState(true);
     const [offset, setOffset] = useState(0);
     const LIMIT = 50;
+    // Read through a ref: markRead also runs from the realtime callback, whose closure is fixed per session.
+    const onListStaleRef = useRef(onListStale);
+    onListStaleRef.current = onListStale;
 
     // 1. Fetch Session & Participant Info
     useEffect(() => {
@@ -248,6 +255,8 @@ const ChatSessionThread = () => {
             });
         } catch (err) {
             console.error("Failed to mark read", err);
+        } finally {
+            onListStaleRef.current?.();
         }
     };
 
@@ -279,6 +288,7 @@ const ChatSessionThread = () => {
             // Optimistically append (or use the returned message)
             setMessages((prev) => [...prev, sentMsg]);
             setNewMessage("");
+            onListStaleRef.current?.();
 
             // Scroll to bottom
             setTimeout(() => {

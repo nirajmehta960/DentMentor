@@ -16,6 +16,7 @@ import {
   ChoiceCard,
   FieldHint,
   FormSection,
+  CONTROL_EDGE,
   RequiredMark,
   StepActions,
   StepHeader,
@@ -121,7 +122,7 @@ export const ExamsTimelineStep = ({
                 key={status}
                 htmlFor={`inbde-${status}`}
                 selected={formData.inbde_status === status}
-                control={<RadioGroupItem value={status} id={`inbde-${status}`} />}
+                control={<RadioGroupItem value={status} id={`inbde-${status}`} className={CONTROL_EDGE} />}
                 title={status}
               />
             ))}
@@ -210,6 +211,7 @@ export const ExamsTimelineStep = ({
                 control={
                   <Checkbox
                     id={`program-${program}`}
+                    className={CONTROL_EDGE}
                     checked={selectedPrograms.includes(program)}
                     onCheckedChange={(checked) =>
                       handleProgramChange(program, !!checked)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate, useSearchParams } from 'react-router-dom';
-import { AppPageHeader, AppShell } from '@/components/site';
+import { AppShell } from '@/components/site';
 import { DashboardNavigation } from '@/components/dashboard/DashboardNavigation';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardMobileNav } from '@/components/dashboard/DashboardMobileNav';
@@ -83,18 +83,8 @@ export default function Dashboard() {
       case 'activity':
         return <ActivityTab />;
       case 'messages':
-        // MessagesTab is shared with the mentee dashboard and carries no page
-        // header of its own, so the mentor page adds one above it.
-        return (
-          <div className="flex flex-col gap-6">
-            <AppPageHeader
-              eyebrow="Messages"
-              title="Inbox"
-              description="Each booked session has its own thread with your mentee."
-            />
-            <MessagesTab />
-          </div>
-        );
+        // MessagesTab (shared with the mentee dashboard) renders its own header.
+        return <MessagesTab />;
       default:
 
         return <OverviewTab onNavigate={setActiveTab} />;
@@ -103,6 +93,14 @@ export default function Dashboard() {
 
   return (
     <AppShell nav={false}>
+      {/* AppShell's skip link targets #main, which here also holds the dashboard
+          chrome, so this second link jumps past the bars and sidebar. */}
+      <a
+        href="#dashboard-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-pill focus:bg-band-fg focus:px-5 focus:py-3 focus:text-white"
+      >
+        Skip to dashboard content
+      </a>
       <DashboardNavigation />
 
       {/* Mobile Navigation */}
@@ -112,7 +110,7 @@ export default function Dashboard() {
         {/* Sidebar - Desktop only */}
         <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <div className="min-w-0 flex-1">
+        <div id="dashboard-content" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
           <div className="mx-auto w-full max-w-[76rem] px-4 pb-16 pt-6 sm:px-6 sm:pt-8 lg:px-10 lg:pt-10">
             {renderActiveTab()}
           </div>

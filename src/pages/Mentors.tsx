@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 
 import { Band, Frame, HAIRLINE, PageHero, SiteShell } from "@/components/site";
@@ -14,6 +14,19 @@ import { cn } from "@/lib/utils";
 const Mentors = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // The filter sheet only exists below lg. If the viewport grows past it while
+  // the sheet is open (rotation, resize), close it so no overlay is left behind.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const query = window.matchMedia("(min-width: 1024px)");
+    const closeAtLarge = () => {
+      if (query.matches) setShowFilters(false);
+    };
+    closeAtLarge();
+    query.addEventListener?.("change", closeAtLarge);
+    return () => query.removeEventListener?.("change", closeAtLarge);
+  }, []);
 
   const {
     mentors,

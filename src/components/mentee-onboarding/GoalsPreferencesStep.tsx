@@ -9,6 +9,7 @@ import {
   FormSection,
   RemovableTag,
   RequiredMark,
+  CONTROL_EDGE,
   StepActions,
   StepHeader,
   TagList,
@@ -149,6 +150,7 @@ export const GoalsPreferencesStep = ({ data, onNext, onPrevious }: GoalsPreferen
                 control={
                   <Checkbox
                     id={`help-${help}`}
+                    className={CONTROL_EDGE}
                     checked={selectedHelp.includes(help)}
                     onCheckedChange={(checked) => handleHelpChange(help, !!checked)}
                   />
@@ -207,6 +209,7 @@ export const GoalsPreferencesStep = ({ data, onNext, onPrevious }: GoalsPreferen
                 control={
                   <Checkbox
                     id={`time-${time}`}
+                    className={CONTROL_EDGE}
                     checked={selectedTimes.includes(time)}
                     onCheckedChange={(checked) => handleTimeChange(time, !!checked)}
                   />

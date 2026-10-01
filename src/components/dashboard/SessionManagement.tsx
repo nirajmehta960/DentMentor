@@ -120,13 +120,13 @@ export function SessionManagement() {
                   </div>
 
                   <div className="flex gap-2 sm:shrink-0">
-                    <Button variant="outline" size="sm" className="h-10 flex-1 sm:flex-initial">
+                    <Button variant="outline" size="sm" className="h-11 flex-1 sm:flex-initial">
                       <MessageCircle className="size-4" aria-hidden="true" />
                       Message
                     </Button>
                     <Button
                       size="sm"
-                      className="h-10 flex-1 sm:flex-initial"
+                      className="h-11 flex-1 sm:flex-initial"
                       onClick={() => {
                         setSelectedSession(session);
                         setIsDetailsDialogOpen(true);
@@ -185,7 +185,7 @@ export function SessionManagement() {
                     <Button
                       size="sm"
                       onClick={() => acceptRequest(request.id)}
-                      className="h-10 flex-1 sm:flex-initial"
+                      className="h-11 flex-1 sm:flex-initial"
                     >
                       <Check className="size-4" aria-hidden="true" />
                       Accept request
@@ -194,7 +194,7 @@ export function SessionManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() => declineRequest(request.id)}
-                      className="h-10 flex-1 hover:border-red-200 hover:bg-red-50 hover:text-red-700 sm:flex-initial"
+                      className="h-11 flex-1 hover:border-red-200 hover:bg-red-50 hover:text-red-700 sm:flex-initial"
                     >
                       <X className="size-4" aria-hidden="true" />
                       Decline

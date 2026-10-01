@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 
 import { CtaPanel, PageHero, SiteCta, SiteShell, useSiteRoutes } from "@/components/site";
-import { APPLY_CLOSE, APPLY_HERO, SIGNED_IN_LABEL } from "@/components/apply/content";
+import { APPLY_CLOSE, APPLY_HERO, MENTOR_SIGN_UP, SIGNED_IN_LABEL } from "@/components/apply/content";
 import { EarningsCalculator } from "@/components/apply/EarningsCalculator";
 import { MentorJourney } from "@/components/apply/MentorJourney";
 import { WhoQualifies } from "@/components/apply/WhoQualifies";
@@ -12,13 +12,13 @@ import { HERO_GLASS } from "@/components/how-it-works/parts";
  * /apply-mentor: why mentor, who can, how it works from the mentor's side, an
  * example of what prices add up to, and the close.
  *
- * The sign-up action goes to `/auth?tab=signup`, where the visitor picks
- * "Become a Mentor". Signed-in visitors get their dashboard instead (and
- * `PublicOnlyRoute` would bounce them off `/auth` anyway).
+ * The sign-up action goes to `/auth?tab=signup&role=mentor`, which opens the
+ * form with the mentor role selected. Signed-in visitors get their dashboard
+ * instead (and `PublicOnlyRoute` would bounce them off `/auth`).
  */
 const ApplyMentor = () => {
   const r = useSiteRoutes();
-  const joinTo = r.isLoggedIn ? r.dashboard : r.signUp;
+  const joinTo = r.isLoggedIn ? r.dashboard : MENTOR_SIGN_UP;
   const joinLabel = r.isLoggedIn ? SIGNED_IN_LABEL : APPLY_HERO.primary;
 
   return (
@@ -42,7 +42,8 @@ const ApplyMentor = () => {
             </SiteCta>
           </>
         }
-      />
+      >
+      </PageHero>
       <WhyMentor />
       <WhoQualifies />
       <MentorJourney />

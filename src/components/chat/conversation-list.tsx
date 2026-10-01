@@ -21,8 +21,8 @@ function Stamp({ iso }: { iso: string }) {
  * page decides what selecting means (Messages navigates to the chat route).
  *
  * The active row is tinted and carries no unread pill: its thread is open and
- * has just been marked read, but this list only refetches on new messages, so
- * the count it holds for that row is already stale.
+ * has just been marked read, and the count may lag until the page's refetch
+ * after mark-read lands.
  */
 export function ConversationList({
     conversations,
@@ -53,7 +53,7 @@ export function ConversationList({
             ) : conversations.length === 0 ? (
                 <p className="px-5 py-10 text-center text-[0.875rem] text-band-muted">No conversations yet.</p>
             ) : (
-                <ul className="min-h-0 flex-1 divide-y divide-[#E3ECEA] overflow-y-auto overscroll-contain">
+                <ul className="min-h-0 flex-1 divide-y divide-band-rule overflow-y-auto overscroll-contain">
                     {conversations.map((conv) => {
                         const otherUser = getOtherUser(conv);
                         const active = conv.session_id === activeSessionId;
@@ -68,8 +68,8 @@ export function ConversationList({
                                     className={cn(
                                         "flex min-h-[4.5rem] w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-200 ease-dm sm:px-5",
                                         active
-                                            ? "bg-[rgb(243_247_246)] shadow-[inset_3px_0_0_rgb(15_112_93)]"
-                                            : "hover:bg-[rgb(249_251_251)]",
+                                            ? "bg-band-signal/[0.05] shadow-[inset_3px_0_0_rgb(var(--band-signal))]"
+                                            : "hover:bg-band-fg/[0.02]",
                                     )}
                                 >
                                     <PersonAvatar person={otherUser} size="lg" />

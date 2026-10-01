@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 
 import { Band, BandHeader, Frame, Reveal, SiteCta, WIDE_RAIL, useSiteRoutes } from "@/components/site";
 import { StepRail } from "@/components/how-it-works/parts";
-import { MENTOR_JOURNEY, SIGNED_IN_LABEL } from "./content";
+import { MENTOR_JOURNEY, MENTOR_SIGN_UP, SIGNED_IN_LABEL } from "./content";
 
 /**
  * How it works from the mentor's side, on the landing's rail. The id is the
@@ -29,7 +29,7 @@ export function MentorJourney() {
             </Reveal>
             <Reveal delay={0.06}>
               <SiteCta
-                to={r.isLoggedIn ? r.dashboard : r.signUp}
+                to={r.isLoggedIn ? r.dashboard : MENTOR_SIGN_UP}
                 variant={r.isLoggedIn ? "ink" : "primary"}
                 size="md"
                 className="group/join"

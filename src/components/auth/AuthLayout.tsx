@@ -65,19 +65,25 @@ function HomeLink({ className }: { className?: string }) {
   );
 }
 
+/*
+ * The panel is at least one viewport tall and sticky, but never clipped: on a
+ * short laptop viewport (e.g. 1366x768) it grows past the fold instead, and
+ * below 820px of height its gaps tighten and the lead (which repeats the facts)
+ * steps aside so the facts and copyright stay in view.
+ */
 function BrandPanel() {
   return (
     <aside
       data-band="ink"
-      className="relative isolate hidden overflow-clip bg-band-ground text-band-fg lg:sticky lg:top-0 lg:flex lg:h-svh lg:flex-col lg:self-start"
+      className="relative isolate hidden overflow-clip bg-band-ground text-band-fg lg:sticky lg:top-0 lg:flex lg:min-h-svh lg:flex-col lg:self-start"
     >
       <div aria-hidden="true" className="dm-page-ground pointer-events-none absolute inset-0 -z-10" />
       <div aria-hidden="true" className="dm-grain dm-grain-faint pointer-events-none absolute inset-0 -z-10" />
 
-      <div className="flex h-full flex-col justify-between gap-12 px-10 py-8 xl:px-16 xl:py-10">
+      <div className="flex flex-1 flex-col justify-between gap-12 px-10 py-8 xl:px-16 xl:py-10 [@media(max-height:820px)]:gap-8 [@media(max-height:820px)]:py-7">
         <HomeLink />
 
-        <div className="flex max-w-[30rem] flex-col gap-7">
+        <div className="flex max-w-[30rem] flex-col gap-7 [@media(max-height:820px)]:gap-5">
           <Enter>
             <p
               className="label inline-flex items-center gap-2 rounded-pill border px-3 py-1.5 text-band-fg"
@@ -97,7 +103,7 @@ function BrandPanel() {
             </p>
           </Enter>
 
-          <Enter delay={0.14}>
+          <Enter delay={0.14} className="[@media(max-height:820px)]:hidden">
             <p className="text-pretty text-body-sm leading-relaxed text-band-muted">
               Book 1:1 sessions with U.S. dental students and graduates for SOP reviews, mock interviews, CV
               reviews and application strategy.
@@ -105,7 +111,7 @@ function BrandPanel() {
           </Enter>
 
           <Enter delay={0.21}>
-            <ul className="flex flex-col gap-4 border-t pt-7">
+            <ul className="flex flex-col gap-4 border-t pt-7 [@media(max-height:820px)]:gap-3 [@media(max-height:820px)]:pt-5">
               {FACTS.map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-start gap-3.5">
                   <span
